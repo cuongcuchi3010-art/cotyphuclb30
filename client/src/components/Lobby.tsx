@@ -124,6 +124,11 @@ export function Lobby() {
             onChange={(v) => setRules({ auctions: !v })}
             label={S.lobby.noAuction}
           />
+          <Toggle
+            checked={!!rules.showStandings}
+            onChange={(v) => setRules({ showStandings: v })}
+            label={S.lobby.showStandings}
+          />
           <label className="flex items-center justify-between gap-2">
             {S.lobby.timeLimit}
             <select

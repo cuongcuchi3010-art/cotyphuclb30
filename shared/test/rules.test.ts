@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DECKS,
+  standings,
   formatMoney,
   liquidationValue,
   mortgageTransferFee,
@@ -871,5 +872,16 @@ describe('Số nhà / khách sạn tối đa tuỳ chỉnh', () => {
     own(s, 'p1', 1, 3);
     ({ state: s } = act(s, 'p1', { type: 'build', pos: 1 }));
     expect(() => act(s, 'p1', { type: 'build', pos: 3 })).toThrow('hết nhà');
+  });
+});
+
+describe('Thứ hạng theo tổng tài sản', () => {
+  it('xếp hạng người còn chơi theo tổng tài sản', () => {
+    const s = mkGame(3, { showStandings: true });
+    own(s, 'p3', 39);
+    pl(s, 'p2').cash = 100;
+    const st = standings(s);
+    expect(st.map((x) => x.id)).toEqual(['p3', 'p1', 'p2']);
+    expect(st[0]).toMatchObject({ rank: 1, worth: 1900 });
   });
 });

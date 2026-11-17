@@ -1,4 +1,4 @@
-import { OWNABLE_INDICES, formatMoney } from '@cotyphu/shared';
+import { OWNABLE_INDICES, formatMoney, standings } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
 import { cx, playerColor, useGame } from '../lib';
@@ -14,6 +14,8 @@ export function PlayerList({ compact, cols }: { compact?: boolean; cols?: 1 | 2 
   const setSheet = useStore((s) => s.setSheet);
   if (!room || !game) return null;
   const cur = game.players[game.current]?.id;
+  const ranks = game.rules.showStandings ? new Map(standings(game).map((x) => [x.id, x])) : null;
+  const medal = (r: number) => (r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : `#${r}`);
   const meP = game.players.find((p) => p.id === me);
   return (
     <div
@@ -78,6 +80,11 @@ export function PlayerList({ compact, cols }: { compact?: boolean; cols?: 1 | 2 
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1 text-sm font-semibold">
+                {ranks?.get(p.id) && (
+                  <span className="shrink-0" title={`Hạng ${ranks.get(p.id)!.rank}`}>
+                    {medal(ranks.get(p.id)!.rank)}
+                  </span>
+                )}
                 <span className="truncate">{p.name}</span>
                 {p.id === me && <span className="text-xs text-gray-400">({S.lobby.you})</span>}
                 {room.hostId === p.id && <span title={S.lobby.host}>👑</span>}
@@ -85,6 +92,11 @@ export function PlayerList({ compact, cols }: { compact?: boolean; cols?: 1 | 2 
               </div>
               <div className="flex flex-wrap gap-x-2 text-xs text-gray-600 dark:text-gray-300">
                 <b className="text-son dark:text-nghe">{formatMoney(p.cash)}</b>
+                {ranks?.get(p.id) && (
+                  <span className="font-semibold text-ngoc-700 dark:text-ngoc-100">
+                    {S.game.worth}: {formatMoney(ranks.get(p.id)!.worth)}
+                  </span>
+                )}
                 {!compact && <span>🏘 {props}</span>}
                 {p.inJail && <span>🚓 {S.game.jailed}</span>}
                 {p.jailCards.length > 0 && <span>🎫 {p.jailCards.length}</span>}

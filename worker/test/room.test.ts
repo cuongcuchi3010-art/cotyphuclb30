@@ -152,6 +152,7 @@ describe('Phòng chơi', () => {
         buildRule: 'landing',
         houseStock: 48,
         hotelStock: 16,
+        showStandings: true,
       },
     });
     a.msg({ type: 'start' });

@@ -82,6 +82,7 @@ export const S = {
     buildRule: 'Cách xây nhà',
     houseStock: 'Số nhà tối đa (cả ván)',
     hotelStock: 'Số khách sạn tối đa (cả ván)',
+    showStandings: 'Hiện tổng tài sản & thứ hạng trong ván',
     standard: 'chuẩn',
     buildMonopoly: 'Sở hữu trọn nhóm màu (chuẩn)',
     buildLanding: 'Dừng lại ô của mình',
@@ -124,6 +125,7 @@ export const S = {
     hotels: 'KS',
     bank: 'Ngân hàng',
     jackpot: 'Hũ tiền',
+    worth: 'Tài sản',
   },
 
   auction: {

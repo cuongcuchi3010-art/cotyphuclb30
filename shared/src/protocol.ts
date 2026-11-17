@@ -77,6 +77,7 @@ export const rulesSchema = z.object({
     }),
   houseStock: z.number().int().min(4).max(200).default(32),
   hotelStock: z.number().int().min(1).max(100).default(12),
+  showStandings: z.boolean().default(false),
   buildRule: z.enum(['monopoly', 'landing']).default('monopoly'),
 });
 

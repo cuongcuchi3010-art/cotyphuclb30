@@ -32,6 +32,8 @@ export interface Rules {
   houseStock: number;
   /** Số khách sạn tối đa trong kho ngân hàng (chuẩn 12) */
   hotelStock: number;
+  /** Hiện tổng tài sản & thứ hạng của mọi người suốt ván */
+  showStandings: boolean;
 }
 
 export const DEFAULT_RULES: Rules = {
@@ -44,6 +46,7 @@ export const DEFAULT_RULES: Rules = {
   buildRule: 'monopoly',
   houseStock: 32,
   hotelStock: 12,
+  showStandings: false,
 };
 
 export interface PlayerStats {

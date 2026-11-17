@@ -307,6 +307,14 @@ export function bankLoanRepay(amount: number): number {
   return Math.ceil((amount * (100 + BANK_LOAN_RATE_PCT)) / 100);
 }
 
+/** Thứ hạng hiện tại theo tổng tài sản (người phá sản xếp cuối) */
+export function standings(s: GameState): { id: PlayerId; worth: number; rank: number }[] {
+  const alive = alivePlayers(s)
+    .map((p) => ({ id: p.id, worth: netWorth(s, p.id) }))
+    .sort((a, b) => b.worth - a.worth);
+  return alive.map((x, i) => ({ ...x, rank: i + 1 }));
+}
+
 export function totalOwed(s: GameState, id: PlayerId): number {
   return s.debts.filter((d) => d.from === id).reduce((a, d) => a + d.amount, 0);
 }

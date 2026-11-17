@@ -133,3 +133,10 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 | M1  | Màn hình rộng gần vuông (Z Fold mở trong, ≥ 600px): mã phòng + Voice ở **cột trái**, nhạc + loa + Bỏ cuộc ở **cột phải** bàn cờ. Chỉ bật khi bàn cờ không nhỏ đi quá 12px so với để hàng nút bên dưới; màn hình cao (Fold cầm dọc, tablet dọc) giữ hàng nút dưới để bàn to nhất. |
 | M2  | **Nhạc nền** tổng hợp bằng Web Audio (không file, không bản quyền): giai điệu ngũ cung kiểu dân gian, 118 BPM, hợp âm C–Am–F–G, bass + trống nhẹ, lặp 8 ô nhịp; âm lượng nhỏ để không át voice chat.                                                                             |
 | M3  | Nhạc **mặc định bật**, chỉ phát trong màn hình chơi, bắt đầu sau lần chạm/bấm đầu tiên (luật trình duyệt). Nút 🎵 bật/tắt riêng, nhớ theo từng máy; nút 🔊 vẫn chỉ bật/tắt hiệu ứng âm thanh.                                                                                    |
+
+## Cập nhật lần 10: tổng tài sản & thứ hạng
+
+| #   | Quyết định                                                                                                                                                                                                                                                    |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S1  | Tuỳ chọn ở sảnh **"Hiện tổng tài sản & thứ hạng trong ván"** (mặc định tắt). Khi bật, danh sách người chơi luôn hiện huy chương 🥇🥈🥉 / #4… và "Tài sản: …", cập nhật sau mỗi nước đi.                                                                       |
+| S2  | Tổng tài sản tính như chế độ giới hạn thời gian: tiền mặt + giá đất (ô thế chấp tính 50%) + giá nhà/khách sạn đã xây − khoản đang nợ vay + khoản đang cho vay. Người phá sản không xếp hạng. Danh sách vẫn giữ thứ tự lượt đi; thứ hạng hiện bằng huy chương. |
