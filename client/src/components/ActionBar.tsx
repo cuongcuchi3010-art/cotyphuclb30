@@ -16,7 +16,7 @@ export function ActionBar() {
   const meP = game.players.find((p) => p.id === me);
   const myTurn = cur.id === me;
   const ph = game.phase;
-  const note = 'text-center text-[12px] sm:text-sm text-gray-600 dark:text-gray-300';
+  const note = 'text-center text-[11px] sm:text-sm text-gray-600 dark:text-gray-300';
 
   if (spectator || !meP) return <div className={note}>👀 {S.game.spectating}</div>;
   if (meP.bankrupt) return <div className={note}>{S.game.bankrupt}</div>;

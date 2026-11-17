@@ -20,18 +20,18 @@ import { CenterInfo } from './CenterInfo';
 
 const SPECIAL_ICON: Partial<Record<Sq['kind'], string>> = {
   chest: '🧧',
-  chance: '❓',
+  chance: '🎲',
   tax: '💸',
   parking: '☕',
-  goToJail: '🚦',
+  goToJail: '🚨',
   jail: '🚓',
-  go: '⬅️',
+  go: '🏁',
 };
 
 export function Board() {
   return (
     <div
-      className="board relative aspect-square w-full select-none rounded-2xl bg-gradient-to-br from-ngoc-100 via-nghe-50 to-son-50 p-[0.6%] shadow-card [container-type:inline-size] dark:from-[#0f2a27] dark:via-[#1c1a12] dark:to-[#2a1014]"
+      className="board relative aspect-square w-full select-none rounded-2xl bg-[#DCE3EA] p-[0.7%] shadow-card [container-type:inline-size] dark:bg-[#0d1117]"
       style={{
         display: 'grid',
         gridTemplateColumns: '1.6fr repeat(9, 1fr) 1.6fr',
@@ -79,19 +79,21 @@ function CenterDecor() {
   );
 }
 
-/** Màu nền / dải màu cho từng loại ô */
-function squareTheme(sq: Sq): { band: string; tint: string } {
-  if (sq.kind === 'street') {
-    const c = GROUPS[sq.group].color;
-    return { band: c, tint: c };
-  }
-  if (sq.kind === 'transport' || sq.kind === 'utility')
-    return { band: sq.brandColor, tint: sq.brandColor };
-  if (sq.kind === 'chance') return { band: '#F2A900', tint: '#F2A900' };
-  if (sq.kind === 'chest') return { band: '#C8102E', tint: '#C8102E' };
-  if (sq.kind === 'tax') return { band: '#6B7280', tint: '#6B7280' };
-  return { band: '#0E9F8E', tint: '#F2A900' };
+/** Màu nhóm (dải giá) của ô mua được */
+function bandColor(sq: Sq): string | null {
+  if (sq.kind === 'street') return GROUPS[sq.group].color;
+  if (sq.kind === 'transport') return '#334155';
+  if (sq.kind === 'utility') return '#0E7490';
+  return null;
 }
+
+/** Ô góc: màu nền riêng để dễ định hướng */
+const CORNER_STYLE: Record<number, { bg: string; fg: string; sub?: string }> = {
+  0: { bg: 'linear-gradient(135deg,#D9F7E8,#B7EBD2)', fg: '#0B7F52', sub: 'Nhận 200 tr' },
+  10: { bg: 'linear-gradient(135deg,#ECEFF3,#D9DEE5)', fg: '#475569', sub: 'Chỉ ghé thăm' },
+  20: { bg: 'linear-gradient(135deg,#FFF3CF,#FDE29A)', fg: '#9A6A00', sub: 'Nghỉ chân' },
+  30: { bg: 'linear-gradient(135deg,#FFE1E4,#FFC2C9)', fg: '#B3132B', sub: 'Về tạm giữ' },
+};
 
 /** Tiền thuê hiện tại hiển thị trên ô đã có chủ */
 function rentLabel(game: GameState, pos: number): string {
@@ -105,25 +107,25 @@ function rentLabel(game: GameState, pos: number): string {
   return formatMoney(rentFor(game, pos, { diceTotal: 7 }));
 }
 
+/** Dải giá nằm ở MÉP NGOÀI bàn cờ */
 const BAND: Record<string, string> = {
-  bottom: 'top-0 inset-x-0 h-[20%]',
-  top: 'bottom-0 inset-x-0 h-[20%]',
-  left: 'right-0 inset-y-0 w-[20%]',
-  right: 'left-0 inset-y-0 w-[20%]',
+  bottom: 'bottom-0 inset-x-0 h-[19%]',
+  top: 'top-0 inset-x-0 h-[19%]',
+  left: 'left-0 inset-y-0 w-[19%]',
+  right: 'right-0 inset-y-0 w-[19%]',
+};
+const INNER_STRIPE: Record<string, (c: string) => string> = {
+  bottom: (c) => `inset 0 0.4cqw 0 0 ${c}`,
+  top: (c) => `inset 0 -0.4cqw 0 0 ${c}`,
+  left: (c) => `inset -0.4cqw 0 0 0 ${c}`,
+  right: (c) => `inset 0.4cqw 0 0 0 ${c}`,
 };
 const PAD: Record<string, string> = {
-  bottom: 'pt-[22%] pb-[3%] flex-col',
-  top: 'pb-[22%] pt-[3%] flex-col',
-  left: 'pr-[22%] pl-[4%] flex-row',
-  right: 'pl-[22%] pr-[4%] flex-row',
+  bottom: 'pb-[21%] pt-[4%] flex-col',
+  top: 'pt-[21%] pb-[4%] flex-col',
+  left: 'pl-[21%] pr-[3%] flex-row',
+  right: 'pr-[21%] pl-[3%] flex-row',
   corner: 'flex-col',
-};
-const BAND_GRADIENT: Record<string, string> = {
-  bottom: 'to bottom',
-  top: 'to top',
-  left: 'to left',
-  right: 'to right',
-  corner: 'to bottom',
 };
 
 function SquareCell({ sq }: { sq: Sq }) {
@@ -133,79 +135,128 @@ function SquareCell({ sq }: { sq: Sq }) {
   const side = sideOf(sq.index);
   const st = game?.properties[sq.index];
   const ownerColor = st?.owner ? playerColor(room, st.owner) : null;
-  const corner = side === 'corner';
-  const theme = squareTheme(sq);
   const price = 'price' in sq ? sq.price : null;
   const isBrand = sq.kind === 'transport' || sq.kind === 'utility';
+  const band = bandColor(sq);
+  const vertical = side === 'left' || side === 'right';
+
+  // ---- Ô góc
+  if (side === 'corner') {
+    const c = CORNER_STYLE[sq.index]!;
+    return (
+      <div
+        className="relative flex flex-col items-center justify-center gap-[4%] overflow-hidden rounded-[6px] text-center shadow-sm"
+        style={{ gridRow: row, gridColumn: col, background: c.bg }}
+        title={sq.name}
+      >
+        <span className="leading-none drop-shadow-sm" style={{ fontSize: '5.4cqw' }}>
+          {SPECIAL_ICON[sq.kind]}
+        </span>
+        <span
+          className="font-extrabold uppercase leading-tight"
+          style={{ color: c.fg, fontSize: '1.55cqw' }}
+        >
+          {sq.short ?? sq.name}
+        </span>
+        {c.sub && (
+          <span
+            className="font-semibold leading-none opacity-80"
+            style={{ color: c.fg, fontSize: '1.1cqw' }}
+          >
+            {sq.index === 20 && game?.rules.jackpot ? `Hũ: ${formatMoney(game.jackpot)}` : c.sub}
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  // ---- Ô thường
+  const bandText =
+    st?.owner && game ? rentLabel(game, sq.index) : price !== null ? formatMoney(price) : null;
   return (
     <button
       type="button"
       onClick={() => (price !== null ? open(sq.index) : undefined)}
       className={cx(
-        'relative flex items-center justify-center gap-[3%] overflow-hidden rounded-[4px] text-center leading-[1.15] text-gray-900 shadow-sm dark:text-gray-50',
-        price !== null && 'hover:z-10 hover:ring-2 hover:ring-nghe',
+        'group relative flex items-center justify-center gap-[4%] overflow-hidden rounded-[6px] bg-[var(--sq-bg)] text-center leading-[1.1] text-slate-800 shadow-sm transition dark:text-slate-100',
+        price !== null && 'hover:z-10 hover:-translate-y-[1px] hover:shadow-md',
         PAD[side],
       )}
       style={{
         gridRow: row,
         gridColumn: col,
-        background: corner
-          ? `radial-gradient(circle at 50% 40%, ${theme.tint}33, transparent 70%), var(--sq-bg)`
-          : `linear-gradient(${BAND_GRADIENT[side]}, ${theme.tint}38, ${theme.tint}10 70%), var(--sq-bg)`,
-        boxShadow: ownerColor ? `inset 0 0 0 2px ${ownerColor}` : undefined,
+        boxShadow: ownerColor ? `inset 0 0 0 0.35cqw ${ownerColor}` : undefined,
       }}
       title={sq.name}
     >
-      {!corner && (sq.kind === 'street' || isBrand) && (
-        <span className={cx('absolute', BAND[side])} style={{ background: theme.band }} />
-      )}
-      {/* Biểu tượng cảnh quan / thương hiệu */}
-      <span className="shrink-0 leading-none" style={{ fontSize: corner ? '4.2cqw' : '2.3cqw' }}>
+      {/* Hình minh hoạ lớn */}
+      <span
+        className={cx(
+          'flex shrink-0 items-center justify-center leading-none',
+          st?.mortgaged && 'opacity-35 grayscale',
+        )}
+        style={{ fontSize: '3.5cqw' }}
+      >
         {sq.kind === 'street' ? (
           sq.icon
         ) : isBrand ? (
-          <BrandLogo id={sq.logo} name={sq.name} color={sq.brandColor} size="2.4cqw" />
+          <BrandLogo id={sq.logo} name={sq.name} color={sq.brandColor} size="3.4cqw" />
         ) : (
           SPECIAL_ICON[sq.kind]
         )}
       </span>
+      {/* Tên ô */}
       <span
-        className={cx(
-          'flex min-w-0 flex-col items-center',
-          side === 'left' || side === 'right' ? 'items-start text-left' : '',
-        )}
+        className={cx('flex min-w-0 flex-col', vertical ? 'items-start text-left' : 'items-center')}
       >
-        <span
-          className={cx('line-clamp-2 font-bold', corner && 'text-son dark:text-nghe')}
-          style={{ fontSize: corner ? '1.6cqw' : '1.32cqw' }}
-        >
+        <span className="line-clamp-2 font-bold" style={{ fontSize: '1.22cqw' }}>
           {sq.short ?? sq.name}
         </span>
-        {st && ownerColor ? (
+        {sq.kind === 'tax' && (
           <span
-            className="mt-[2px] whitespace-nowrap rounded-full px-[0.5cqw] font-extrabold text-white"
-            style={{ background: st.mortgaged ? '#6B7280' : ownerColor, fontSize: '1.22cqw' }}
-          >
-            {rentLabel(game!, sq.index)}
-          </span>
-        ) : price !== null ? (
-          <span className="font-semibold text-son dark:text-nghe" style={{ fontSize: '1.22cqw' }}>
-            {formatMoney(price)}
-          </span>
-        ) : sq.kind === 'tax' ? (
-          <span
-            className="font-semibold text-gray-600 dark:text-gray-300"
-            style={{ fontSize: '1.12cqw' }}
+            className="font-semibold text-slate-500 dark:text-slate-300"
+            style={{ fontSize: '1.1cqw' }}
           >
             {formatMoney(sq.amount)}
           </span>
-        ) : null}
+        )}
       </span>
+
+      {/* Dải giá (chưa có chủ) / tiền thuê theo màu chủ (đã có chủ) ở mép ngoài */}
+      {band && bandText && (
+        <span
+          className={cx(
+            'absolute flex items-center justify-center font-extrabold text-white',
+            BAND[side],
+          )}
+          style={{
+            background: st?.mortgaged ? '#94A3B8' : (ownerColor ?? band),
+            fontSize: '1.15cqw',
+            // Chủ sở hữu: giữ một vạch màu nhóm ở mép trong của thẻ
+            boxShadow: ownerColor ? INNER_STRIPE[side]!(band) : undefined,
+          }}
+        >
+          <span
+            className="whitespace-nowrap"
+            style={
+              vertical
+                ? {
+                    writingMode: 'vertical-rl',
+                    transform: side === 'left' ? 'rotate(180deg)' : undefined,
+                  }
+                : undefined
+            }
+          >
+            {ownerColor && !st?.mortgaged && sq.kind !== 'utility' ? `Thuê ${bandText}` : bandText}
+          </span>
+        </span>
+      )}
       {st && st.houses > 0 && <Buildings houses={st.houses} side={side} />}
     </button>
   );
 }
 
+/** Nhà / khách sạn: đặt ở mép trong (phía giữa bàn) */
 function Buildings({ houses, side }: { houses: number; side: string }) {
   const pos: Record<string, string> = {
     bottom: 'top-[2%] inset-x-0 justify-center',
@@ -214,7 +265,10 @@ function Buildings({ houses, side }: { houses: number; side: string }) {
     right: 'left-[2%] inset-y-0 flex-col justify-center',
   };
   return (
-    <span className={cx('absolute z-[5] flex gap-[1px]', pos[side])} style={{ fontSize: '1.2cqw' }}>
+    <span
+      className={cx('absolute z-[5] flex gap-[1px] drop-shadow', pos[side])}
+      style={{ fontSize: '1.35cqw' }}
+    >
       {houses === 5 ? (
         <span>🏨</span>
       ) : (
@@ -361,11 +415,14 @@ function CardReveal() {
             animate={{ rotateY: 0, scale: 1 }}
             transition={{ type: 'spring', stiffness: 160, damping: 16, delay: 0.6 }}
           >
-            <div className="text-2xl">{card.deck === 'chance' ? '❓' : '🧧'}</div>
+            <div className="text-2xl">{card.deck === 'chance' ? '🎲' : '🧧'}</div>
             <div className="mb-1 text-xs font-bold uppercase tracking-wider text-son dark:text-nghe">
               {DECK_NAMES[card.deck]} · {room?.players.find((p) => p.id === card.who)?.name}
             </div>
-            <div className="text-sm font-medium text-gray-800 dark:text-gray-100">
+            <div
+              style={{ fontSize: 'max(11px, 1.75cqw)' }}
+              className="font-medium text-gray-800 dark:text-gray-100"
+            >
               {cardById(card.id).text}
             </div>
           </motion.div>

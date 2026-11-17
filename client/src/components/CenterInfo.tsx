@@ -131,7 +131,7 @@ function LogFeed() {
       <div
         ref={box}
         className="min-h-0 flex-1 space-y-[0.3cqw] overflow-y-auto px-[1.4cqw] pb-[0.8cqw]"
-        style={{ fontSize: 'max(10px, 1.45cqw)' }}
+        style={{ fontSize: 'max(9px, 1.45cqw)' }}
       >
         {log.slice(-60).map((l) => (
           <div
