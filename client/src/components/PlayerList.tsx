@@ -6,7 +6,7 @@ import { useVoice } from '../voice';
 import { Avatar } from './Avatar';
 
 /** Danh sách người chơi; bấm vào người khác để mở giao dịch với họ */
-export function PlayerList({ compact }: { compact?: boolean }) {
+export function PlayerList({ compact, cols }: { compact?: boolean; cols?: 1 | 2 | 3 }) {
   const { room, game, me } = useGame();
   const speaking = useVoice((s) => s.speaking);
   const setDraft = useStore((s) => s.setTradeDraft);
@@ -16,7 +16,16 @@ export function PlayerList({ compact }: { compact?: boolean }) {
   const cur = game.players[game.current]?.id;
   const meP = game.players.find((p) => p.id === me);
   return (
-    <div className={cx('grid gap-1.5', compact ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-1')}>
+    <div
+      className={cx(
+        'grid gap-1.5',
+        (cols ?? (compact ? 2 : 1)) === 3
+          ? 'grid-cols-3'
+          : (cols ?? (compact ? 2 : 1)) === 2
+            ? 'grid-cols-2'
+            : 'grid-cols-1',
+      )}
+    >
       {game.players.map((p) => {
         const seat = room.players.find((s) => s.id === p.id);
         const props = OWNABLE_INDICES.filter((i) => game.properties[i]!.owner === p.id).length;

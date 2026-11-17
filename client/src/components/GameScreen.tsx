@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
-import { cx, useGame } from '../lib';
+import { computeLayout, cx, useGame, useViewport } from '../lib';
 import { isMuted, setMuted } from '../sound';
 import { VoiceControls } from './VoiceControls';
 import { Board } from './Board';
@@ -17,50 +17,74 @@ export function GameScreen() {
   const { room, game, me } = useGame();
   const sheetOpen = useStore((s) => s.sheetOpen);
   const setSheet = useStore((s) => s.setSheet);
+  const { w, h } = useViewport();
   if (!room || !game) return null;
+  const L = computeLayout(w, h);
 
-  return (
-    <div className="mx-auto flex min-h-[100dvh] max-w-[1400px] flex-col gap-3 p-2 pb-24 lg:flex-row lg:items-start lg:p-4 lg:pb-4">
-      {/* Bàn cờ */}
-      <div className="w-full lg:sticky lg:top-4 lg:max-w-[min(100vh-2rem,900px)] lg:flex-1">
-        <div className="touch-pinch-zoom overflow-auto">
+  const overlays = (
+    <>
+      <Prompts />
+      <PropertyCardModal />
+      {game.phase.kind === 'gameOver' && <GameOver />}
+      {me === null && <div className="sr-only">{S.game.spectating}</div>}
+    </>
+  );
+
+  // ---- Bàn cờ trái + panel phải: máy tính, điện thoại nằm ngang, máy gập mở ngang
+  if (L.mode === 'side') {
+    return (
+      <div
+        className="mx-auto flex justify-center gap-3 p-2"
+        style={{ height: '100dvh', maxWidth: L.board + L.panel + 48 }}
+      >
+        <div className="shrink-0 self-center" style={{ width: L.board }}>
           <Board />
         </div>
-      </div>
-
-      {/* Panel bên phải (máy tính) */}
-      <aside className="hidden w-[380px] shrink-0 flex-col gap-3 lg:flex">
-        <TopBar />
-        <PlayerList />
-        <div className="flex h-[58vh] flex-col rounded-2xl bg-white/90 p-2 shadow-card dark:bg-[#211d16]">
-          <TabBar />
-          <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
-            <TabContent />
+        <aside className="flex min-w-0 flex-col gap-2" style={{ width: L.panel }}>
+          <TopBar />
+          <div className={L.compact ? 'max-h-[34%] shrink-0 overflow-y-auto' : 'shrink-0'}>
+            <PlayerList compact={L.compact} cols={L.compact ? 2 : 1} />
           </div>
-        </div>
-      </aside>
+          <div className="flex min-h-0 flex-1 flex-col rounded-2xl bg-white/90 p-2 shadow-card dark:bg-[#211d16]">
+            <TabBar />
+            <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
+              <TabContent />
+            </div>
+          </div>
+        </aside>
+        {overlays}
+      </div>
+    );
+  }
 
-      {/* Điện thoại: danh sách người chơi gọn + thanh hành động cố định + bottom sheet */}
-      <div className="lg:hidden">
+  // ---- Dọc: điện thoại cầm dọc, máy gập mở dọc (màn hình gần vuông)
+  return (
+    <div className="mx-auto flex min-h-[100dvh] flex-col items-center gap-2 p-2 pb-24">
+      <div className="touch-pinch-zoom shrink-0" style={{ width: L.board }}>
+        <Board />
+      </div>
+      <div className="w-full" style={{ maxWidth: Math.max(L.board, 360) }}>
         <div className="mb-2">
           <TopBar />
         </div>
-        <PlayerList compact />
+        <PlayerList compact cols={w >= 600 ? 3 : 2} />
       </div>
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-black/10 bg-giay/95 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur dark:border-white/10 dark:bg-giay-dark/95 lg:hidden">
-        <TabBar />
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-black/10 bg-giay/95 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur dark:border-white/10 dark:bg-giay-dark/95">
+        <div className="mx-auto" style={{ maxWidth: Math.max(L.board, 360) }}>
+          <TabBar />
+        </div>
       </div>
       <AnimatePresence>
         {sheetOpen && (
           <motion.div
-            className="fixed inset-0 z-40 bg-black/30 lg:hidden"
+            className="fixed inset-0 z-40 bg-black/30"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSheet(false)}
           >
             <motion.div
-              className="absolute inset-x-0 bottom-0 flex h-[72vh] flex-col rounded-t-3xl bg-giay p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-card dark:bg-giay-dark"
+              className="absolute inset-x-0 bottom-0 mx-auto flex h-[72dvh] max-w-[720px] flex-col rounded-t-3xl bg-giay p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-card dark:bg-giay-dark"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
@@ -81,11 +105,7 @@ export function GameScreen() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <Prompts />
-      <PropertyCardModal />
-      {game.phase.kind === 'gameOver' && <GameOver />}
-      {me === null && <div className="sr-only">{S.game.spectating}</div>}
+      {overlays}
     </div>
   );
 }
@@ -96,7 +116,7 @@ function TopBar() {
   const [muted, setM] = useState(isMuted());
   const meP = game?.players.find((p) => p.id === me);
   return (
-    <div className="flex items-center justify-between gap-2 text-sm">
+    <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
       <div className="font-semibold text-gray-600 dark:text-gray-300">
         {S.lobby.code}:{' '}
         <span className="font-mono tracking-widest text-son dark:text-nghe">{room?.code}</span>

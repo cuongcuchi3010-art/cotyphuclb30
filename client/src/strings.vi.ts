@@ -83,7 +83,7 @@ export const S = {
     buildMonopoly: 'Sở hữu trọn nhóm màu (chuẩn)',
     buildLanding: 'Dừng lại ô của mình',
     buildLandingHint:
-      'Mỗi lần dừng đúng ô đất của mình được xây thêm 1 nhà ở ô đó, không cần trọn nhóm.',
+      'Dừng lại ô đất của mình thì được xây tuỳ ý tới 4 nhà ở ô đó (không cần trọn nhóm). Ô đã có sẵn 4 nhà khi bước vào thì được xây khách sạn.',
     seconds: (n: number) => `${n} giây`,
     password: 'Mật khẩu phòng (để trống = không có)',
     savePassword: 'Lưu',

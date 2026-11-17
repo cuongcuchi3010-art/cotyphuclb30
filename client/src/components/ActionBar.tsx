@@ -4,7 +4,7 @@ import { useStore } from '../store';
 import { nameOf, useGame } from '../lib';
 import { Btn } from './ui';
 
-const B = '!min-h-[38px] !px-2 !text-[13px] sm:!min-h-[46px] sm:!text-base';
+const B = '!min-h-[max(34px,5.2cqw)] !px-2 !text-[max(12px,1.8cqw)]';
 
 /** Nút hành động chính (đặt giữa bàn cờ): tung / mua / kết thúc lượt / tạm giữ */
 export function ActionBar() {
@@ -16,7 +16,7 @@ export function ActionBar() {
   const meP = game.players.find((p) => p.id === me);
   const myTurn = cur.id === me;
   const ph = game.phase;
-  const note = 'text-center text-[11px] sm:text-sm text-gray-600 dark:text-gray-300';
+  const note = 'text-center text-[max(10px,1.6cqw)] text-gray-600 dark:text-gray-300';
 
   if (spectator || !meP) return <div className={note}>👀 {S.game.spectating}</div>;
   if (meP.bankrupt) return <div className={note}>{S.game.bankrupt}</div>;
@@ -45,7 +45,7 @@ export function ActionBar() {
   if (ph.kind === 'awaitRoll' && meP.inJail) {
     return (
       <div className="w-full">
-        <div className="mb-1 text-center text-[12px] font-semibold sm:text-sm">
+        <div className="mb-1 text-center text-[max(11px,1.6cqw)] font-semibold">
           🚓 {S.game.inJail} · {S.game.jailAttempts(meP.jailAttempts)}
         </div>
         <div className="grid grid-cols-3 gap-1.5">
@@ -72,7 +72,7 @@ export function ActionBar() {
       <div className="w-full">
         {buildBtn}
         <Btn
-          className={`${B} w-full animate-glow !text-base sm:!text-lg`}
+          className={`${B} w-full animate-glow !text-[max(13px,2.1cqw)]`}
           onClick={() => act({ type: 'roll' })}
         >
           🎲 {game.doublesCount > 0 ? S.game.rollAgain : S.game.roll}
@@ -98,7 +98,7 @@ export function ActionBar() {
       <div className="w-full">
         {buildBtn}
         <Btn
-          className={`${B} w-full !text-base sm:!text-lg`}
+          className={`${B} w-full !text-[max(13px,2.1cqw)]`}
           variant="secondary"
           onClick={() => act({ type: 'endTurn' })}
         >

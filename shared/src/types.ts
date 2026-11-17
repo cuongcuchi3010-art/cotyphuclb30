@@ -193,8 +193,10 @@ export interface GameState {
   loans: Loan[];
   loanOffers: LoanOffer[];
   nextLoanId: number;
-  /** Luật 'landing': ô người đang tới lượt vừa dừng lại, được xây thêm 1 cấp */
+  /** Luật 'landing': ô người đang tới lượt vừa dừng lại (được xây nhà trong lượt này) */
   buildPass?: number | null;
+  /** Số nhà trên ô lúc vừa dừng lại (4 = được xây khách sạn) */
+  buildPassLevel?: number;
   endReason?: 'lastStanding' | 'timeUp';
 }
 

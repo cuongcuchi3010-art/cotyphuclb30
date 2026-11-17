@@ -73,3 +73,49 @@ export function fmtClock(ms: number): string {
 export function cx(...c: (string | false | null | undefined)[]): string {
   return c.filter(Boolean).join(' ');
 }
+
+/** Kích thước vùng hiển thị (cập nhật khi xoay màn hình / gập-mở máy gập) */
+export function useViewport(): { w: number; h: number } {
+  const read = () => ({
+    w: Math.round(window.visualViewport?.width ?? window.innerWidth),
+    h: Math.round(window.visualViewport?.height ?? window.innerHeight),
+  });
+  const [vp, setVp] = useState(read);
+  useEffect(() => {
+    const on = () => setVp(read());
+    window.addEventListener('resize', on);
+    window.addEventListener('orientationchange', on);
+    window.visualViewport?.addEventListener('resize', on);
+    return () => {
+      window.removeEventListener('resize', on);
+      window.removeEventListener('orientationchange', on);
+      window.visualViewport?.removeEventListener('resize', on);
+    };
+  }, []);
+  return vp;
+}
+
+export interface GameLayout {
+  /** 'side': bàn cờ trái + panel phải (máy tính, điện thoại ngang, máy gập mở ngang)
+   *  'stack': bàn cờ trên, thông tin dưới, tab ở đáy (điện thoại dọc, máy gập mở dọc) */
+  mode: 'side' | 'stack';
+  /** Cạnh bàn cờ (px) */
+  board: number;
+  /** Bề rộng panel bên phải (px, chế độ side) */
+  panel: number;
+  /** Màn hình thấp: dùng danh sách người chơi gọn */
+  compact: boolean;
+}
+
+/** Chọn bố cục theo tỉ lệ màn hình, bàn cờ luôn vừa khít không tràn */
+export function computeLayout(w: number, h: number): GameLayout {
+  const pad = 16;
+  if (w / h >= 1.15 && w >= 560) {
+    const panel = Math.round(Math.min(400, Math.max(260, w * 0.36)));
+    const board = Math.floor(Math.max(240, Math.min(h - pad, w - panel - pad * 2, 900)));
+    return { mode: 'side', board, panel, compact: h < 640 };
+  }
+  // Dọc: chừa chỗ cho thanh trên + người chơi (~150px) và thanh tab ở đáy (~76px)
+  const board = Math.floor(Math.max(240, Math.min(w - pad, h - 226, 900)));
+  return { mode: 'stack', board, panel: 0, compact: true };
+}

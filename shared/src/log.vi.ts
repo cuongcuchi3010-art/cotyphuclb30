@@ -86,7 +86,7 @@ export function describeEvent(ev: GameEvent, s: Pick<GameState, 'players'>): str
     case 'cardNoEffect':
       return `Thẻ không có tác dụng với ${name(ev.playerId)}`;
     case 'buildChance':
-      return `${name(ev.playerId)} trở lại ${sq(ev.pos)}, được xây thêm nhà`;
+      return `${name(ev.playerId)} trở lại ${sq(ev.pos)}, được xây nhà`;
     case 'build':
       return ev.level === 5
         ? `${name(ev.playerId)} xây khách sạn ở ${sq(ev.pos)}`

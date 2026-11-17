@@ -726,21 +726,34 @@ describe('Vay tiền', () => {
 });
 
 describe('Luật xây nhà khi dừng lại ô của mình', () => {
-  it('chỉ xây khi vừa dừng lại ô của mình, không cần trọn nhóm, mỗi lần 1 cấp', () => {
+  it('dừng lại ô của mình: xây tuỳ ý tới 4 nhà, không cần trọn nhóm', () => {
     let s = mkGame(2, { buildRule: 'landing' });
     own(s, 'p1', 6); // Sa Pa, không trọn nhóm
     expect(() => act(s, 'p1', { type: 'build', pos: 6 })).toThrow('vừa dừng');
     ({ state: s } = act(s, 'p1', { type: 'roll' }, [2, 4])); // dừng ở Sa Pa
     expect(s.buildPass).toBe(6);
-    ({ state: s } = act(s, 'p1', { type: 'build', pos: 6 }));
-    expect(s.properties[6]!.houses).toBe(1);
-    expect(pl(s, 'p1').cash).toBe(1450);
-    expect(() => act(s, 'p1', { type: 'build', pos: 6 })).toThrow('vừa dừng');
-    // Tiền thuê tính theo số nhà
-    expect(rentFor(s, 6, { diceTotal: 7 })).toBe(30);
+    for (let k = 0; k < 4; k++) ({ state: s } = act(s, 'p1', { type: 'build', pos: 6 }));
+    expect(s.properties[6]!.houses).toBe(4);
+    expect(pl(s, 'p1').cash).toBe(1500 - 200);
+    // Vừa đủ 4 nhà trong lần này: chưa được lên khách sạn
+    expect(() => act(s, 'p1', { type: 'build', pos: 6 })).toThrow('sẵn 4 nhà');
+    expect(rentFor(s, 6, { diceTotal: 7 })).toBe(400);
     // Hết lượt thì mất quyền xây
     ({ state: s } = act(s, 'p1', { type: 'endTurn' }));
     expect(s.buildPass).toBeNull();
+  });
+
+  it('bước vào ô đã có sẵn 4 nhà thì được xây khách sạn', () => {
+    let s = mkGame(2, { buildRule: 'landing' });
+    own(s, 'p1', 6);
+    s.properties[6]!.houses = 4;
+    s.bank.houses = 28;
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [2, 4]));
+    ({ state: s } = act(s, 'p1', { type: 'build', pos: 6 }));
+    expect(s.properties[6]!.houses).toBe(5);
+    expect(s.bank.hotels).toBe(11);
+    expect(s.bank.houses).toBe(32);
+    expect(() => act(s, 'p1', { type: 'build', pos: 6 })).toThrow('khách sạn');
   });
 
   it('không xây trên ô đang thế chấp; thế chấp/giao dịch chỉ xét chính ô đó', () => {

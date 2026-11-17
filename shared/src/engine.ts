@@ -664,6 +664,7 @@ function landOn(c: Ctx, p: PlayerState, ctx: RentContext): void {
     }
     if (st.owner === p.id && isLandingBuild(s) && sq.kind === 'street' && !st.mortgaged) {
       s.buildPass = pos;
+      s.buildPassLevel = st.houses;
       c.ev.push({ t: 'buildChance', playerId: p.id, pos });
       return;
     }
@@ -1123,6 +1124,8 @@ export function canBuild(s: GameState, p: PlayerState, pos: number): string | nu
     if (st.mortgaged) return 'Ô đang thế chấp';
     if (s.buildPass !== pos) return 'Chỉ được xây khi vừa dừng lại ô này';
     if (st.houses >= HOTEL_LEVEL) return 'Ô đã có khách sạn';
+    if (st.houses === 4 && s.buildPassLevel !== 4)
+      return 'Khách sạn chỉ xây được khi bước vào ô đã có sẵn 4 nhà';
     if (st.houses === 4) {
       if (s.bank.hotels < 1) return 'Ngân hàng đã hết khách sạn';
     } else if (s.bank.houses < 1) return 'Ngân hàng đã hết nhà';
@@ -1156,7 +1159,6 @@ function build(c: Ctx, p: PlayerState, pos: number): void {
     s.bank.houses--;
   }
   st.houses++;
-  if (isLandingBuild(s)) s.buildPass = null; // mỗi lần dừng chỉ xây 1 cấp
   c.ev.push({ t: 'build', playerId: p.id, pos, level: st.houses, cost: sq.houseCost });
 }
 
