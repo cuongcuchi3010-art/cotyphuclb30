@@ -97,6 +97,17 @@ export type GameEvent =
   | { t: 'auctionWon'; playerId: PlayerId; pos: number; amount: number }
   | { t: 'auctionNoBids'; pos: number }
   | { t: 'buildChance'; playerId: PlayerId; pos: number }
+  | {
+      t: 'houseLost';
+      playerId: PlayerId;
+      pos: number;
+      level: number;
+      reason: 'fire' | 'demolish';
+      by?: PlayerId;
+    }
+  | { t: 'propertyGifted'; from: PlayerId; to: PlayerId; pos: number }
+  | { t: 'propertyWon'; playerId: PlayerId; pos: number }
+  | { t: 'cardNoEffect'; playerId: PlayerId }
   | { t: 'build'; playerId: PlayerId; pos: number; level: number; cost: number }
   | { t: 'sell'; playerId: PlayerId; pos: number; level: number; refund: number }
   | { t: 'mortgage'; playerId: PlayerId; pos: number; amount: number }

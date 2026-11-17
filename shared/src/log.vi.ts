@@ -75,6 +75,16 @@ export function describeEvent(ev: GameEvent, s: Pick<GameState, 'players'>): str
       return `${name(ev.playerId)} thắng đấu giá ${sq(ev.pos)} với ${formatMoney(ev.amount)}`;
     case 'auctionNoBids':
       return `Không ai trả giá, ${sq(ev.pos)} vẫn thuộc ngân hàng`;
+    case 'houseLost':
+      return ev.reason === 'fire'
+        ? `🔥 Cháy nhà ở ${sq(ev.pos)} của ${name(ev.playerId)} (còn ${ev.level === 5 ? 'khách sạn' : `${ev.level} nhà`})`
+        : `🔨 ${name(ev.by)} đập nhà của ${name(ev.playerId)} ở ${sq(ev.pos)} (còn ${ev.level} nhà)`;
+    case 'propertyGifted':
+      return `🎁 ${name(ev.from)} buộc phải tặng ${sq(ev.pos)} cho ${name(ev.to)}`;
+    case 'propertyWon':
+      return `🍀 ${name(ev.playerId)} trúng thưởng ô ${sq(ev.pos)}`;
+    case 'cardNoEffect':
+      return `Thẻ không có tác dụng với ${name(ev.playerId)}`;
     case 'buildChance':
       return `${name(ev.playerId)} trở lại ${sq(ev.pos)}, được xây thêm nhà`;
     case 'build':

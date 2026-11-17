@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DECKS,
   formatMoney,
   liquidationValue,
   mortgageTransferFee,
@@ -165,7 +166,7 @@ describe('Thẻ bài', () => {
     ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
     expect(pl(s, 'p1').jailCards).toEqual(['chance']);
     expect(s.decks.chance).not.toContain(CH_JAILFREE);
-    expect(s.decks.chance).toHaveLength(15);
+    expect(s.decks.chance).toHaveLength(DECKS.chance.length - 1);
   });
 });
 
@@ -768,5 +769,81 @@ describe('Luật xây nhà khi dừng lại ô của mình', () => {
     ({ state: s } = act(s, 'p1', { type: 'roll' }, [2, 4]));
     expect(s.buildPass ?? null).toBeNull();
     expect(() => act(s, 'p1', { type: 'build', pos: 6 })).toThrow('trọn nhóm');
+  });
+});
+
+describe('Thẻ mới: cháy nhà, đập nhà, tặng đất, sinh nhật, trúng đất', () => {
+  const idx = (deck: 'chance' | 'chest', id: string) => DECKS[deck].findIndex((c) => c.id === id);
+
+  it('cháy nhà: mất 1 nhà của mình, nhà về kho', () => {
+    let s = mkGame();
+    own(s, 'p1', 1, 3);
+    s.properties[1]!.houses = 2;
+    s.bank.houses = 30;
+    topCard(s, 'chance', idx('chance', 'ch17'));
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4])); // → Cơ Hội ô 7
+    expect(s.properties[1]!.houses).toBe(1);
+    expect(s.bank.houses).toBe(31);
+  });
+
+  it('cháy khách sạn: xuống 4 nhà', () => {
+    let s = mkGame();
+    own(s, 'p1', 39);
+    s.properties[39]!.houses = 5;
+    s.bank.hotels = 11;
+    topCard(s, 'chance', idx('chance', 'ch17'));
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
+    expect(s.properties[39]!.houses).toBe(4);
+    expect(s.bank.hotels).toBe(12);
+    expect(s.bank.houses).toBe(28);
+  });
+
+  it('đập nhà hàng xóm: người khác mất 1 nhà', () => {
+    const s = mkGame();
+    own(s, 'p2', 6, 8, 9);
+    s.properties[9]!.houses = 3;
+    s.bank.houses = 29;
+    topCard(s, 'chance', idx('chance', 'ch18'));
+    const r = act(s, 'p1', { type: 'roll' }, [3, 4]);
+    expect(r.state.properties[9]!.houses).toBe(2);
+    expect(r.events).toContainEqual(
+      expect.objectContaining({ t: 'houseLost', reason: 'demolish', by: 'p1' }),
+    );
+  });
+
+  it('không có nhà để cháy thì thẻ không có tác dụng', () => {
+    const s = mkGame();
+    topCard(s, 'chance', idx('chance', 'ch17'));
+    const r = act(s, 'p1', { type: 'roll' }, [3, 4]);
+    expect(r.events).toContainEqual(expect.objectContaining({ t: 'cardNoEffect' }));
+  });
+
+  it('buộc tặng đất: 1 ô chưa xây nhà chuyển sang người khác', () => {
+    let s = mkGame();
+    own(s, 'p1', 1, 3);
+    s.properties[1]!.houses = 1; // nhóm nâu có nhà → không tặng được
+    s.bank.houses = 31;
+    own(s, 'p1', 16);
+    topCard(s, 'chance', idx('chance', 'ch19'));
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
+    expect(s.properties[16]!.owner).toBe('p2');
+    expect(s.properties[1]!.owner).toBe('p1');
+  });
+
+  it('sinh nhật: mỗi người tặng 20 tr', () => {
+    let s = mkGame(3);
+    topCard(s, 'chest', idx('chest', 'kv17'));
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 1])); // → Khí Vận ô 2
+    expect(pl(s, 'p1').cash).toBe(1540);
+    expect(pl(s, 'p3').cash).toBe(1480);
+  });
+
+  it('trúng thưởng đất: nhận 1 ô còn của ngân hàng', () => {
+    const s = mkGame();
+    topCard(s, 'chest', idx('chest', 'kv19'));
+    const r = act(s, 'p1', { type: 'roll' }, [1, 1]);
+    const won = r.events.find((e) => e.t === 'propertyWon');
+    expect(won).toBeTruthy();
+    if (won && won.t === 'propertyWon') expect(r.state.properties[won.pos]!.owner).toBe('p1');
   });
 });

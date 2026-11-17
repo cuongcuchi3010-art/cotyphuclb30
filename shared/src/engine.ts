@@ -802,11 +802,82 @@ function applyCard(c: Ctx, p: PlayerState, e: CardEffect): void {
           s.debts.push({ from: o.id, to: p.id, amount: e.amount, reason: 'collectEach' });
       }
       return;
+    case 'fire':
+    case 'demolishNeighbor': {
+      const victims =
+        e.type === 'fire'
+          ? [p.id]
+          : alivePlayers(s)
+              .filter((o) => o.id !== p.id)
+              .map((o) => o.id);
+      const targets = OWNABLE_INDICES.filter((i) => {
+        const st = s.properties[i]!;
+        return st.owner !== null && victims.includes(st.owner) && st.houses > 0;
+      });
+      if (targets.length === 0) {
+        c.ev.push({ t: 'cardNoEffect', playerId: p.id });
+        return;
+      }
+      const pos = targets[c.rng.int(0, targets.length - 1)]!;
+      const st = s.properties[pos]!;
+      loseOneLevel(s, pos);
+      c.ev.push({
+        t: 'houseLost',
+        playerId: st.owner!,
+        pos,
+        level: st.houses,
+        reason: e.type === 'fire' ? 'fire' : 'demolish',
+        by: e.type === 'fire' ? undefined : p.id,
+      });
+      return;
+    }
+    case 'giftProperty': {
+      const mine = OWNABLE_INDICES.filter(
+        (i) => s.properties[i]!.owner === p.id && blockHasNoBuildings(s, i),
+      );
+      const others = alivePlayers(s).filter((o) => o.id !== p.id);
+      if (mine.length === 0 || others.length === 0) {
+        c.ev.push({ t: 'cardNoEffect', playerId: p.id });
+        return;
+      }
+      const pos = mine[c.rng.int(0, mine.length - 1)]!;
+      const to = others[c.rng.int(0, others.length - 1)]!;
+      s.properties[pos]!.owner = to.id;
+      s.mortgageChoices = s.mortgageChoices.filter((m) => m.pos !== pos);
+      if (s.buildPass === pos) s.buildPass = null;
+      c.ev.push({ t: 'propertyGifted', from: p.id, to: to.id, pos });
+      return;
+    }
+    case 'freeProperty': {
+      const free = OWNABLE_INDICES.filter((i) => s.properties[i]!.owner === null);
+      if (free.length === 0) {
+        c.ev.push({ t: 'cardNoEffect', playerId: p.id });
+        return;
+      }
+      const pos = free[c.rng.int(0, free.length - 1)]!;
+      s.properties[pos]!.owner = p.id;
+      c.ev.push({ t: 'propertyWon', playerId: p.id, pos });
+      return;
+    }
   }
 }
 
 function diceTotal(s: GameState): number {
   return s.lastDice ? s.lastDice[0] + s.lastDice[1] : 7;
+}
+
+/** Mất 1 cấp nhà (cháy / bị đập): nhà về kho; khách sạn xuống mức nhà kho đáp ứng được */
+function loseOneLevel(s: GameState, pos: number): void {
+  const st = s.properties[pos]!;
+  if (st.houses === HOTEL_LEVEL) {
+    const k = Math.min(4, s.bank.houses);
+    s.bank.hotels++;
+    s.bank.houses -= k;
+    st.houses = k;
+  } else if (st.houses > 0) {
+    st.houses--;
+    s.bank.houses++;
+  }
 }
 
 // ---------------------------------------------------------------------------

@@ -17,7 +17,15 @@ export type CardEffect =
   | { type: 'goToJail' }
   | { type: 'repairs'; perHouse: number; perHotel: number }
   | { type: 'payEach'; amount: number }
-  | { type: 'collectEach'; amount: number };
+  | { type: 'collectEach'; amount: number }
+  /** Cháy nhà: mất 1 cấp nhà trên một ô ngẫu nhiên của mình */
+  | { type: 'fire' }
+  /** Đập nhà hàng xóm: phá 1 cấp nhà trên một ô ngẫu nhiên của người khác */
+  | { type: 'demolishNeighbor' }
+  /** Buộc tặng 1 ô đất (chưa có nhà) của mình cho một người chơi khác ngẫu nhiên */
+  | { type: 'giftProperty' }
+  /** Nhận miễn phí 1 ô đất ngẫu nhiên còn thuộc ngân hàng */
+  | { type: 'freeProperty' };
 
 export type DeckId = 'chance' | 'chest';
 
@@ -131,6 +139,24 @@ export const CHANCE_CARDS: readonly Card[] = [
     text: 'Dự án bất động sản sinh lời: nhận 150 tr.',
     effect: { type: 'collect', amount: 150 },
   },
+  {
+    id: 'ch17',
+    deck: 'chance',
+    text: 'Cháy nhà! Một căn nhà bất kỳ của bạn bị thiêu rụi (mất 1 nhà).',
+    effect: { type: 'fire' },
+  },
+  {
+    id: 'ch18',
+    deck: 'chance',
+    text: 'Tranh chấp đất đai: bạn đập 1 căn nhà bất kỳ của hàng xóm.',
+    effect: { type: 'demolishNeighbor' },
+  },
+  {
+    id: 'ch19',
+    deck: 'chance',
+    text: 'Làm từ thiện bắt buộc: tặng 1 ô đất (chưa xây nhà) của bạn cho một người chơi khác.',
+    effect: { type: 'giftProperty' },
+  },
 ];
 
 export const CHEST_CARDS: readonly Card[] = [
@@ -230,6 +256,24 @@ export const CHEST_CARDS: readonly Card[] = [
     deck: 'chest',
     text: 'Nhận thừa kế: 100 tr.',
     effect: { type: 'collect', amount: 100 },
+  },
+  {
+    id: 'kv17',
+    deck: 'chest',
+    text: 'Chúc mừng sinh nhật! Mỗi người chơi tặng bạn 20 tr.',
+    effect: { type: 'collectEach', amount: 20 },
+  },
+  {
+    id: 'kv18',
+    deck: 'chest',
+    text: 'Chập điện: một căn nhà bất kỳ của bạn bị cháy (mất 1 nhà).',
+    effect: { type: 'fire' },
+  },
+  {
+    id: 'kv19',
+    deck: 'chest',
+    text: 'Trúng thưởng bốc thăm: nhận miễn phí 1 ô đất bất kỳ còn thuộc ngân hàng.',
+    effect: { type: 'freeProperty' },
   },
 ];
 

@@ -100,3 +100,13 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 | B2  | Luật _Dừng lại ô của mình_: mỗi lần người chơi dừng đúng ô đất của mình (không đang thế chấp) thì trong lượt đó được xây **thêm 1 cấp** trên chính ô đó (nhà → … → khách sạn). Không cần trọn nhóm, không cần xây đều. Hết lượt thì mất quyền xây. Giới hạn kho 32 nhà / 12 khách sạn vẫn áp dụng. |
 | B3  | Ở luật này, bán nhà không cần bán đều. Thế chấp / giao dịch chỉ yêu cầu **chính ô đó** không có nhà (thay vì cả nhóm). Tiền thuê vẫn theo bảng giá (đất trống trọn nhóm vẫn ×2).                                                                                                                   |
 | B4  | Ô đã có chủ: dải giữ nguyên **màu nhóm** (ghi tiền thuê), chủ sở hữu thể hiện bằng **viền ô** theo màu người chơi.                                                                                                                                                                                 |
+
+## Cập nhật lần 6: thẻ bài mới
+
+| #   | Quyết định                                                                                                                                                                                                                            |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C1  | Mỗi bộ thêm 3 thẻ (16 → 19 thẻ). **Cơ Hội**: Cháy nhà, Đập nhà hàng xóm, Buộc tặng đất. **Khí Vận**: Sinh nhật (mỗi người tặng 20 tr), Chập điện cháy nhà, Trúng thưởng 1 ô đất của ngân hàng.                                        |
+| C2  | Các lựa chọn "bất kỳ" (nhà nào cháy, nhà ai bị đập, tặng ô nào, cho ai, trúng ô nào) do **server bốc ngẫu nhiên** bằng RNG như tung xúc xắc, nên không ai can thiệp được và không cần thêm bước chọn làm chậm ván.                    |
+| C3  | Mất 1 cấp nhà: nhà trả về kho; khách sạn bị cháy/đập xuống 4 nhà (nếu kho thiếu nhà thì xuống mức kho đáp ứng được, giống luật bán khách sạn). Sau đó nhóm có thể lệch số nhà; luật xây/bán đều vẫn tính theo mức thấp nhất/cao nhất. |
+| C4  | Buộc tặng đất chỉ chọn ô **không có nhà** (luật chuẩn: cả nhóm không có nhà; luật "dừng lại ô của mình": chính ô đó không có nhà). Ô thế chấp được tặng nguyên trạng, người nhận **không** phải trả phí 10%.                          |
+| C5  | Không có mục tiêu hợp lệ (chưa ai có nhà, không có ô để tặng, ngân hàng hết đất) thì thẻ không có tác dụng và nhật ký ghi rõ.                                                                                                         |
