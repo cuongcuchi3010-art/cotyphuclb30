@@ -147,3 +147,9 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 | --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | T1  | 4 ô công ty vận tải đổi tên: ô 5 **METUB**, ô 15 **MMusic**, ô 25 **M2B**, ô 35 **VNNL** (giá, tiền thuê giữ nguyên). Logo id tương ứng `metub`, `mmusic`, `m2b`, `vnnl`; thiếu file thì hiện huy hiệu chữ trên nền màu mới. |
 | T2  | Thẻ Cơ Hội liên quan sửa chữ: "Đi công tác tới công ty gần nhất phía trước (METUB/MMusic/M2B/VNNL)…" và "Ghé thăm METUB…".                                                                                                   |
+
+## Cập nhật lần 12: logo & tên công ty
+
+| #   | Quyết định                                                                                                                                                                                                                                                             |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T3  | Theo logo chủ dự án gửi: ô 25 **M2B → MonoX**, ô 35 **VNNL → Melive** (METUB, MMusic giữ nguyên). Logo đặt ở `client/public/logos/` (`metub.png`, `mmusic.png`, `monox.png`, `melive.png`), đã cắt sát nội dung và đưa về khung vuông 256×256, giữ nguyên màu nền gốc. |

@@ -24,7 +24,7 @@ export function BrandLogo({
         alt={name}
         width={size}
         height={size}
-        className="object-contain"
+        className="rounded-[18%] object-contain shadow-sm"
         style={{ width: size, height: size }}
         onError={() => setStage(stage === 'svg' ? 'png' : 'text')}
       />
@@ -34,7 +34,7 @@ export function BrandLogo({
     .replace(/[–-].*$/, '')
     .split(/\s+/)
     .filter(Boolean);
-  // Tên một từ ngắn (METUB, M2B, VNNL): hiện nguyên tên; còn lại: chữ cái đầu / 2 ký tự đầu
+  // Tên một từ ngắn (vd METUB, MonoX): hiện nguyên tên; còn lại: chữ cái đầu / 2 ký tự đầu
   const initials = (
     words.length === 1
       ? words[0]!.length <= 5

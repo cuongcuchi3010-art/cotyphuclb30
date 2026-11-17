@@ -71,13 +71,13 @@ export const CHANCE_CARDS: readonly Card[] = [
   {
     id: 'ch05',
     deck: 'chance',
-    text: 'Đi công tác tới công ty gần nhất phía trước (METUB/MMusic/M2B/VNNL). Có chủ: trả gấp đôi tiền thuê. Chưa có chủ: được mua.',
+    text: 'Đi công tác tới công ty gần nhất phía trước (METUB/MMusic/MonoX/Melive). Có chủ: trả gấp đôi tiền thuê. Chưa có chủ: được mua.',
     effect: { type: 'nearestTransport' },
   },
   {
     id: 'ch06',
     deck: 'chance',
-    text: 'Đi công tác tới công ty gần nhất phía trước (METUB/MMusic/M2B/VNNL). Có chủ: trả gấp đôi tiền thuê. Chưa có chủ: được mua.',
+    text: 'Đi công tác tới công ty gần nhất phía trước (METUB/MMusic/MonoX/Melive). Có chủ: trả gấp đôi tiền thuê. Chưa có chủ: được mua.',
     effect: { type: 'nearestTransport' },
   },
   {

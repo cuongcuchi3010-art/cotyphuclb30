@@ -7,8 +7,8 @@ Nên dùng ảnh vuông, nền trong suốt, kích thước khoảng 128×128 px
 | ---------- | ---------------------------------------- | ----------------------- |
 | `metub`    | Ô 5 – METUB, thẻ Cơ Hội "Ghé thăm METUB" | `metub.svg` / `.png`    |
 | `mmusic`   | Ô 15 – MMusic                            | `mmusic.svg` / `.png`   |
-| `m2b`      | Ô 25 – M2B                               | `m2b.svg` / `.png`      |
-| `vnnl`     | Ô 35 – VNNL                              | `vnnl.svg` / `.png`     |
+| `monox`    | Ô 25 – MonoX                             | `monox.svg` / `.png`    |
+| `melive`   | Ô 35 – Melive                            | `melive.svg` / `.png`   |
 | `evn`      | Ô 12 – EVN                               | `evn.svg` / `.png`      |
 | `viettel`  | Ô 28 – Viettel                           | `viettel.svg` / `.png`  |
 | `vinamilk` | Thẻ Cơ Hội "cổ tức Vinamilk"             | `vinamilk.svg` / `.png` |
