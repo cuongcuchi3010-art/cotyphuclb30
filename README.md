@@ -117,6 +117,11 @@ cd .. && pnpm run deploy
 
 ## Tuỳ biến
 
+### Mật khẩu BÁO DANH (chặn bot)
+
+Ai mở link cũng phải nhập mật khẩu báo danh trước. Mật khẩu mặc định do chủ phòng giữ (không ghi trong code).
+Muốn đổi: Cloudflare → **Workers & Pages → cotyphuclb30 → Settings → Variables and Secrets → Add**, chọn loại **Secret**, tên `GATE_PASSWORD`, giá trị là mật khẩu mới, rồi bấm **Deploy**. Mọi người sẽ phải báo danh lại bằng mật khẩu mới.
+
 ### Thêm logo thương hiệu
 
 Đặt file vào `client/public/logos/<id>.svg` (hoặc `.png`). Xem danh sách id trong [`client/public/logos/README.md`](client/public/logos/README.md).

@@ -78,3 +78,12 @@ Ghi lại những chỗ SPEC chưa nói rõ hoặc phải điều chỉnh, kèm 
 | N9  | Ô đã có chủ hiển thị **tiền thuê hiện tại** (theo số nhà và trọn nhóm) trên nền màu chủ sở hữu. Ô tiện ích hiện "×4" hoặc "×10 xúc xắc".                                                                                                                                                                                                                    |
 | N10 | Mỗi ô địa danh có biểu tượng cảnh quan (`LANDMARK_ICONS` trong `board.vi.ts`) và nền chuyển màu theo nhóm. Nhóm "Hồng" đổi thành **Tím** (`#7B3FB8`) cho dễ phân biệt.                                                                                                                                                                                      |
 | N11 | Avatar người chơi = quân cờ trên nền hoạ tiết theo màu của người đó, dùng thống nhất ở mọi nơi.                                                                                                                                                                                                                                                             |
+
+## Cập nhật lần 3: cổng BÁO DANH (chặn bot)
+
+| #   | Quyết định                                                                                                                                                                                            |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G1  | Mọi API (`/api/*`, trừ `/api/gate`) và WebSocket (`/ws/*`) đều **chặn ở server** nếu chưa báo danh, nên bot gọi thẳng API cũng không vào được. Trang web tĩnh vẫn tải được để hiện màn hình BÁO DANH. |
+| G2  | Báo danh đúng thì server đặt cookie `cotyphu_gate` (HttpOnly, Secure, SameSite=Lax, 30 ngày). Giá trị cookie suy ra từ mật khẩu hiện tại, nên **đổi mật khẩu thì mọi người phải báo danh lại**.       |
+| G3  | Mật khẩu mặc định chỉ lưu dạng **SHA-256** trong code (không lộ trên GitHub). Đổi mật khẩu: đặt secret `GATE_PASSWORD` trên Cloudflare, không cần sửa code.                                           |
+| G4  | Nhập sai thì server trả lời chậm 0,8 giây để hạn chế dò mật khẩu.                                                                                                                                     |

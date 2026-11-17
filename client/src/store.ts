@@ -56,6 +56,7 @@ export async function api<T>(
     data = {} as T;
   }
   if (res.status === 401 && a && !path.startsWith('/api/auth/')) saveAuth(null);
+  if (res.status === 403 && (data as { gate?: boolean }).gate) useStore.setState({ gate: false });
   return { ok: res.ok, status: res.status, data };
 }
 
@@ -81,6 +82,8 @@ export interface Toast {
 }
 
 interface Store {
+  /** Đã báo danh (null = đang kiểm tra) */
+  gate: boolean | null;
   auth: Auth | null;
   code: string | null;
   conn: ConnState;
@@ -143,6 +146,7 @@ export function setJoinIntent(m: ClientMessage | null) {
 }
 
 export const useStore = create<Store>((set, get) => ({
+  gate: null,
   auth: loadAuth(),
   code: null,
   conn: 'idle',
@@ -326,4 +330,15 @@ export function setRtcHandlers(onSignal: typeof rtcHandler, onRoom: typeof rtcRo
 /** Giờ server hiện tại (ước lượng) */
 export function serverNow(): number {
   return Date.now() + useStore.getState().clockOffset;
+}
+
+/** Hỏi server đã báo danh chưa (cookie) */
+export async function checkGate() {
+  try {
+    const res = await fetch('/api/gate');
+    const d = (await res.json()) as { ok?: boolean };
+    useStore.setState({ gate: !!d.ok });
+  } catch {
+    useStore.setState({ gate: false });
+  }
 }

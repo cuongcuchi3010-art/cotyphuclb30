@@ -1,18 +1,26 @@
 import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect } from 'react';
 import { AuthScreen } from './components/AuthScreen';
+import { GateScreen } from './components/GateScreen';
 import { Home } from './components/Home';
 import { RoomPage } from './components/RoomPage';
 import { usePath } from './router';
-import { useStore } from './store';
+import { checkGate, useStore } from './store';
 import { cx } from './lib';
 
 export function App() {
   const path = usePath();
   const auth = useStore((s) => s.auth);
+  const gate = useStore((s) => s.gate);
+  useEffect(() => {
+    void checkGate();
+  }, []);
   const m = path.match(/^\/r\/([A-Za-z0-9]{6})\/?$/);
   return (
     <div className="lotus-bg min-h-[100dvh]">
-      {!auth ? (
+      {gate === null ? null : !gate ? (
+        <GateScreen />
+      ) : !auth ? (
         <AuthScreen />
       ) : m ? (
         <RoomPage key={m[1]!.toUpperCase()} code={m[1]!.toUpperCase()} />

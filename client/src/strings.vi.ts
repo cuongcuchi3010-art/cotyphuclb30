@@ -5,6 +5,17 @@ export const S = {
   appName: 'Cờ Tỷ Phú CLB30',
   tagline: 'Chơi online cùng bạn bè — không cần tài khoản',
 
+  gate: {
+    club: 'Cờ Tỷ Phú · CLB30',
+    title: 'BÁO DANH',
+    subtitle: 'Xin trình mật khẩu của hội để vào sân chơi.',
+    label: 'Mật khẩu báo danh',
+    submit: 'Báo danh',
+    wrong: 'Sai mật khẩu báo danh. Hỏi lại chủ phòng nhé!',
+    stamp1: 'Đã',
+    stamp2: 'báo danh',
+  },
+
   auth: {
     login: 'Đăng nhập',
     register: 'Tạo tài khoản',

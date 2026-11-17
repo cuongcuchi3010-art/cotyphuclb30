@@ -9,6 +9,7 @@ import {
   type ServerMessage,
 } from '@cotyphu/shared';
 import { Account } from './accounts.js';
+import { checkGatePassword, gateCookieHeader, hasGateCookie } from './gate.js';
 import { RoomCore, newSnapshot, type Conn, type RoomHost, type RoomSnapshot } from './room.js';
 
 export { Account };
@@ -17,6 +18,8 @@ export interface Env {
   ROOMS: DurableObjectNamespace<Room>;
   ACCOUNTS: DurableObjectNamespace<Account>;
   ASSETS: Fetcher;
+  /** Mật khẩu BÁO DANH (tuỳ chọn, ghi đè mật khẩu mặc định) */
+  GATE_PASSWORD?: string;
 }
 
 interface Attachment {
@@ -262,6 +265,32 @@ export default {
     const path = url.pathname;
 
     if (path === '/healthz') return json({ ok: true, time: Date.now() });
+
+    // ---- Cổng BÁO DANH (chặn bot): mọi API & WebSocket cần cookie báo danh
+    if (path === '/api/gate') {
+      if (req.method === 'GET') return json({ ok: await hasGateCookie(req, env.GATE_PASSWORD) });
+      if (req.method === 'POST') {
+        let pw = '';
+        try {
+          pw = String(((await req.json()) as { password?: unknown }).password ?? '').slice(0, 100);
+        } catch {
+          /* bỏ qua */
+        }
+        if (!(await checkGatePassword(pw, env.GATE_PASSWORD))) {
+          // Chậm lại một chút để hạn chế dò mật khẩu
+          await new Promise((r) => setTimeout(r, 800));
+          return json({ ok: false, error: 'Mật khẩu báo danh không đúng' }, 403);
+        }
+        const res = json({ ok: true });
+        res.headers.set('set-cookie', await gateCookieHeader(req, env.GATE_PASSWORD));
+        return res;
+      }
+    }
+    if (
+      (path.startsWith('/api/') || path.startsWith('/ws/')) &&
+      !(await hasGateCookie(req, env.GATE_PASSWORD))
+    )
+      return json({ error: 'Bạn cần báo danh trước', gate: true }, 403);
 
     // ---- Tài khoản
     if ((path === '/api/auth/register' || path === '/api/auth/login') && req.method === 'POST') {
