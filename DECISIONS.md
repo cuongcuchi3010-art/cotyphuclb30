@@ -118,3 +118,10 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 | R1  | Bố cục chọn theo **tỉ lệ màn hình** (không chỉ theo bề rộng). Tỉ lệ ngang/dọc ≥ 1,15: bàn cờ trái + panel phải (máy tính, điện thoại nằm ngang). Còn lại: bàn cờ trên, người chơi dưới, tab ở đáy (điện thoại dọc, Z Fold mở trong gần vuông). |
 | R2  | Cạnh bàn cờ tính theo **cả chiều cao** màn hình (`visualViewport`), nên bàn không bao giờ tràn màn hình. Bố cục tự cập nhật khi xoay máy hoặc gập/mở máy gập.                                                                                  |
 | R3  | Nút và chữ giữa bàn cờ có cỡ tính theo bàn cờ (`cqw`), cân đối khi bàn nhỏ (điện thoại ngang) lẫn bàn lớn (máy tính).                                                                                                                          |
+
+## Cập nhật lần 8: số nhà / khách sạn tối đa
+
+| #   | Quyết định                                                                                                                                                                                                                 |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| K1  | Chủ phòng chọn ở sảnh **Số nhà tối đa** (16–120, chuẩn 32) và **Số khách sạn tối đa** (4–30, chuẩn 12). Đây là kho chung của ngân hàng cho cả ván; hết kho thì không ai xây được (bỏ đấu giá nhà khi khan hiếm như trước). |
+| K2  | Giữa bàn cờ hiển thị số nhà/khách sạn còn trong kho theo mức đã chọn.                                                                                                                                                      |

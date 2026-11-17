@@ -75,6 +75,8 @@ export const rulesSchema = z.object({
     .refine((v) => v === 0 || (v >= 30 && v <= 300), {
       message: 'Đồng hồ lượt từ 30–300 giây hoặc tắt',
     }),
+  houseStock: z.number().int().min(4).max(200).default(32),
+  hotelStock: z.number().int().min(1).max(100).default(12),
   buildRule: z.enum(['monopoly', 'landing']).default('monopoly'),
 });
 

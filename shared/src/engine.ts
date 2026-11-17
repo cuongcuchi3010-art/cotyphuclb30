@@ -121,7 +121,7 @@ export function createGame(players: NewPlayer[], rulesIn: Partial<Rules>, rng: R
     players: ps,
     current: 0,
     properties,
-    bank: { houses: HOUSE_STOCK, hotels: HOTEL_STOCK },
+    bank: { houses: rules.houseStock ?? HOUSE_STOCK, hotels: rules.hotelStock ?? HOTEL_STOCK },
     decks: {
       chance: shuffle(
         DECKS.chance.map((_, i) => i),

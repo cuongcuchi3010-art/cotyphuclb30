@@ -141,6 +141,34 @@ export function Lobby() {
             </select>
           </label>
           <label className="flex items-center justify-between gap-2">
+            {S.lobby.houseStock}
+            <select
+              value={rules.houseStock ?? 32}
+              onChange={(e) => setRules({ houseStock: Number(e.target.value) })}
+              className="rounded-lg border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-black/30"
+            >
+              {[16, 24, 32, 48, 64, 88, 120].map((v) => (
+                <option key={v} value={v}>
+                  {v} nhà{v === 32 ? ` (${S.lobby.standard})` : ''}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center justify-between gap-2">
+            {S.lobby.hotelStock}
+            <select
+              value={rules.hotelStock ?? 12}
+              onChange={(e) => setRules({ hotelStock: Number(e.target.value) })}
+              className="rounded-lg border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-black/30"
+            >
+              {[4, 8, 12, 16, 22, 30].map((v) => (
+                <option key={v} value={v}>
+                  {v} khách sạn{v === 12 ? ` (${S.lobby.standard})` : ''}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center justify-between gap-2">
             {S.lobby.buildRule}
             <select
               value={rules.buildRule ?? 'monopoly'}

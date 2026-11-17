@@ -80,6 +80,9 @@ export const S = {
     minutes: (n: number) => `${n} phút`,
     turnTimer: 'Đồng hồ lượt',
     buildRule: 'Cách xây nhà',
+    houseStock: 'Số nhà tối đa (cả ván)',
+    hotelStock: 'Số khách sạn tối đa (cả ván)',
+    standard: 'chuẩn',
     buildMonopoly: 'Sở hữu trọn nhóm màu (chuẩn)',
     buildLanding: 'Dừng lại ô của mình',
     buildLandingHint:

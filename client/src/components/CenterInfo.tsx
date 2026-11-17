@@ -94,7 +94,8 @@ export function CenterInfo() {
         style={{ fontSize: '1.25cqw' }}
       >
         <span>
-          🏠 {game.bank.houses}/32 · 🏨 {game.bank.hotels}/12
+          🏠 {game.bank.houses}/{game.rules.houseStock ?? 32} · 🏨 {game.bank.hotels}/
+          {game.rules.hotelStock ?? 12}
         </span>
         {game.rules.jackpot && (
           <span>

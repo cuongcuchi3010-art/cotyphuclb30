@@ -51,9 +51,12 @@ function checkInvariants(s: GameState): void {
     if (!st.owner && (st.houses > 0 || st.mortgaged))
       throw new Error(`Ô ${i} của ngân hàng có trạng thái lạ`);
   }
-  if (houses > 32 || hotels > 12) throw new Error('Vượt giới hạn kho');
-  if (houses + s.bank.houses !== 32) throw new Error(`Lệch kho nhà ${houses}+${s.bank.houses}`);
-  if (hotels + s.bank.hotels !== 12) throw new Error('Lệch kho khách sạn');
+  const H = s.rules.houseStock;
+  const K = s.rules.hotelStock;
+  if (houses > H || hotels > K) throw new Error('Vượt giới hạn kho');
+  if (houses + s.bank.houses !== H) throw new Error(`Lệch kho nhà ${houses}+${s.bank.houses}`);
+  if (hotels + s.bank.hotels !== K) throw new Error('Lệch kho khách sạn');
+  if (s.bank.houses < 0 || s.bank.hotels < 0) throw new Error('Kho âm');
   for (const p of s.players) {
     if (p.cash < 0) throw new Error(`${p.id} âm tiền ${p.cash} ở pha ${s.phase.kind}`);
   }
@@ -136,6 +139,8 @@ export function runSimulation(from: number, count: number): { finished: number; 
         doubleGo: g % 4 === 0,
         auctions: g % 7 !== 0,
         buildRule: g % 2 === 0 ? 'landing' : 'monopoly',
+        houseStock: [32, 12, 64][g % 3]!,
+        hotelStock: [12, 3, 24][g % 3]!,
       },
       rng,
     );

@@ -860,3 +860,16 @@ describe('Thẻ mới: cháy nhà, đập nhà, tặng đất, sinh nhật, trú
     if (won && won.t === 'propertyWon') expect(r.state.properties[won.pos]!.owner).toBe('p1');
   });
 });
+
+describe('Số nhà / khách sạn tối đa tuỳ chỉnh', () => {
+  it('kho ngân hàng theo luật chọn ở sảnh', () => {
+    const s = mkGame(2, { houseStock: 48, hotelStock: 4 });
+    expect(s.bank).toEqual({ houses: 48, hotels: 4 });
+  });
+  it('hết kho thì không xây được', () => {
+    let s = mkGame(2, { houseStock: 1, hotelStock: 1 });
+    own(s, 'p1', 1, 3);
+    ({ state: s } = act(s, 'p1', { type: 'build', pos: 1 }));
+    expect(() => act(s, 'p1', { type: 'build', pos: 3 })).toThrow('hết nhà');
+  });
+});

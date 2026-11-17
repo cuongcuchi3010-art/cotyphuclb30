@@ -28,6 +28,10 @@ export interface Rules {
   turnTimerSec: number;
   /** Cách xây nhà: 'monopoly' = trọn nhóm màu (chuẩn); 'landing' = dừng lại ô của mình */
   buildRule: 'monopoly' | 'landing';
+  /** Số nhà tối đa trong kho ngân hàng (chuẩn 32) */
+  houseStock: number;
+  /** Số khách sạn tối đa trong kho ngân hàng (chuẩn 12) */
+  hotelStock: number;
 }
 
 export const DEFAULT_RULES: Rules = {
@@ -38,6 +42,8 @@ export const DEFAULT_RULES: Rules = {
   timeLimitMinutes: 0,
   turnTimerSec: 90,
   buildRule: 'monopoly',
+  houseStock: 32,
+  hotelStock: 12,
 };
 
 export interface PlayerStats {
