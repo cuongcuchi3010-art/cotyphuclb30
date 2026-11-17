@@ -1,0 +1,28 @@
+# Cờ Tỷ Phú CLB30 — Cloudflare Worker + Durable Objects (gói miễn phí)
+name = "cotyphuclb30"
+main = "src/index.ts"
+compatibility_date = "2025-06-01"
+
+[assets]
+directory = "../client/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*", "/ws/*", "/healthz", "/logos/*", "/images/*"]
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+# Gói miễn phí yêu cầu Durable Object dùng SQLite.
+# v1 trùng với bản mẫu Cloudflare tạo khi mở dự án (MyDurableObject), v2 đổi tên thành Room.
+# Nhờ vậy deploy được cả khi bản mẫu đã từng chạy lẫn khi chưa.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["MyDurableObject"]
+
+[[migrations]]
+tag = "v2"
+renamed_classes = [{ from = "MyDurableObject", to = "Room" }]
+
+# Dùng tên miền miễn phí *.workers.dev do Cloudflare cấp
+workers_dev = true
