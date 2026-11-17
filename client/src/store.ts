@@ -82,6 +82,9 @@ export interface Toast {
 }
 
 interface Store {
+  /** Kiểu bàn cờ: 2D phẳng hoặc 3D isometric */
+  view: '2d' | '3d';
+  setView(v: '2d' | '3d'): void;
   /** Đã báo danh (null = đang kiểm tra) */
   gate: boolean | null;
   auth: Auth | null;
@@ -146,6 +149,21 @@ export function setJoinIntent(m: ClientMessage | null) {
 }
 
 export const useStore = create<Store>((set, get) => ({
+  view: (() => {
+    try {
+      return localStorage.getItem('cotyphu:view') === '3d' ? '3d' : '2d';
+    } catch {
+      return '2d';
+    }
+  })(),
+  setView(view) {
+    try {
+      localStorage.setItem('cotyphu:view', view);
+    } catch {
+      /* bỏ qua */
+    }
+    set({ view });
+  },
   gate: null,
   auth: loadAuth(),
   code: null,

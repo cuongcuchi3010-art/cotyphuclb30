@@ -87,3 +87,13 @@ Ghi lại những chỗ SPEC chưa nói rõ hoặc phải điều chỉnh, kèm 
 | G2  | Báo danh đúng thì server đặt cookie `cotyphu_gate` (HttpOnly, Secure, SameSite=Lax, 30 ngày). Giá trị cookie suy ra từ mật khẩu hiện tại, nên **đổi mật khẩu thì mọi người phải báo danh lại**.       |
 | G3  | Mật khẩu mặc định chỉ lưu dạng **SHA-256** trong code (không lộ trên GitHub). Đổi mật khẩu: đặt secret `GATE_PASSWORD` trên Cloudflare, không cần sửa code.                                           |
 | G4  | Nhập sai thì server trả lời chậm 0,8 giây để hạn chế dò mật khẩu.                                                                                                                                     |
+
+## Cập nhật lần 4: bàn cờ 3D
+
+| #   | Quyết định                                                                                                                                                                          |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | Thêm lựa chọn **2D / 3D** ở thanh trên cùng. Mỗi máy tự nhớ lựa chọn (localStorage); mặc định 2D.                                                                                   |
+| D2  | 3D dựng bằng **CSS 3D isometric** (`rotateX(55deg) rotateZ(-45deg)`), không dùng thư viện 3D: nhẹ, mượt trên điện thoại, dùng chung toàn bộ logic ô và quân cờ với 2D.              |
+| D3  | Biểu tượng cảnh quan, nhà/khách sạn và quân cờ "đứng thẳng" nhờ phép quay ngược và giãn dọc 1/cos 55° (class `.bb`). Ô gần người xem được đặt lớp trên (`z-index` theo hàng − cột). |
+| D4  | Mặt bàn có khối đế nhiều lớp để tạo độ dày. Giữa sân là thảm cỏ, chữ "CỜ TỶ PHÚ CLB30" sơn trên nền, cây và công trình đứng.                                                        |
+| D5  | Ở chế độ 3D, xúc xắc và nút hành động là một bảng **phẳng** nổi giữa bàn (trên điện thoại: nằm ngay dưới bàn); Nhật ký chuyển sang panel bên phải (trên điện thoại: dưới bàn).      |

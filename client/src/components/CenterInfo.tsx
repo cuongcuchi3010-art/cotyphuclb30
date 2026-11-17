@@ -112,7 +112,7 @@ export function CenterInfo() {
 }
 
 /** Nhật ký ván ở giữa bàn cờ */
-function LogFeed() {
+export function LogFeed({ panel }: { panel?: boolean } = {}) {
   const { room } = useGame();
   const box = useRef<HTMLDivElement>(null);
   const log = room?.log ?? [];
@@ -123,15 +123,21 @@ function LogFeed() {
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col rounded-xl bg-white/75 shadow-inner dark:bg-black/35">
       <div
-        className="px-[1.4cqw] pt-[0.8cqw] font-bold text-ngoc-700 dark:text-ngoc-100"
-        style={{ fontSize: '1.45cqw' }}
+        className={cx(
+          'font-bold text-ngoc-700 dark:text-ngoc-100',
+          panel ? 'px-3 pt-2' : 'px-[1.4cqw] pt-[0.8cqw]',
+        )}
+        style={{ fontSize: panel ? '14px' : '1.45cqw' }}
       >
         📜 {S.log}
       </div>
       <div
         ref={box}
-        className="min-h-0 flex-1 space-y-[0.3cqw] overflow-y-auto px-[1.4cqw] pb-[0.8cqw]"
-        style={{ fontSize: 'max(9px, 1.45cqw)' }}
+        className={cx(
+          'min-h-0 flex-1 overflow-y-auto',
+          panel ? 'space-y-0.5 px-3 pb-2' : 'space-y-[0.3cqw] px-[1.4cqw] pb-[0.8cqw]',
+        )}
+        style={{ fontSize: panel ? '13px' : 'max(9px, 1.45cqw)' }}
       >
         {log.slice(-60).map((l) => (
           <div
