@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { GameState, RoomView } from '@cotyphu/shared';
 import { PLAYER_COLORS } from './strings.vi';
 import { serverNow, useStore } from './store';
@@ -108,14 +108,29 @@ export interface GameLayout {
 }
 
 /** Chọn bố cục theo tỉ lệ màn hình, bàn cờ luôn vừa khít không tràn */
-export function computeLayout(w: number, h: number): GameLayout {
+export function computeLayout(w: number, h: number, reserved = 226): GameLayout {
   const pad = 16;
   if (w / h >= 1.15 && w >= 560) {
     const panel = Math.round(Math.min(400, Math.max(260, w * 0.36)));
     const board = Math.floor(Math.max(240, Math.min(h - pad, w - panel - pad * 2, 900)));
     return { mode: 'side', board, panel, compact: h < 640 };
   }
-  // Dọc: chừa chỗ cho thanh trên + người chơi (~150px) và thanh tab ở đáy (~76px)
-  const board = Math.floor(Math.max(240, Math.min(w - pad, h - 226, 900)));
+  // Dọc: chừa đúng chiều cao thật của phần dưới bàn cờ (thanh trên, người chơi, thanh tab)
+  const board = Math.floor(Math.max(240, Math.min(w - pad, h - reserved, 900)));
   return { mode: 'stack', board, panel: 0, compact: true };
+}
+
+/** Đo chiều cao thật của một phần tử (cập nhật khi nội dung đổi) */
+export function useMeasuredHeight<T extends HTMLElement>(): [React.RefObject<T>, number] {
+  const ref = useRef<T>(null);
+  const [h, setH] = useState(0);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setH(Math.ceil(el.getBoundingClientRect().height)));
+    ro.observe(el);
+    setH(Math.ceil(el.getBoundingClientRect().height));
+    return () => ro.disconnect();
+  }, []);
+  return [ref, h];
 }

@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
-import { computeLayout, cx, useGame, useViewport } from '../lib';
+import { computeLayout, cx, useGame, useMeasuredHeight, useViewport } from '../lib';
 import { isMuted, setMuted } from '../sound';
 import { VoiceControls } from './VoiceControls';
 import { Board } from './Board';
@@ -18,8 +18,12 @@ export function GameScreen() {
   const sheetOpen = useStore((s) => s.sheetOpen);
   const setSheet = useStore((s) => s.setSheet);
   const { w, h } = useViewport();
+  const [belowRef, belowH] = useMeasuredHeight<HTMLDivElement>();
+  const [barRef, barH] = useMeasuredHeight<HTMLDivElement>();
   if (!room || !game) return null;
-  const L = computeLayout(w, h);
+  // Dọc: chừa đúng phần dưới bàn cờ đo được + khoảng cách (8 trên + 8 giữa + 8 dưới)
+  const reserved = belowH && barH ? belowH + barH + 24 : 226;
+  const L = computeLayout(w, h, reserved);
 
   const overlays = (
     <>
@@ -59,17 +63,23 @@ export function GameScreen() {
 
   // ---- Dọc: điện thoại cầm dọc, máy gập mở dọc (màn hình gần vuông)
   return (
-    <div className="mx-auto flex min-h-[100dvh] flex-col items-center gap-2 p-2 pb-24">
+    <div
+      className="mx-auto flex min-h-[100dvh] flex-col items-center justify-center gap-2 p-2"
+      style={{ paddingBottom: (barH || 76) + 8 }}
+    >
       <div className="touch-pinch-zoom shrink-0" style={{ width: L.board }}>
         <Board />
       </div>
-      <div className="w-full" style={{ maxWidth: Math.max(L.board, 360) }}>
+      <div ref={belowRef} className="w-full" style={{ maxWidth: Math.max(L.board, 360) }}>
         <div className="mb-2">
           <TopBar />
         </div>
         <PlayerList compact cols={w >= 600 ? 3 : 2} />
       </div>
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-black/10 bg-giay/95 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur dark:border-white/10 dark:bg-giay-dark/95">
+      <div
+        ref={barRef}
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-black/10 bg-giay/95 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur dark:border-white/10 dark:bg-giay-dark/95"
+      >
         <div className="mx-auto" style={{ maxWidth: Math.max(L.board, 360) }}>
           <TabBar />
         </div>
