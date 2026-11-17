@@ -96,6 +96,7 @@ export type GameEvent =
   | { t: 'bid'; playerId: PlayerId; amount: number }
   | { t: 'auctionWon'; playerId: PlayerId; pos: number; amount: number }
   | { t: 'auctionNoBids'; pos: number }
+  | { t: 'buildChance'; playerId: PlayerId; pos: number }
   | { t: 'build'; playerId: PlayerId; pos: number; level: number; cost: number }
   | { t: 'sell'; playerId: PlayerId; pos: number; level: number; refund: number }
   | { t: 'mortgage'; playerId: PlayerId; pos: number; amount: number }

@@ -149,11 +149,13 @@ describe('Phòng chơi', () => {
         auctions: true,
         timeLimitMinutes: 0,
         turnTimerSec: 60,
+        buildRule: 'landing',
       },
     });
     a.msg({ type: 'start' });
     expect(b.room.status).toBe('playing');
     expect(b.room.game!.players[0]!.cash).toBe(2000);
+    expect(b.room.game!.rules.buildRule).toBe('landing');
   });
 
   it('mật khẩu phòng', () => {

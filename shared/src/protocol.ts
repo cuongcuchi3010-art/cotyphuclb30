@@ -75,6 +75,7 @@ export const rulesSchema = z.object({
     .refine((v) => v === 0 || (v >= 30 && v <= 300), {
       message: 'Đồng hồ lượt từ 30–300 giây hoặc tắt',
     }),
+  buildRule: z.enum(['monopoly', 'landing']).default('monopoly'),
 });
 
 /** Biệt danh = tên đăng nhập: chữ (có dấu), số, khoảng trắng, . _ - */

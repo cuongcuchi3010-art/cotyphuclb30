@@ -5,8 +5,7 @@ import { useStore } from '../store';
 import { cx, useGame } from '../lib';
 import { isMuted, setMuted } from '../sound';
 import { VoiceControls } from './VoiceControls';
-import { Board, Hud3D } from './Board';
-import { LogFeed } from './CenterInfo';
+import { Board } from './Board';
 import { GameOver } from './GameOver';
 import { PlayerList } from './PlayerList';
 import { PropertyCardModal } from './PropertyCard';
@@ -18,18 +17,12 @@ export function GameScreen() {
   const { room, game, me } = useGame();
   const sheetOpen = useStore((s) => s.sheetOpen);
   const setSheet = useStore((s) => s.setSheet);
-  const view = useStore((s) => s.view);
   if (!room || !game) return null;
 
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-[1400px] flex-col gap-3 p-2 pb-24 lg:flex-row lg:items-start lg:p-4 lg:pb-4">
       {/* Bàn cờ */}
-      <div
-        className={cx(
-          'w-full lg:sticky lg:top-4 lg:flex-1',
-          view === '3d' ? 'lg:max-w-[min(150vh,1100px)]' : 'lg:max-w-[min(100vh-2rem,900px)]',
-        )}
-      >
+      <div className="w-full lg:sticky lg:top-4 lg:max-w-[min(100vh-2rem,900px)] lg:flex-1">
         <div className="touch-pinch-zoom overflow-auto">
           <Board />
         </div>
@@ -39,14 +32,7 @@ export function GameScreen() {
       <aside className="hidden w-[380px] shrink-0 flex-col gap-3 lg:flex">
         <TopBar />
         <PlayerList />
-        {view === '3d' && (
-          <div className="flex h-[26vh] flex-col">
-            <LogFeed panel />
-          </div>
-        )}
-        <div
-          className={`flex ${view === '3d' ? 'h-[40vh]' : 'h-[58vh]'} flex-col rounded-2xl bg-white/90 p-2 shadow-card dark:bg-[#211d16]`}
-        >
+        <div className="flex h-[58vh] flex-col rounded-2xl bg-white/90 p-2 shadow-card dark:bg-[#211d16]">
           <TabBar />
           <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
             <TabContent />
@@ -56,16 +42,6 @@ export function GameScreen() {
 
       {/* Điện thoại: danh sách người chơi gọn + thanh hành động cố định + bottom sheet */}
       <div className="lg:hidden">
-        {view === '3d' && (
-          <div className="mb-2 space-y-2">
-            <div className="sm:hidden">
-              <Hud3D />
-            </div>
-            <div className="flex h-40 flex-col">
-              <LogFeed panel />
-            </div>
-          </div>
-        )}
         <div className="mb-2">
           <TopBar />
         </div>
@@ -127,7 +103,6 @@ function TopBar() {
         {room && room.spectators > 0 && <span className="ml-2">👀 {room.spectators}</span>}
       </div>
       <div className="flex gap-1">
-        <ViewToggle />
         <VoiceControls />
         <Btn
           variant="ghost"
@@ -151,35 +126,6 @@ function TopBar() {
           </Btn>
         )}
       </div>
-    </div>
-  );
-}
-
-/** Chọn kiểu bàn cờ 2D / 3D (lưu theo từng máy) */
-function ViewToggle() {
-  const view = useStore((s) => s.view);
-  const setView = useStore((s) => s.setView);
-  return (
-    <div
-      className="flex rounded-xl bg-black/5 p-0.5 dark:bg-white/10"
-      role="group"
-      aria-label="Kiểu bàn cờ"
-    >
-      {(['2d', '3d'] as const).map((v) => (
-        <button
-          key={v}
-          type="button"
-          onClick={() => setView(v)}
-          className={cx(
-            'rounded-lg px-2.5 py-1.5 text-xs font-extrabold uppercase',
-            view === v
-              ? 'bg-white text-son shadow dark:bg-gray-800 dark:text-nghe'
-              : 'text-gray-500',
-          )}
-        >
-          {v}
-        </button>
-      ))}
     </div>
   );
 }

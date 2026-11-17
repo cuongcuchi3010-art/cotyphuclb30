@@ -8,27 +8,15 @@ import {
   UTILITY_INDICES,
   formatMoney,
   rentFor,
-  square,
   type GameEvent,
   type GameState,
   type Square as Sq,
 } from '@cotyphu/shared';
 import { useStore } from '../store';
-import {
-  cellOf,
-  centerPct,
-  cx,
-  fmtClock,
-  nameOf,
-  playerColor,
-  sideOf,
-  useGame,
-  useNow,
-} from '../lib';
+import { cellOf, centerPct, cx, playerColor, sideOf, useGame } from '../lib';
 import { BrandLogo } from './BrandLogo';
 import { Avatar } from './Avatar';
-import { CenterInfo, Die } from './CenterInfo';
-import { ActionBar } from './ActionBar';
+import { CenterInfo } from './CenterInfo';
 
 const SPECIAL_ICON: Partial<Record<Sq['kind'], string>> = {
   chest: '🧧',
@@ -41,20 +29,9 @@ const SPECIAL_ICON: Partial<Record<Sq['kind'], string>> = {
 };
 
 export function Board() {
-  const view = useStore((s) => s.view);
-  return view === '3d' ? <Board3D /> : <BoardGrid iso={false} />;
-}
-
-/** Lưới bàn cờ 11×11 (dùng cho cả 2D và mặt bàn 3D) */
-function BoardGrid({ iso }: { iso: boolean }) {
   return (
     <div
-      className={cx(
-        'board relative aspect-square w-full select-none p-[0.7%] [container-type:inline-size]',
-        iso
-          ? 'iso rounded-[1.2cqw] bg-[#C9D3DD] dark:bg-[#1a2230]'
-          : 'rounded-2xl bg-[#DCE3EA] shadow-card dark:bg-[#0d1117]',
-      )}
+      className="board relative aspect-square w-full select-none rounded-2xl bg-[#DCE3EA] p-[0.7%] shadow-card [container-type:inline-size] dark:bg-[#0d1117]"
       style={{
         display: 'grid',
         gridTemplateColumns: '1.6fr repeat(9, 1fr) 1.6fr',
@@ -66,177 +43,14 @@ function BoardGrid({ iso }: { iso: boolean }) {
         <SquareCell key={sq.index} sq={sq} />
       ))}
       <div
-        className={cx('relative rounded-xl', !iso && 'overflow-hidden')}
-        style={{ gridRow: '2 / 11', gridColumn: '2 / 11', zIndex: iso ? 1 : undefined }}
+        className="relative overflow-hidden rounded-xl"
+        style={{ gridRow: '2 / 11', gridColumn: '2 / 11' }}
       >
-        {iso ? (
-          <IsoCenter />
-        ) : (
-          <>
-            <CenterDecor />
-            <CenterInfo />
-            <CardReveal />
-          </>
-        )}
+        <CenterDecor />
+        <CenterInfo />
+        <CardReveal />
       </div>
       <Tokens />
-    </div>
-  );
-}
-
-/** Bàn cờ 3D (isometric): mặt bàn nghiêng có độ dày; HUD phẳng nổi ở giữa */
-function Board3D() {
-  return (
-    <div
-      className="relative w-full select-none [container-type:inline-size]"
-      style={{ height: '64cqw' }}
-    >
-      <div
-        className="absolute left-1/2 top-[47%]"
-        style={{
-          width: '66cqw',
-          height: '66cqw',
-          transform: 'translate(-50%, -50%) rotateX(55deg) rotateZ(-45deg)',
-          transformStyle: 'preserve-3d',
-        }}
-      >
-        {/* Khối đế: nhiều lớp xếp chồng tạo độ dày */}
-        {[1, 2, 3, 4, 5, 6].map((k) => (
-          <div
-            key={k}
-            className="absolute inset-0 rounded-[1.2cqw]"
-            style={{
-              transform: `translateZ(-${k * 0.32}cqw)`,
-              background: k === 6 ? '#5B6B7D' : '#8494A6',
-              boxShadow: k === 6 ? '0 0 4cqw 1cqw rgb(15 23 42 / 0.35)' : undefined,
-            }}
-          />
-        ))}
-        <BoardGrid iso />
-      </div>
-      {/* HUD phẳng (không nghiêng) để bấm dễ; trên điện thoại hiện bên dưới bàn */}
-      <div className="pointer-events-none absolute inset-0 hidden items-center justify-center sm:flex">
-        <div className="pointer-events-auto" style={{ width: '34cqw', marginTop: '-4cqw' }}>
-          <Hud3D />
-        </div>
-      </div>
-      <div className="pointer-events-none absolute left-1/2 top-[44%] h-[34cqw] w-[46cqw] -translate-x-1/2 -translate-y-1/2">
-        <div className="pointer-events-auto relative h-full w-full">
-          <CardReveal />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/** Bảng điều khiển phẳng cho chế độ 3D */
-export function Hud3D() {
-  const { room, game } = useGame();
-  const events = useStore((s) => s.events);
-  const now = useNow(250);
-  if (!room || !game) return null;
-  const cur = game.players[game.current]!;
-  const dice = game.lastDice ?? [1, 1];
-  const rolledNow = events.list.some((e) => e.t === 'roll');
-  const left = room.deadline ? room.deadline - now : null;
-  const ph = game.phase;
-  const actorId = ph.kind === 'raiseFunds' ? ph.debtor : cur.id;
-  const actor = game.players.find((p) => p.id === actorId) ?? cur;
-  return (
-    <div className="flex flex-col items-center gap-2 rounded-2xl bg-white/85 p-2.5 shadow-card backdrop-blur dark:bg-black/60">
-      <div className="flex max-w-full items-center gap-3">
-        <div className="flex w-[84px] shrink-0 gap-1.5">
-          {dice.map((d, i) => (
-            <motion.div
-              key={`${events.id}-${i}`}
-              initial={rolledNow ? { rotate: -360, scale: 0.4, y: -20 } : false}
-              animate={{ rotate: 0, scale: 1, y: 0 }}
-              transition={{
-                duration: 0.55,
-                delay: i * 0.05,
-                type: 'spring',
-                stiffness: 180,
-                damping: 14,
-              }}
-              className="flex-1"
-            >
-              <Die value={d} />
-            </motion.div>
-          ))}
-        </div>
-        {ph.kind !== 'gameOver' && (
-          <div className="flex min-w-0 items-center gap-1.5">
-            <Avatar token={actor.token} color={playerColor(room, actorId)} size={30} />
-            <div className="min-w-0 leading-tight">
-              <div className="truncate text-sm font-bold">
-                {ph.kind === 'auction'
-                  ? `Đấu giá: ${square(game.auction!.pos).short ?? square(game.auction!.pos).name}`
-                  : ph.kind === 'raiseFunds'
-                    ? `${nameOf(room, ph.debtor)} gom tiền`
-                    : `Lượt ${cur.name}`}
-              </div>
-              {left !== null && (
-                <div
-                  className={cx(
-                    'text-xs font-bold tabular-nums',
-                    left < 10_000 ? 'text-son' : 'text-ngoc-600',
-                  )}
-                >
-                  ⏱ {fmtClock(left)}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-      <div className="w-full">
-        <ActionBar />
-      </div>
-    </div>
-  );
-}
-
-/** Giữa mặt bàn 3D: thảm cỏ, chữ sơn trên nền, cây và công trình đứng */
-function IsoCenter() {
-  const deco = [
-    { x: '14%', y: '14%', e: '🏟️', s: 8 },
-    { x: '86%', y: '14%', e: '🌳', s: 4.5 },
-    { x: '14%', y: '86%', e: '🌴', s: 4.5 },
-    { x: '86%', y: '86%', e: '⛲', s: 5 },
-    { x: '50%', y: '10%', e: '🌳', s: 3.5 },
-    { x: '10%', y: '50%', e: '🌲', s: 3.5 },
-    { x: '90%', y: '50%', e: '🌲', s: 3.5 },
-    { x: '50%', y: '90%', e: '🌳', s: 3.5 },
-  ];
-  return (
-    <div
-      className="absolute inset-0 rounded-xl"
-      style={{
-        background: 'radial-gradient(circle at 50% 50%, #A6DE85 0%, #7CC35C 55%, #5FA845 100%)',
-        boxShadow: 'inset 0 0 0 0.5cqw rgb(255 255 255 / 0.5)',
-      }}
-    >
-      <div className="absolute inset-[7%] rounded-[2cqw] border-[0.35cqw] border-dashed border-white/60" />
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div
-          className="text-center font-black leading-none text-white/85 drop-shadow"
-          style={{ fontSize: '6cqw' }}
-        >
-          CỜ TỶ PHÚ
-          <div className="mt-[1cqw] text-nghe" style={{ fontSize: '7.5cqw' }}>
-            CLB30
-          </div>
-        </div>
-      </div>
-      {deco.map((d, i) => (
-        <span
-          key={i}
-          className="absolute -translate-x-1/2 -translate-y-1/2"
-          style={{ left: d.x, top: d.y, fontSize: `${d.s}cqw` }}
-        >
-          <span className="bb">{d.e}</span>
-        </span>
-      ))}
     </div>
   );
 }
@@ -300,12 +114,6 @@ const BAND: Record<string, string> = {
   left: 'left-0 inset-y-0 w-[19%]',
   right: 'right-0 inset-y-0 w-[19%]',
 };
-const INNER_STRIPE: Record<string, (c: string) => string> = {
-  bottom: (c) => `inset 0 0.4cqw 0 0 ${c}`,
-  top: (c) => `inset 0 -0.4cqw 0 0 ${c}`,
-  left: (c) => `inset -0.4cqw 0 0 0 ${c}`,
-  right: (c) => `inset 0.4cqw 0 0 0 ${c}`,
-};
 const PAD: Record<string, string> = {
   bottom: 'pb-[21%] pt-[4%] flex-col',
   top: 'pt-[21%] pb-[4%] flex-col',
@@ -331,17 +139,16 @@ function SquareCell({ sq }: { sq: Sq }) {
     const c = CORNER_STYLE[sq.index]!;
     return (
       <div
-        className="sq relative flex flex-col items-center justify-center gap-[4%] overflow-hidden rounded-[6px] text-center shadow-sm"
+        className="relative flex flex-col items-center justify-center gap-[4%] overflow-hidden rounded-[6px] text-center shadow-sm"
         style={{
           gridRow: row,
           gridColumn: col,
           background: c.bg,
-          ['--depth' as string]: 20 + row - col,
         }}
         title={sq.name}
       >
         <span className="leading-none drop-shadow-sm" style={{ fontSize: '5.4cqw' }}>
-          <span className="bb">{SPECIAL_ICON[sq.kind]}</span>
+          {SPECIAL_ICON[sq.kind]}
         </span>
         <span
           className="font-extrabold uppercase leading-tight"
@@ -369,15 +176,16 @@ function SquareCell({ sq }: { sq: Sq }) {
       type="button"
       onClick={() => (price !== null ? open(sq.index) : undefined)}
       className={cx(
-        'sq group relative flex items-center justify-center gap-[4%] overflow-hidden rounded-[6px] bg-[var(--sq-bg)] text-center leading-[1.1] text-slate-800 shadow-sm transition dark:text-slate-100',
+        'group relative flex items-center justify-center gap-[4%] overflow-hidden rounded-[6px] bg-[var(--sq-bg)] text-center leading-[1.1] text-slate-800 shadow-sm transition dark:text-slate-100',
         price !== null && 'hover:z-10 hover:-translate-y-[1px] hover:shadow-md',
         PAD[side],
       )}
       style={{
         gridRow: row,
         gridColumn: col,
-        boxShadow: ownerColor ? `inset 0 0 0 0.35cqw ${ownerColor}` : undefined,
-        ['--depth' as string]: 20 + row - col,
+        boxShadow: ownerColor
+          ? `inset 0 0 0 0.55cqw ${ownerColor}, 0 0 0.6cqw ${ownerColor}88`
+          : undefined,
       }}
       title={sq.name}
     >
@@ -390,11 +198,11 @@ function SquareCell({ sq }: { sq: Sq }) {
         style={{ fontSize: '3.5cqw' }}
       >
         {sq.kind === 'street' ? (
-          <span className="bb">{sq.icon}</span>
+          sq.icon
         ) : isBrand ? (
           <BrandLogo id={sq.logo} name={sq.name} color={sq.brandColor} size="3.4cqw" />
         ) : (
-          <span className="bb">{SPECIAL_ICON[sq.kind]}</span>
+          SPECIAL_ICON[sq.kind]
         )}
       </span>
       {/* Tên ô */}
@@ -414,7 +222,7 @@ function SquareCell({ sq }: { sq: Sq }) {
         )}
       </span>
 
-      {/* Dải giá (chưa có chủ) / tiền thuê theo màu chủ (đã có chủ) ở mép ngoài */}
+      {/* Dải màu nhóm ở mép ngoài: giá mua (chưa có chủ) / tiền thuê (đã có chủ) */}
       {band && bandText && (
         <span
           className={cx(
@@ -422,10 +230,8 @@ function SquareCell({ sq }: { sq: Sq }) {
             BAND[side],
           )}
           style={{
-            background: st?.mortgaged ? '#94A3B8' : (ownerColor ?? band),
+            background: st?.mortgaged ? '#94A3B8' : band,
             fontSize: '1.15cqw',
-            // Chủ sở hữu: giữ một vạch màu nhóm ở mép trong của thẻ
-            boxShadow: ownerColor ? INNER_STRIPE[side]!(band) : undefined,
           }}
         >
           <span
@@ -462,13 +268,9 @@ function Buildings({ houses, side }: { houses: number; side: string }) {
       style={{ fontSize: '1.35cqw' }}
     >
       {houses === 5 ? (
-        <span className="bb">🏨</span>
+        <span>🏨</span>
       ) : (
-        Array.from({ length: houses }, (_, i) => (
-          <span key={i} className="bb">
-            🏠
-          </span>
-        ))
+        Array.from({ length: houses }, (_, i) => <span key={i}>🏠</span>)
       )}
     </span>
   );
@@ -532,7 +334,7 @@ function Tokens() {
 
   if (!game) return null;
   return (
-    <div className="tokens pointer-events-none absolute inset-0 z-20">
+    <div className="pointer-events-none absolute inset-0 z-20">
       {game.players.map((p) => {
         if (p.bankrupt) return null;
         const st = stacks.get(p.position) ?? [p.id];
@@ -554,7 +356,7 @@ function Tokens() {
             transition={{ duration: Math.max(0.2, (xs.length - 1) * STEP_S), ease: 'linear' }}
             style={{ translateX: '-50%', translateY: '-50%' }}
           >
-            <div className={cx('bb-token rounded-full shadow-md', isCur && 'animate-pulse-soft')}>
+            <div className={cx('rounded-full shadow-md', isCur && 'animate-pulse-soft')}>
               <Avatar token={p.token} color={color} size="4.6cqw" ring={isCur} />
             </div>
           </motion.div>

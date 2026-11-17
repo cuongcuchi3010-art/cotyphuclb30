@@ -75,6 +75,8 @@ export function describeEvent(ev: GameEvent, s: Pick<GameState, 'players'>): str
       return `${name(ev.playerId)} thắng đấu giá ${sq(ev.pos)} với ${formatMoney(ev.amount)}`;
     case 'auctionNoBids':
       return `Không ai trả giá, ${sq(ev.pos)} vẫn thuộc ngân hàng`;
+    case 'buildChance':
+      return `${name(ev.playerId)} trở lại ${sq(ev.pos)}, được xây thêm nhà`;
     case 'build':
       return ev.level === 5
         ? `${name(ev.playerId)} xây khách sạn ở ${sq(ev.pos)}`

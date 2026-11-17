@@ -26,6 +26,8 @@ export interface Rules {
   timeLimitMinutes: 0 | 30 | 60 | 90;
   /** 0 = tắt đồng hồ lượt */
   turnTimerSec: number;
+  /** Cách xây nhà: 'monopoly' = trọn nhóm màu (chuẩn); 'landing' = dừng lại ô của mình */
+  buildRule: 'monopoly' | 'landing';
 }
 
 export const DEFAULT_RULES: Rules = {
@@ -35,6 +37,7 @@ export const DEFAULT_RULES: Rules = {
   auctions: true,
   timeLimitMinutes: 0,
   turnTimerSec: 90,
+  buildRule: 'monopoly',
 };
 
 export interface PlayerStats {
@@ -190,6 +193,8 @@ export interface GameState {
   loans: Loan[];
   loanOffers: LoanOffer[];
   nextLoanId: number;
+  /** Luật 'landing': ô người đang tới lượt vừa dừng lại, được xây thêm 1 cấp */
+  buildPass?: number | null;
   endReason?: 'lastStanding' | 'timeUp';
 }
 

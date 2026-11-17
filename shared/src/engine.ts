@@ -219,6 +219,19 @@ export function groupHasNoBuildings(s: GameState, pos: number): boolean {
   return groupOf(pos).every((i) => (s.properties[i]?.houses ?? 0) === 0);
 }
 
+export function isLandingBuild(s: GameState): boolean {
+  return s.rules.buildRule === 'landing';
+}
+
+/**
+ * Điều kiện "không có nhà" để thế chấp / giao dịch:
+ * luật chuẩn xét cả nhóm màu; luật 'landing' chỉ xét chính ô đó.
+ */
+export function blockHasNoBuildings(s: GameState, pos: number): boolean {
+  if (isLandingBuild(s)) return (s.properties[pos]?.houses ?? 0) === 0;
+  return groupHasNoBuildings(s, pos);
+}
+
 export function countOwned(s: GameState, owner: PlayerId, indices: readonly number[]): number {
   return indices.filter((i) => s.properties[i]?.owner === owner).length;
 }
@@ -649,6 +662,11 @@ function landOn(c: Ctx, p: PlayerState, ctx: RentContext): void {
       c.ev.push({ t: 'offer', playerId: p.id, pos });
       return;
     }
+    if (st.owner === p.id && isLandingBuild(s) && sq.kind === 'street' && !st.mortgaged) {
+      s.buildPass = pos;
+      c.ev.push({ t: 'buildChance', playerId: p.id, pos });
+      return;
+    }
     if (st.owner === p.id || st.mortgaged) return;
     const owner = getPlayer(s, st.owner);
     if (owner.bankrupt) return;
@@ -916,6 +934,7 @@ function nextTurn(c: Ctx): void {
   s.rolled = false;
   s.resume = { kind: 'none' };
   s.mortgageChoices = [];
+  s.buildPass = null;
   s.phase = { kind: 'awaitRoll' };
   const cur = s.players[i]!;
   c.ev.push({ t: 'turnStart', playerId: cur.id, turn: s.turn });
@@ -1029,6 +1048,16 @@ export function canBuild(s: GameState, p: PlayerState, pos: number): string | nu
   if (sq.kind !== 'street') return 'Chỉ xây nhà trên ô đất';
   const st = s.properties[pos]!;
   if (st.owner !== p.id) return 'Ô này không phải của bạn';
+  if (isLandingBuild(s)) {
+    if (st.mortgaged) return 'Ô đang thế chấp';
+    if (s.buildPass !== pos) return 'Chỉ được xây khi vừa dừng lại ô này';
+    if (st.houses >= HOTEL_LEVEL) return 'Ô đã có khách sạn';
+    if (st.houses === 4) {
+      if (s.bank.hotels < 1) return 'Ngân hàng đã hết khách sạn';
+    } else if (s.bank.houses < 1) return 'Ngân hàng đã hết nhà';
+    if (p.cash < sq.houseCost) return 'Không đủ tiền';
+    return null;
+  }
   if (!ownsWholeGroup(s, p.id, pos)) return 'Cần sở hữu trọn nhóm màu';
   const members = GROUP_MEMBERS[sq.group];
   if (members.some((i) => s.properties[i]!.mortgaged)) return 'Có ô trong nhóm đang thế chấp';
@@ -1056,6 +1085,7 @@ function build(c: Ctx, p: PlayerState, pos: number): void {
     s.bank.houses--;
   }
   st.houses++;
+  if (isLandingBuild(s)) s.buildPass = null; // mỗi lần dừng chỉ xây 1 cấp
   c.ev.push({ t: 'build', playerId: p.id, pos, level: st.houses, cost: sq.houseCost });
 }
 
@@ -1065,6 +1095,7 @@ export function canSell(s: GameState, p: PlayerState, pos: number): string | nul
   const st = s.properties[pos]!;
   if (st.owner !== p.id) return 'Ô này không phải của bạn';
   if (st.houses === 0) return 'Ô này không có nhà';
+  if (isLandingBuild(s)) return null;
   const max = Math.max(...GROUP_MEMBERS[sq.group].map((i) => s.properties[i]!.houses));
   if (st.houses !== max) return 'Phải bán đều các ô trong nhóm';
   return null;
@@ -1099,7 +1130,12 @@ function mortgage(c: Ctx, p: PlayerState, pos: number): void {
   const st = getProp(s, pos);
   if (st.owner !== p.id) fail('Ô này không phải của bạn');
   if (st.mortgaged) fail('Ô đã thế chấp');
-  if (!groupHasNoBuildings(s, pos)) fail('Phải bán hết nhà trong nhóm trước khi thế chấp');
+  if (!blockHasNoBuildings(s, pos))
+    fail(
+      isLandingBuild(s)
+        ? 'Phải bán hết nhà trên ô trước khi thế chấp'
+        : 'Phải bán hết nhà trong nhóm trước khi thế chấp',
+    );
   const amount = mortgageValue(pos);
   st.mortgaged = true;
   p.cash += amount;
@@ -1250,7 +1286,7 @@ function autoLiquidate(c: Ctx, id: PlayerId): void {
   // 2) thế chấp, ô rẻ nhất trước
   const mortgageable = OWNABLE_INDICES.filter((i) => {
     const st = s.properties[i]!;
-    return st.owner === id && !st.mortgaged && groupHasNoBuildings(s, i);
+    return st.owner === id && !st.mortgaged && blockHasNoBuildings(s, i);
   }).sort((a, b) => ownable(a).price - ownable(b).price);
   for (const i of mortgageable) {
     if (p.cash >= need()) break;
@@ -1279,7 +1315,10 @@ function validateSide(s: GameState, owner: PlayerState, side: TradeSide): string
     const st = s.properties[pos];
     if (!st) return 'Ô không hợp lệ';
     if (st.owner !== owner.id) return `${square(pos).name} không còn thuộc ${owner.name}`;
-    if (!groupHasNoBuildings(s, pos)) return `Nhóm của ${square(pos).name} đang có nhà`;
+    if (!blockHasNoBuildings(s, pos))
+      return isLandingBuild(s)
+        ? `${square(pos).name} đang có nhà`
+        : `Nhóm của ${square(pos).name} đang có nhà`;
   }
   return null;
 }

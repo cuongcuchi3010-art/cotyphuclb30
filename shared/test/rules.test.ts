@@ -723,3 +723,50 @@ describe('Vay tiền', () => {
     expect(s.winner).toBe('p2');
   });
 });
+
+describe('Luật xây nhà khi dừng lại ô của mình', () => {
+  it('chỉ xây khi vừa dừng lại ô của mình, không cần trọn nhóm, mỗi lần 1 cấp', () => {
+    let s = mkGame(2, { buildRule: 'landing' });
+    own(s, 'p1', 6); // Sa Pa, không trọn nhóm
+    expect(() => act(s, 'p1', { type: 'build', pos: 6 })).toThrow('vừa dừng');
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [2, 4])); // dừng ở Sa Pa
+    expect(s.buildPass).toBe(6);
+    ({ state: s } = act(s, 'p1', { type: 'build', pos: 6 }));
+    expect(s.properties[6]!.houses).toBe(1);
+    expect(pl(s, 'p1').cash).toBe(1450);
+    expect(() => act(s, 'p1', { type: 'build', pos: 6 })).toThrow('vừa dừng');
+    // Tiền thuê tính theo số nhà
+    expect(rentFor(s, 6, { diceTotal: 7 })).toBe(30);
+    // Hết lượt thì mất quyền xây
+    ({ state: s } = act(s, 'p1', { type: 'endTurn' }));
+    expect(s.buildPass).toBeNull();
+  });
+
+  it('không xây trên ô đang thế chấp; thế chấp/giao dịch chỉ xét chính ô đó', () => {
+    let s = mkGame(2, { buildRule: 'landing' });
+    own(s, 'p1', 6, 8);
+    s.properties[6]!.houses = 2;
+    s.bank.houses = 30;
+    // Ô 8 cùng nhóm vẫn thế chấp được dù ô 6 có nhà
+    ({ state: s } = act(s, 'p1', { type: 'mortgage', pos: 8 }));
+    expect(s.properties[8]!.mortgaged).toBe(true);
+    expect(() => act(s, 'p1', { type: 'mortgage', pos: 6 })).toThrow('trên ô');
+    // Bán nhà không cần bán đều
+    ({ state: s } = act(s, 'p1', { type: 'sell', pos: 6 }));
+    expect(s.properties[6]!.houses).toBe(1);
+    // Dừng ở ô đang thế chấp: không được xây
+    pl(s, 'p1').position = 4;
+    s.phase = { kind: 'awaitRoll' };
+    s.rolled = false;
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 3])); // → 8
+    expect(s.buildPass ?? null).toBeNull();
+  });
+
+  it('luật chuẩn vẫn như cũ', () => {
+    let s = mkGame(2);
+    own(s, 'p1', 6);
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [2, 4]));
+    expect(s.buildPass ?? null).toBeNull();
+    expect(() => act(s, 'p1', { type: 'build', pos: 6 })).toThrow('trọn nhóm');
+  });
+});

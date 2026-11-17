@@ -85,23 +85,3 @@ body {
     animation: none;
   }
 }
-
-/* ---------- Bàn cờ 3D (isometric) ---------- */
-/* Mặt bàn: rotateX(55deg) rotateZ(-45deg). Phần tử .bb "đứng thẳng" bằng phép quay ngược + giãn dọc (1/cos55°). */
-.iso .sq {
-  overflow: visible !important;
-  z-index: var(--depth);
-}
-.iso .bb {
-  display: inline-block;
-  transform: rotate(45deg) scaleY(1.743) translateY(-34%);
-  transform-origin: 50% 100%;
-  filter: drop-shadow(0 0.3cqw 0.2cqw rgb(0 0 0 / 0.25));
-}
-.iso .tokens {
-  z-index: 60;
-}
-.iso .bb-token {
-  transform: rotate(45deg) scaleY(1.743) translateY(-55%);
-  transform-origin: 50% 100%;
-}

@@ -11,7 +11,7 @@ import {
   canBorrowFromBank,
   canBuild,
   formatMoney,
-  groupHasNoBuildings,
+  blockHasNoBuildings,
   mortgageValue,
   ownable,
   unmortgageCost,
@@ -195,7 +195,7 @@ function AssetsTab() {
                   {S.assets.unmortgage} {formatMoney(unmortgageCost(i))}
                 </Btn>
               ) : (
-                groupHasNoBuildings(game, i) && (
+                blockHasNoBuildings(game, i) && (
                   <Btn
                     variant="ghost"
                     className={small}
@@ -286,7 +286,7 @@ function AssetPicker({
       {owned.map((i) => {
         const sq = ownable(i);
         const st = game.properties[i]!;
-        const ok = groupHasNoBuildings(game, i);
+        const ok = blockHasNoBuildings(game, i);
         const on = selected.includes(i);
         return (
           <button

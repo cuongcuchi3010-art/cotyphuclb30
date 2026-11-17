@@ -1,4 +1,4 @@
-import { formatMoney, ownable } from '@cotyphu/shared';
+import { canBuild, formatMoney, ownable, square } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
 import { nameOf, useGame } from '../lib';
@@ -28,6 +28,20 @@ export function ActionBar() {
     );
   }
 
+  const pass = game.buildPass ?? null;
+  const buildBtn =
+    pass !== null && canBuild(game, meP, pass) === null ? (
+      <Btn
+        className={`${B} mb-1.5 w-full`}
+        variant="gold"
+        onClick={() => act({ type: 'build', pos: pass })}
+      >
+        {S.game.buildHere(
+          square(pass).short ?? square(pass).name,
+          formatMoney((square(pass) as { houseCost: number }).houseCost),
+        )}
+      </Btn>
+    ) : null;
   if (ph.kind === 'awaitRoll' && meP.inJail) {
     return (
       <div className="w-full">
@@ -55,12 +69,15 @@ export function ActionBar() {
   }
   if (ph.kind === 'awaitRoll') {
     return (
-      <Btn
-        className={`${B} w-full animate-glow !text-base sm:!text-lg`}
-        onClick={() => act({ type: 'roll' })}
-      >
-        🎲 {game.doublesCount > 0 ? S.game.rollAgain : S.game.roll}
-      </Btn>
+      <div className="w-full">
+        {buildBtn}
+        <Btn
+          className={`${B} w-full animate-glow !text-base sm:!text-lg`}
+          onClick={() => act({ type: 'roll' })}
+        >
+          🎲 {game.doublesCount > 0 ? S.game.rollAgain : S.game.roll}
+        </Btn>
+      </div>
     );
   }
   if (ph.kind === 'awaitBuy') {
@@ -78,13 +95,16 @@ export function ActionBar() {
   }
   if (ph.kind === 'awaitEnd') {
     return (
-      <Btn
-        className={`${B} w-full !text-base sm:!text-lg`}
-        variant="secondary"
-        onClick={() => act({ type: 'endTurn' })}
-      >
-        ✅ {S.game.endTurn}
-      </Btn>
+      <div className="w-full">
+        {buildBtn}
+        <Btn
+          className={`${B} w-full !text-base sm:!text-lg`}
+          variant="secondary"
+          onClick={() => act({ type: 'endTurn' })}
+        >
+          ✅ {S.game.endTurn}
+        </Btn>
+      </div>
     );
   }
   return null;

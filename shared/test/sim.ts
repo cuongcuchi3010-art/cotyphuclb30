@@ -129,7 +129,12 @@ export function runSimulation(from: number, count: number): { finished: number; 
     const n = 2 + (g % 5);
     let { state: s } = createGame(
       Array.from({ length: n }, (_, i) => ({ id: `b${i}`, name: `Bot ${i}`, token: TOKENS[i]! })),
-      { jackpot: g % 3 === 0, doubleGo: g % 4 === 0, auctions: g % 7 !== 0 },
+      {
+        jackpot: g % 3 === 0,
+        doubleGo: g % 4 === 0,
+        auctions: g % 7 !== 0,
+        buildRule: g % 2 === 0 ? 'landing' : 'monopoly',
+      },
       rng,
     );
     let actions = 0;
