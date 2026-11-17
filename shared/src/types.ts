@@ -80,7 +80,7 @@ export interface Debt {
 }
 
 export type DebtReason =
-  'rent' | 'tax' | 'card' | 'jailFine' | 'mortgageFee' | 'payEach' | 'collectEach';
+  'rent' | 'tax' | 'card' | 'jailFine' | 'mortgageFee' | 'payEach' | 'collectEach' | 'loan';
 
 /** Việc cần làm tiếp sau khi trả hết nợ */
 export type Resume =
@@ -115,6 +115,35 @@ export interface Trade {
   take: TradeSide;
   createdTurn: number;
 }
+
+/** Khoản vay đang hiệu lực */
+export interface Loan {
+  id: string;
+  lender: PlayerId | 'bank';
+  borrower: PlayerId;
+  principal: number;
+  /** Số tiền phải trả lại (gốc + lãi) */
+  repay: number;
+  /** Số lượt (của người vay) còn lại trước khi đến hạn */
+  turnsLeft: number;
+}
+
+/** Đề nghị vay / cho vay giữa người chơi, chờ người kia đồng ý */
+export interface LoanOffer {
+  id: string;
+  from: PlayerId;
+  to: PlayerId;
+  lender: PlayerId;
+  borrower: PlayerId;
+  amount: number;
+  repay: number;
+  turns: number;
+}
+
+export const BANK_LOAN_MAX = 500;
+export const BANK_LOAN_RATE_PCT = 10;
+export const BANK_LOAN_TURNS = 5;
+export const PLAYER_LOAN_MAX_TURNS = 20;
 
 export type Phase =
   | { kind: 'awaitRoll' }
@@ -158,6 +187,9 @@ export interface GameState {
   seq: number;
   /** Nguồn tạo ID giao dịch */
   nextTradeId: number;
+  loans: Loan[];
+  loanOffers: LoanOffer[];
+  nextLoanId: number;
   endReason?: 'lastStanding' | 'timeUp';
 }
 

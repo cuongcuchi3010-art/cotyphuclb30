@@ -58,3 +58,30 @@ body {
     animation: none;
   }
 }
+
+:root {
+  --sq-bg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sq-bg: #1d1a14;
+  }
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(242 169 0 / 0.75);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgb(242 169 0 / 0);
+  }
+}
+.animate-glow {
+  animation: glow 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-glow {
+    animation: none;
+  }
+}

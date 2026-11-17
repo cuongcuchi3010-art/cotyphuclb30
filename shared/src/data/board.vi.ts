@@ -16,7 +16,7 @@ export interface GroupInfo {
 export const GROUPS: Record<ColorGroup, GroupInfo> = {
   brown: { name: 'Nâu', color: '#8B5A2B' },
   lightBlue: { name: 'Xanh nhạt', color: '#7CC8EC' },
-  pink: { name: 'Hồng', color: '#E05FA4' },
+  pink: { name: 'Tím', color: '#7B3FB8' },
   orange: { name: 'Cam', color: '#F28C28' },
   red: { name: 'Đỏ', color: '#D7263D' },
   yellow: { name: 'Vàng', color: '#F2C21B' },
@@ -43,6 +43,8 @@ export interface StreetSquare extends BaseSquare {
   houseCost: number;
   /** Ảnh minh hoạ tuỳ chọn: client/public/images/<image> */
   image?: string;
+  /** Biểu tượng cảnh quan hiển thị trên ô (emoji) */
+  icon?: string;
 }
 
 export interface TransportSquare extends BaseSquare {
@@ -198,6 +200,35 @@ export const BOARD: readonly Square[] = [
     'Đồng Khởi',
   ),
 ];
+
+/** Biểu tượng cảnh quan cho từng ô địa danh — sửa tuỳ thích */
+export const LANDMARK_ICONS: Record<number, string> = {
+  1: '⛰️', // Hà Giang – cao nguyên đá
+  3: '🏞️', // Điện Biên – thung lũng Mường Thanh
+  6: '🌾', // Sa Pa – ruộng bậc thang
+  8: '🍵', // Mộc Châu – đồi chè
+  9: '🛶', // Tràng An – thuyền trên sông
+  11: '🏯', // Huế – Đại Nội
+  13: '🏮', // Hội An – đèn lồng
+  14: '🌊', // Quy Nhơn – biển
+  16: '🏜️', // Mũi Né – đồi cát
+  18: '🏖️', // Nha Trang – bãi biển
+  19: '🌸', // Đà Lạt – hoa
+  21: '🚣', // Cần Thơ – chợ nổi
+  23: '🌅', // Vũng Tàu – bình minh biển
+  24: '⛵', // Hạ Long – vịnh
+  26: '🚢', // Hải Phòng – cảng
+  27: '🏝️', // Phú Quốc – đảo ngọc
+  29: '🌉', // Đà Nẵng – cầu Rồng
+  31: '🪷', // Tây Hồ – sen
+  32: '🏡', // Thảo Điền – biệt thự
+  34: '🏙️', // Phú Mỹ Hưng – đô thị
+  37: '🐢', // Hồ Gươm – rùa
+  39: '🏛️', // Đồng Khởi – Nhà hát lớn
+};
+for (const sq of BOARD) {
+  if (sq.kind === 'street') (sq as StreetSquare).icon ??= LANDMARK_ICONS[sq.index];
+}
 
 export const BOARD_SIZE = 40;
 export const GO_INDEX = 0;

@@ -5,14 +5,17 @@ import {
   DECK_NAMES,
   GROUPS,
   cardById,
+  UTILITY_INDICES,
   formatMoney,
+  rentFor,
   type GameEvent,
+  type GameState,
   type Square as Sq,
 } from '@cotyphu/shared';
 import { useStore } from '../store';
 import { cellOf, centerPct, cx, playerColor, sideOf, useGame } from '../lib';
 import { BrandLogo } from './BrandLogo';
-import { TokenIcon } from './TokenIcon';
+import { Avatar } from './Avatar';
 import { CenterInfo } from './CenterInfo';
 
 const SPECIAL_ICON: Partial<Record<Sq['kind'], string>> = {
@@ -28,7 +31,7 @@ const SPECIAL_ICON: Partial<Record<Sq['kind'], string>> = {
 export function Board() {
   return (
     <div
-      className="board relative aspect-square w-full select-none rounded-2xl bg-ngoc-50 p-[0.6%] shadow-card dark:bg-[#0f2a27]"
+      className="board relative aspect-square w-full select-none rounded-2xl bg-gradient-to-br from-ngoc-100 via-nghe-50 to-son-50 p-[0.6%] shadow-card [container-type:inline-size] dark:from-[#0f2a27] dark:via-[#1c1a12] dark:to-[#2a1014]"
       style={{
         display: 'grid',
         gridTemplateColumns: '1.6fr repeat(9, 1fr) 1.6fr',
@@ -76,6 +79,53 @@ function CenterDecor() {
   );
 }
 
+/** Màu nền / dải màu cho từng loại ô */
+function squareTheme(sq: Sq): { band: string; tint: string } {
+  if (sq.kind === 'street') {
+    const c = GROUPS[sq.group].color;
+    return { band: c, tint: c };
+  }
+  if (sq.kind === 'transport' || sq.kind === 'utility')
+    return { band: sq.brandColor, tint: sq.brandColor };
+  if (sq.kind === 'chance') return { band: '#F2A900', tint: '#F2A900' };
+  if (sq.kind === 'chest') return { band: '#C8102E', tint: '#C8102E' };
+  if (sq.kind === 'tax') return { band: '#6B7280', tint: '#6B7280' };
+  return { band: '#0E9F8E', tint: '#F2A900' };
+}
+
+/** Tiền thuê hiện tại hiển thị trên ô đã có chủ */
+function rentLabel(game: GameState, pos: number): string {
+  const sq = BOARD[pos]!;
+  const st = game.properties[pos]!;
+  if (st.mortgaged) return 'Thế chấp';
+  if (sq.kind === 'utility') {
+    const n = UTILITY_INDICES.filter((i) => game.properties[i]!.owner === st.owner).length;
+    return `×${n === 2 ? 10 : 4} xúc xắc`;
+  }
+  return formatMoney(rentFor(game, pos, { diceTotal: 7 }));
+}
+
+const BAND: Record<string, string> = {
+  bottom: 'top-0 inset-x-0 h-[20%]',
+  top: 'bottom-0 inset-x-0 h-[20%]',
+  left: 'right-0 inset-y-0 w-[20%]',
+  right: 'left-0 inset-y-0 w-[20%]',
+};
+const PAD: Record<string, string> = {
+  bottom: 'pt-[22%] pb-[3%] flex-col',
+  top: 'pb-[22%] pt-[3%] flex-col',
+  left: 'pr-[22%] pl-[4%] flex-row',
+  right: 'pl-[22%] pr-[4%] flex-row',
+  corner: 'flex-col',
+};
+const BAND_GRADIENT: Record<string, string> = {
+  bottom: 'to bottom',
+  top: 'to top',
+  left: 'to left',
+  right: 'to right',
+  corner: 'to bottom',
+};
+
 function SquareCell({ sq }: { sq: Sq }) {
   const { room, game } = useGame();
   const open = useStore((s) => s.setOpenSquare);
@@ -84,99 +134,91 @@ function SquareCell({ sq }: { sq: Sq }) {
   const st = game?.properties[sq.index];
   const ownerColor = st?.owner ? playerColor(room, st.owner) : null;
   const corner = side === 'corner';
-  const strip = sq.kind === 'street' ? GROUPS[sq.group].color : null;
-  const stripPos: Record<string, string> = {
-    bottom: 'top-0 inset-x-0 h-[22%]',
-    top: 'bottom-0 inset-x-0 h-[22%]',
-    left: 'right-0 inset-y-0 w-[22%]',
-    right: 'left-0 inset-y-0 w-[22%]',
-  };
-  const contentPad: Record<string, string> = {
-    bottom: 'pt-[24%]',
-    top: 'pb-[24%]',
-    left: 'pr-[24%]',
-    right: 'pl-[24%]',
-    corner: '',
-  };
+  const theme = squareTheme(sq);
   const price = 'price' in sq ? sq.price : null;
+  const isBrand = sq.kind === 'transport' || sq.kind === 'utility';
   return (
     <button
       type="button"
       onClick={() => (price !== null ? open(sq.index) : undefined)}
       className={cx(
-        'relative flex flex-col items-center justify-center overflow-hidden rounded-[3px] bg-white text-center leading-tight text-gray-800 dark:bg-[#1d1a14] dark:text-gray-100',
-        price !== null && 'hover:ring-2 hover:ring-nghe',
-        corner && 'bg-nghe-50 dark:bg-[#2a2210]',
-        contentPad[side],
+        'relative flex items-center justify-center gap-[3%] overflow-hidden rounded-[4px] text-center leading-[1.15] text-gray-900 shadow-sm dark:text-gray-50',
+        price !== null && 'hover:z-10 hover:ring-2 hover:ring-nghe',
+        PAD[side],
       )}
-      style={{ gridRow: row, gridColumn: col }}
+      style={{
+        gridRow: row,
+        gridColumn: col,
+        background: corner
+          ? `radial-gradient(circle at 50% 40%, ${theme.tint}33, transparent 70%), var(--sq-bg)`
+          : `linear-gradient(${BAND_GRADIENT[side]}, ${theme.tint}38, ${theme.tint}10 70%), var(--sq-bg)`,
+        boxShadow: ownerColor ? `inset 0 0 0 2px ${ownerColor}` : undefined,
+      }}
       title={sq.name}
     >
-      {strip && <span className={cx('absolute', stripPos[side])} style={{ background: strip }} />}
-      {st?.mortgaged && (
-        <span className="absolute inset-0 z-10 flex items-center justify-center bg-gray-500/50 text-[clamp(6px,1.4vmin,11px)] font-bold text-white">
-          TC
-        </span>
+      {!corner && (sq.kind === 'street' || isBrand) && (
+        <span className={cx('absolute', BAND[side])} style={{ background: theme.band }} />
       )}
-      <SquareBody sq={sq} />
-      {st && st.houses > 0 && <Buildings houses={st.houses} side={side} />}
-      {ownerColor ? (
+      {/* Biểu tượng cảnh quan / thương hiệu */}
+      <span className="shrink-0 leading-none" style={{ fontSize: corner ? '4.2cqw' : '2.3cqw' }}>
+        {sq.kind === 'street' ? (
+          sq.icon
+        ) : isBrand ? (
+          <BrandLogo id={sq.logo} name={sq.name} color={sq.brandColor} size="2.4cqw" />
+        ) : (
+          SPECIAL_ICON[sq.kind]
+        )}
+      </span>
+      <span
+        className={cx(
+          'flex min-w-0 flex-col items-center',
+          side === 'left' || side === 'right' ? 'items-start text-left' : '',
+        )}
+      >
         <span
-          className="absolute bottom-[4%] right-[4%] z-[6] h-[clamp(6px,1.5vmin,13px)] w-[clamp(6px,1.5vmin,13px)] rounded-full border border-white shadow"
-          style={{ background: ownerColor }}
-        />
-      ) : (
-        price !== null && (
-          <span className="text-[clamp(5px,1.1vmin,10px)] font-semibold text-son dark:text-nghe">
+          className={cx('line-clamp-2 font-bold', corner && 'text-son dark:text-nghe')}
+          style={{ fontSize: corner ? '1.6cqw' : '1.32cqw' }}
+        >
+          {sq.short ?? sq.name}
+        </span>
+        {st && ownerColor ? (
+          <span
+            className="mt-[2px] whitespace-nowrap rounded-full px-[0.5cqw] font-extrabold text-white"
+            style={{ background: st.mortgaged ? '#6B7280' : ownerColor, fontSize: '1.22cqw' }}
+          >
+            {rentLabel(game!, sq.index)}
+          </span>
+        ) : price !== null ? (
+          <span className="font-semibold text-son dark:text-nghe" style={{ fontSize: '1.22cqw' }}>
             {formatMoney(price)}
           </span>
-        )
-      )}
-    </button>
-  );
-}
-
-function SquareBody({ sq }: { sq: Sq }) {
-  const label = sq.short ?? sq.name;
-  const text = 'text-[clamp(5px,1.15vmin,11px)] font-medium px-[2px]';
-  if (sq.kind === 'transport' || sq.kind === 'utility') {
-    return (
-      <>
-        <BrandLogo id={sq.logo} name={sq.name} color={sq.brandColor} size={18} />
-        <span className={text}>{label}</span>
-      </>
-    );
-  }
-  if (sq.kind === 'street') return <span className={cx(text, 'line-clamp-2')}>{label}</span>;
-  const corner = sq.index % 10 === 0;
-  return (
-    <>
-      <span className={corner ? 'text-[clamp(10px,3vmin,26px)]' : 'text-[clamp(8px,1.8vmin,16px)]'}>
-        {SPECIAL_ICON[sq.kind]}
+        ) : sq.kind === 'tax' ? (
+          <span
+            className="font-semibold text-gray-600 dark:text-gray-300"
+            style={{ fontSize: '1.12cqw' }}
+          >
+            {formatMoney(sq.amount)}
+          </span>
+        ) : null}
       </span>
-      <span className={cx(text, corner && 'font-bold text-son dark:text-nghe')}>{label}</span>
-    </>
+      {st && st.houses > 0 && <Buildings houses={st.houses} side={side} />}
+    </button>
   );
 }
 
 function Buildings({ houses, side }: { houses: number; side: string }) {
   const pos: Record<string, string> = {
-    bottom: 'top-[1%] inset-x-0 justify-center',
-    top: 'bottom-[1%] inset-x-0 justify-center',
-    left: 'right-[1%] inset-y-0 flex-col justify-center',
-    right: 'left-[1%] inset-y-0 flex-col justify-center',
+    bottom: 'top-[2%] inset-x-0 justify-center',
+    top: 'bottom-[2%] inset-x-0 justify-center',
+    left: 'right-[2%] inset-y-0 flex-col justify-center',
+    right: 'left-[2%] inset-y-0 flex-col justify-center',
   };
   return (
-    <span className={cx('absolute z-[5] flex gap-[1px]', pos[side])}>
+    <span className={cx('absolute z-[5] flex gap-[1px]', pos[side])} style={{ fontSize: '1.2cqw' }}>
       {houses === 5 ? (
-        <span className="h-[clamp(5px,1.3vmin,10px)] w-[clamp(9px,2.4vmin,18px)] rounded-[2px] border border-white bg-son" />
+        <span>🏨</span>
       ) : (
-        Array.from({ length: houses }, (_, i) => (
-          <span
-            key={i}
-            className="h-[clamp(4px,1vmin,8px)] w-[clamp(4px,1vmin,8px)] rounded-[1px] border border-white bg-ngoc-600"
-          />
-        ))
+        Array.from({ length: houses }, (_, i) => <span key={i}>🏠</span>)
       )}
     </span>
   );
@@ -262,18 +304,8 @@ function Tokens() {
             transition={{ duration: Math.max(0.2, (xs.length - 1) * STEP_S), ease: 'linear' }}
             style={{ translateX: '-50%', translateY: '-50%' }}
           >
-            <div
-              className={cx(
-                'flex items-center justify-center rounded-full border-2 bg-white/95 p-[2px] shadow-md dark:bg-gray-900/95',
-                isCur && 'animate-pulse-soft',
-              )}
-              style={{
-                borderColor: color,
-                width: 'clamp(16px, 4.6vmin, 38px)',
-                height: 'clamp(16px, 4.6vmin, 38px)',
-              }}
-            >
-              <TokenIcon token={p.token} size={30} />
+            <div className={cx('rounded-full shadow-md', isCur && 'animate-pulse-soft')}>
+              <Avatar token={p.token} color={color} size="4.6cqw" ring={isCur} />
             </div>
           </motion.div>
         );

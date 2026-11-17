@@ -5,7 +5,26 @@ export const S = {
   appName: 'Cờ Tỷ Phú CLB30',
   tagline: 'Chơi online cùng bạn bè — không cần tài khoản',
 
+  auth: {
+    login: 'Đăng nhập',
+    register: 'Tạo tài khoản',
+    username: 'Biệt danh',
+    usernameHint: 'Biệt danh cũng là tên hiển thị trong game',
+    password: 'Mật khẩu',
+    password2: 'Nhập lại mật khẩu',
+    mismatch: 'Hai mật khẩu không khớp',
+    noAccount: 'Chưa có tài khoản?',
+    haveAccount: 'Đã có tài khoản?',
+    submitLogin: 'Đăng nhập',
+    submitRegister: 'Tạo tài khoản',
+    logout: 'Đăng xuất',
+    hello: (n: string) => `Xin chào, ${n}!`,
+    why: 'Đăng nhập để chơi tiếp trên bất kỳ thiết bị nào: điện thoại, máy tính, máy tính bảng.',
+  },
+
   home: {
+    recent: 'Phòng gần đây',
+    rejoin: 'Vào lại',
     create: 'Tạo phòng',
     join: 'Vào phòng',
     codePlaceholder: 'Mã phòng (6 ký tự)',
@@ -109,7 +128,9 @@ export const S = {
     openAssets: 'Mở Tài sản',
   },
 
-  tabs: { assets: 'Tài sản', trade: 'Giao dịch', log: 'Nhật ký', chat: 'Chat' },
+  tabs: { assets: 'Tài sản', trade: 'Giao dịch', loan: 'Vay', chat: 'Chat' },
+
+  log: 'Nhật ký',
 
   assets: {
     none: 'Bạn chưa có ô nào.',
@@ -141,6 +162,11 @@ export const S = {
     none: 'Không có đề nghị nào.',
     nothing: '(không có gì)',
     noHouses: 'Chỉ giao dịch được ô mà cả nhóm không có nhà.',
+    pick: 'Chọn người muốn giao dịch',
+    theirAssets: (n: string) => `Tài sản của ${n}`,
+    noProps: 'Không có ô nào.',
+    hasHouses: 'nhóm có nhà',
+    pending: 'Đề nghị đang chờ',
     gives: 'đưa',
   },
 
@@ -194,6 +220,49 @@ export const S = {
   },
 
   sound: { on: 'Bật tiếng', off: 'Tắt tiếng' },
+
+  voice: {
+    join: 'Voice',
+    leave: 'Rời voice',
+    mute: 'Tắt mic',
+    unmute: 'Bật mic',
+    connecting: 'Đang mở micro…',
+    hint: 'Voice chat: nói chuyện trực tiếp với những người đang bật voice',
+  },
+
+  loan: {
+    bankTitle: 'Vay ngân hàng',
+    bankInfo: (rate: number, turns: number, max: string) =>
+      `Lãi ${rate}%, trả sau ${turns} lượt của bạn. Dư nợ tối đa ${max}.`,
+    amount: 'Số tiền vay (tr)',
+    repay: 'Phải trả',
+    borrow: 'Vay',
+    available: (v: string) => `Còn vay được: ${v}`,
+    onlyTurn: 'Chỉ vay ngân hàng được trong lượt của bạn hoặc khi đang gom tiền.',
+    myLoans: 'Khoản vay của bạn',
+    lentLoans: 'Bạn đang cho vay',
+    none: 'Chưa có khoản vay nào.',
+    turnsLeft: (n: number) => `còn ${n} lượt`,
+    repayNow: 'Trả ngay',
+    playerTitle: 'Vay / cho vay người chơi',
+    pick: 'Chọn người chơi',
+    iBorrow: 'Mình xin vay',
+    iLend: 'Mình cho vay',
+    repayAmount: 'Số tiền trả lại (tr)',
+    turns: 'Thời hạn (lượt)',
+    send: 'Gửi đề nghị',
+    incomingBorrow: (n: string) => `${n} xin vay tiền của bạn`,
+    incomingLend: (n: string) => `${n} muốn cho bạn vay tiền`,
+    terms: (amt: string, repay: string, turns: number) =>
+      `Vay ${amt}, trả ${repay} sau ${turns} lượt`,
+    accept: 'Đồng ý',
+    reject: 'Từ chối',
+    cancel: 'Huỷ',
+    pending: 'Đề nghị đang chờ',
+    from: 'Từ',
+    bank: 'Ngân hàng',
+    rentHint: 'Đến hạn sẽ tự trừ tiền; thiếu thì vào pha Gom tiền.',
+  },
 } as const;
 
 export const TOKEN_NAMES: Record<TokenId, string> = {

@@ -4,7 +4,9 @@ import { useStore } from '../store';
 import { nameOf, useGame } from '../lib';
 import { Btn } from './ui';
 
-/** Nút hành động chính: tung / mua / kết thúc lượt / tạm giữ */
+const B = '!min-h-[38px] !px-2 !text-[13px] sm:!min-h-[46px] sm:!text-base';
+
+/** Nút hành động chính (đặt giữa bàn cờ): tung / mua / kết thúc lượt / tạm giữ */
 export function ActionBar() {
   const { room, game, me } = useGame();
   const act = useStore((s) => s.act);
@@ -14,16 +16,13 @@ export function ActionBar() {
   const meP = game.players.find((p) => p.id === me);
   const myTurn = cur.id === me;
   const ph = game.phase;
+  const note = 'text-center text-[12px] sm:text-sm text-gray-600 dark:text-gray-300';
 
-  if (spectator || !meP) {
-    return <div className="text-center text-sm text-gray-500">👀 {S.game.spectating}</div>;
-  }
-  if (meP.bankrupt) {
-    return <div className="text-center text-sm font-semibold text-gray-500">{S.game.bankrupt}</div>;
-  }
+  if (spectator || !meP) return <div className={note}>👀 {S.game.spectating}</div>;
+  if (meP.bankrupt) return <div className={note}>{S.game.bankrupt}</div>;
   if (!myTurn) {
     return (
-      <div className="text-center text-sm text-gray-500">
+      <div className={note}>
         {S.game.turnOf(nameOf(room, ph.kind === 'raiseFunds' ? ph.debtor : cur.id))} · {S.game.wait}
       </div>
     );
@@ -31,23 +30,23 @@ export function ActionBar() {
 
   if (ph.kind === 'awaitRoll' && meP.inJail) {
     return (
-      <div>
-        <div className="mb-2 text-center text-sm font-semibold">
+      <div className="w-full">
+        <div className="mb-1 text-center text-[12px] font-semibold sm:text-sm">
           🚓 {S.game.inJail} · {S.game.jailAttempts(meP.jailAttempts)}
         </div>
-        <div className="grid grid-cols-3 gap-2">
-          <Btn big disabled={meP.cash < 50} onClick={() => act({ type: 'payBail' })}>
+        <div className="grid grid-cols-3 gap-1.5">
+          <Btn className={B} disabled={meP.cash < 50} onClick={() => act({ type: 'payBail' })}>
             {S.game.payBail}
           </Btn>
           <Btn
-            big
+            className={B}
             variant="gold"
             disabled={meP.jailCards.length === 0}
             onClick={() => act({ type: 'useJailCard' })}
           >
-            {S.game.useCard}
+            🎫 Thẻ
           </Btn>
-          <Btn big variant="secondary" onClick={() => act({ type: 'roll' })}>
+          <Btn className={B} variant="secondary" onClick={() => act({ type: 'roll' })}>
             🎲 {S.game.rollDoubles}
           </Btn>
         </div>
@@ -56,7 +55,10 @@ export function ActionBar() {
   }
   if (ph.kind === 'awaitRoll') {
     return (
-      <Btn big className="w-full text-lg" onClick={() => act({ type: 'roll' })}>
+      <Btn
+        className={`${B} w-full animate-glow !text-base sm:!text-lg`}
+        onClick={() => act({ type: 'roll' })}
+      >
         🎲 {game.doublesCount > 0 ? S.game.rollAgain : S.game.roll}
       </Btn>
     );
@@ -64,11 +66,11 @@ export function ActionBar() {
   if (ph.kind === 'awaitBuy') {
     const sq = ownable(ph.pos);
     return (
-      <div className="grid grid-cols-2 gap-2">
-        <Btn big disabled={meP.cash < sq.price} onClick={() => act({ type: 'buy' })}>
+      <div className="grid w-full grid-cols-2 gap-1.5">
+        <Btn className={B} disabled={meP.cash < sq.price} onClick={() => act({ type: 'buy' })}>
           {S.game.buy(formatMoney(sq.price))}
         </Btn>
-        <Btn big variant="ghost" onClick={() => act({ type: 'decline' })}>
+        <Btn className={B} variant="ghost" onClick={() => act({ type: 'decline' })}>
           {S.game.decline}
         </Btn>
       </div>
@@ -77,9 +79,8 @@ export function ActionBar() {
   if (ph.kind === 'awaitEnd') {
     return (
       <Btn
-        big
+        className={`${B} w-full !text-base sm:!text-lg`}
         variant="secondary"
-        className="w-full text-lg"
         onClick={() => act({ type: 'endTurn' })}
       >
         ✅ {S.game.endTurn}

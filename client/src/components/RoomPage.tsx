@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { NAME_MAX, TOKENS, type ClientMessage, type TokenId } from '@cotyphu/shared';
+import { TOKENS, type ClientMessage, type TokenId } from '@cotyphu/shared';
 import { S } from '../strings.vi';
-import { loadPref, loadSession, savePref, setJoinIntent, useStore } from '../store';
+import { api, loadPref, savePref, setJoinIntent, useStore } from '../store';
+import { leaveVoice } from '../voice';
 import { navigate } from '../router';
 import { GameScreen } from './GameScreen';
 import { Lobby, TokenPicker } from './Lobby';
@@ -24,10 +25,14 @@ export function RoomPage({ code }: { code: string }) {
   const conn = useStore((s) => s.conn);
   const kicked = useStore((s) => s.kicked);
   const fatal = useStore((s) => s.fatal);
+  const resumeChecked = useStore((s) => s.resumeChecked);
 
   useEffect(() => {
     connect(code);
-    return () => disconnect();
+    return () => {
+      leaveVoice();
+      disconnect();
+    };
   }, [code, connect, disconnect]);
 
   let body;
@@ -41,7 +46,7 @@ export function RoomPage({ code }: { code: string }) {
   } else if (room && (me || spectator)) {
     body =
       room.status === 'lobby' && me ? <Lobby /> : room.game ? <GameScreen /> : <SpectatorLobby />;
-  } else if (loadSession(code) && conn !== 'closed') {
+  } else if (!resumeChecked && conn !== 'closed') {
     body = <Center>{S.conn.connecting}</Center>;
   } else {
     body = <JoinForm code={code} />;
@@ -82,7 +87,6 @@ function JoinForm({ code }: { code: string }) {
   const send = useStore((s) => s.send);
   const [info, setInfo] = useState<Info | null>(null);
   const [notFound, setNotFound] = useState(false);
-  const [name, setName] = useState(loadPref('name') ?? '');
   const [token, setToken] = useState<TokenId | null>(null);
   const [password, setPassword] = useState('');
   const room = useStore((s) => s.room);
@@ -91,13 +95,12 @@ function JoinForm({ code }: { code: string }) {
     let alive = true;
     const load = async () => {
       try {
-        const res = await fetch(`/api/rooms/${code}`);
+        const res = await api<Info>(`/api/rooms/${code}`);
         if (res.status === 404 || res.status === 400) {
           if (alive) setNotFound(true);
           return;
         }
-        const data = (await res.json()) as Info;
-        if (alive) setInfo(data);
+        if (alive && res.ok) setInfo(res.data);
       } catch {
         /* thử lại sau */
       }
@@ -140,12 +143,10 @@ function JoinForm({ code }: { code: string }) {
   }
 
   const join = () => {
-    if (!token || !name.trim()) return;
-    savePref('name', name.trim());
+    if (!token) return;
     savePref('token', token);
     const msg: ClientMessage = {
       type: 'join',
-      name: name.trim(),
       token,
       password: password || undefined,
       hostKey,
@@ -194,16 +195,9 @@ function JoinForm({ code }: { code: string }) {
               join();
             }}
           >
-            <label className="block text-sm font-semibold">
-              {S.join.name}
-              <input
-                value={name}
-                maxLength={NAME_MAX}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={S.join.namePlaceholder}
-                className="mt-1 min-h-[44px] w-full rounded-xl border border-black/10 bg-white px-3 font-normal dark:border-white/20 dark:bg-black/30"
-              />
-            </label>
+            <div className="text-center text-sm">
+              {S.auth.hello(useStore.getState().auth?.username ?? '')}
+            </div>
             <div>
               <div className="mb-1 text-sm font-semibold">{S.join.token}</div>
               <TokenPicker value={token} taken={taken} onChange={setToken} />
@@ -217,7 +211,7 @@ function JoinForm({ code }: { code: string }) {
                 className="min-h-[44px] w-full rounded-xl border border-black/10 bg-white px-3 dark:border-white/20 dark:bg-black/30"
               />
             )}
-            <Btn big type="submit" className="w-full text-lg" disabled={!token || !name.trim()}>
+            <Btn big type="submit" className="w-full text-lg" disabled={!token}>
               {S.join.submit}
             </Btn>
           </form>

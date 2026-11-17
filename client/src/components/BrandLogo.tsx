@@ -13,7 +13,8 @@ export function BrandLogo({
   id?: string;
   name: string;
   color: string;
-  size?: number;
+  /** px hoặc đơn vị CSS */
+  size?: number | string;
 }) {
   const [stage, setStage] = useState<'svg' | 'png' | 'text'>(id ? 'svg' : 'text');
   if (stage !== 'text' && id) {
@@ -40,7 +41,12 @@ export function BrandLogo({
   return (
     <span
       className="inline-flex items-center justify-center rounded-md font-bold text-white leading-none"
-      style={{ background: color, width: size, height: size, fontSize: size * 0.36 }}
+      style={{
+        background: color,
+        width: size,
+        height: size,
+        fontSize: typeof size === 'number' ? size * 0.36 : `calc(${size} * 0.36)`,
+      }}
       title={name}
     >
       {initials}

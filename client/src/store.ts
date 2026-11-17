@@ -11,27 +11,52 @@ import { playForEvents } from './sound';
 
 type ConnState = 'idle' | 'connecting' | 'open' | 'reconnecting' | 'closed';
 
-export interface Session {
-  playerId: string;
-  secret: string;
+export interface Auth {
+  token: string;
+  username: string;
 }
 
-const sessKey = (code: string) => `cotyphu:session:${code}`;
-export function loadSession(code: string): Session | null {
+const AUTH_KEY = 'cotyphu:auth';
+export function loadAuth(): Auth | null {
   try {
-    const raw = localStorage.getItem(sessKey(code));
-    return raw ? (JSON.parse(raw) as Session) : null;
+    const raw = localStorage.getItem(AUTH_KEY);
+    return raw ? (JSON.parse(raw) as Auth) : null;
   } catch {
     return null;
   }
 }
-function saveSession(code: string, s: Session | null) {
+export function saveAuth(a: Auth | null) {
   try {
-    if (s) localStorage.setItem(sessKey(code), JSON.stringify(s));
-    else localStorage.removeItem(sessKey(code));
+    if (a) localStorage.setItem(AUTH_KEY, JSON.stringify(a));
+    else localStorage.removeItem(AUTH_KEY);
   } catch {
     /* bỏ qua */
   }
+  useStore.setState({ auth: a });
+}
+
+/** fetch kèm token đăng nhập; 401 thì đăng xuất */
+export async function api<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<{ ok: boolean; status: number; data: T }> {
+  const a = useStore.getState().auth;
+  const res = await fetch(path, {
+    ...init,
+    headers: {
+      ...(init.body ? { 'content-type': 'application/json' } : {}),
+      ...(a ? { authorization: `Bearer ${a.token}` } : {}),
+      ...(init.headers ?? {}),
+    },
+  });
+  let data: T;
+  try {
+    data = (await res.json()) as T;
+  } catch {
+    data = {} as T;
+  }
+  if (res.status === 401 && a && !path.startsWith('/api/auth/')) saveAuth(null);
+  return { ok: res.ok, status: res.status, data };
 }
 
 export function savePref(key: string, v: string) {
@@ -56,6 +81,7 @@ export interface Toast {
 }
 
 interface Store {
+  auth: Auth | null;
   code: string | null;
   conn: ConnState;
   room: RoomView | null;
@@ -70,11 +96,13 @@ interface Store {
   /** Chênh lệch đồng hồ server - client */
   clockOffset: number;
   /** Tab đang mở ở panel */
-  tab: 'assets' | 'trade' | 'log' | 'chat';
+  tab: 'assets' | 'trade' | 'loan' | 'chat';
   sheetOpen: boolean;
   unreadChat: number;
   tradeDraft: TradeDraft | null;
   openSquare: number | null;
+  /** Server đã trả lời lệnh resume */
+  resumeChecked: boolean;
 
   connect(code: string): void;
   disconnect(): void;
@@ -115,6 +143,7 @@ export function setJoinIntent(m: ClientMessage | null) {
 }
 
 export const useStore = create<Store>((set, get) => ({
+  auth: loadAuth(),
   code: null,
   conn: 'idle',
   room: null,
@@ -126,17 +155,27 @@ export const useStore = create<Store>((set, get) => ({
   fatal: null,
   kicked: false,
   clockOffset: 0,
-  tab: 'log',
+  tab: 'assets',
   sheetOpen: false,
   unreadChat: 0,
   tradeDraft: null,
   openSquare: null,
+  resumeChecked: false,
 
   connect(code) {
     if (get().code === code && ws) return;
     get().disconnect();
     wantOpen = true;
-    set({ code, conn: 'connecting', room: null, me: null, fatal: null, kicked: false, chat: [] });
+    set({
+      code,
+      conn: 'connecting',
+      room: null,
+      me: null,
+      fatal: null,
+      kicked: false,
+      chat: [],
+      resumeChecked: false,
+    });
     open(code);
   },
 
@@ -180,14 +219,16 @@ export const useStore = create<Store>((set, get) => ({
 
 function open(code: string) {
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const sock = new WebSocket(`${proto}//${location.host}/ws/${code}`);
+  const token = useStore.getState().auth?.token ?? '';
+  const sock = new WebSocket(
+    `${proto}//${location.host}/ws/${code}?token=${encodeURIComponent(token)}`,
+  );
   ws = sock;
   sock.onopen = () => {
     retry = 0;
     useStore.setState({ conn: 'open' });
-    const sess = loadSession(code);
-    if (sess) sock.send(JSON.stringify({ type: 'resume', ...sess } satisfies ClientMessage));
-    else if (joinIntent) sock.send(JSON.stringify(joinIntent));
+    // Vào lại ghế của tài khoản (nếu có); không có thì gửi lệnh vào phòng nếu đã chọn
+    sock.send(JSON.stringify({ type: 'resume' } satisfies ClientMessage));
     const q = pending;
     pending = [];
     for (const m of q) sock.send(JSON.stringify(m));
@@ -228,9 +269,17 @@ function handle(code: string, m: ServerMessage) {
   const st = useStore.getState();
   switch (m.type) {
     case 'welcome':
-      if (m.playerId && m.secret) saveSession(code, { playerId: m.playerId, secret: m.secret });
+      if (!m.playerId && !m.spectator) {
+        // Chưa có ghế: nếu người dùng đã bấm "Vào phòng" thì gửi lệnh
+        useStore.setState({ me: null, resumeChecked: true });
+        if (joinIntent) useStore.getState().send(joinIntent);
+        return;
+      }
       joinIntent = null;
-      useStore.setState({ me: m.playerId, spectator: m.spectator });
+      useStore.setState({ me: m.playerId, spectator: m.spectator, resumeChecked: true });
+      return;
+    case 'rtc':
+      rtcHandler?.(m.from, m.data);
       return;
     case 'room': {
       const events = m.events ?? [];
@@ -242,10 +291,8 @@ function handle(code: string, m: ServerMessage) {
       });
       if (events.length) playForEvents(events, st.me);
       // Mình không còn trong phòng (bị xoá ở sảnh)
-      if (st.me && !m.room.players.some((p) => p.id === st.me)) {
-        saveSession(code, null);
-        useStore.setState({ me: null });
-      }
+      if (st.me && !m.room.players.some((p) => p.id === st.me)) useStore.setState({ me: null });
+      rtcRoomHandler?.(m.room);
       return;
     }
     case 'chat': {
@@ -257,17 +304,10 @@ function handle(code: string, m: ServerMessage) {
       return;
     }
     case 'error':
-      if (m.message === 'Phiên cũ không còn hợp lệ') {
-        saveSession(code, null);
-        useStore.setState({ me: null });
-        if (joinIntent) useStore.getState().send(joinIntent);
-        return;
-      }
       if (m.fatal) useStore.setState({ fatal: m.message });
       st.toast(m.message, 'error');
       return;
     case 'kicked':
-      saveSession(code, null);
       useStore.setState({ kicked: true, me: null });
       return;
     case 'pong':
@@ -275,8 +315,12 @@ function handle(code: string, m: ServerMessage) {
   }
 }
 
-export function forgetSession(code: string) {
-  saveSession(code, null);
+/** Bộ xử lý tín hiệu voice chat (voice.ts đăng ký) */
+let rtcHandler: ((from: string, data: Record<string, unknown>) => void) | null = null;
+let rtcRoomHandler: ((room: RoomView) => void) | null = null;
+export function setRtcHandlers(onSignal: typeof rtcHandler, onRoom: typeof rtcRoomHandler) {
+  rtcHandler = onSignal;
+  rtcRoomHandler = onRoom;
 }
 
 /** Giờ server hiện tại (ước lượng) */

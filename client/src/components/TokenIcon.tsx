@@ -1,7 +1,7 @@
 import type { TokenId } from '@cotyphu/shared';
 
 /** Quân cờ: SVG tự vẽ, không dùng hình của bản gốc */
-export function TokenIcon({ token, size = 28 }: { token: TokenId; size?: number }) {
+export function TokenIcon({ token, size = 28 }: { token: TokenId; size?: number | string }) {
   const p = { width: size, height: size, viewBox: '0 0 48 48', 'aria-hidden': true } as const;
   switch (token) {
     case 'xe-may':

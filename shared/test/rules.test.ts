@@ -624,3 +624,102 @@ describe('Hũ tiền & giới hạn thời gian', () => {
     expect(s.winner).toBe('p3');
   });
 });
+
+describe('Vay tiền', () => {
+  it('vay ngân hàng: lãi 10%, tối đa 500 tr dư nợ, đến hạn sau 5 lượt thì tự thu', () => {
+    let s = mkGame();
+    ({ state: s } = act(s, 'p1', { type: 'bankLoan', amount: 300 }));
+    expect(pl(s, 'p1').cash).toBe(1800);
+    expect(s.loans[0]).toMatchObject({ lender: 'bank', principal: 300, repay: 330, turnsLeft: 5 });
+    expect(() => act(s, 'p1', { type: 'bankLoan', amount: 250 })).toThrow('tối đa 200');
+    expect(() => act(s, 'p2', { type: 'bankLoan', amount: 50 })).toThrow('lượt');
+    // Qua 5 lượt của p1
+    for (let k = 0; k < 5; k++) {
+      ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 2]));
+      if (s.phase.kind === 'awaitBuy') ({ state: s } = act(s, 'p1', { type: 'decline' }));
+      if (s.phase.kind === 'auction') ({ state: s } = act(s, 'system', { type: 'auctionClose' }));
+      ({ state: s } = act(s, 'p1', { type: 'endTurn' }));
+      ({ state: s } = act(s, 'p2', { type: 'roll' }, [1, 2]));
+      if (s.phase.kind === 'awaitBuy') ({ state: s } = act(s, 'p2', { type: 'decline' }));
+      if (s.phase.kind === 'auction') ({ state: s } = act(s, 'system', { type: 'auctionClose' }));
+      const before = pl(s, 'p1').cash;
+      ({ state: s } = act(s, 'p2', { type: 'endTurn' }));
+      if (k < 4) expect(s.loans).toHaveLength(1);
+      else {
+        expect(s.loans).toHaveLength(0);
+        expect(pl(s, 'p1').cash).toBe(before - 330);
+      }
+    }
+  });
+
+  it('trả nợ sớm', () => {
+    let s = mkGame();
+    ({ state: s } = act(s, 'p1', { type: 'bankLoan', amount: 100 }));
+    ({ state: s } = act(s, 'p1', { type: 'repayLoan', id: s.loans[0]!.id }));
+    expect(pl(s, 'p1').cash).toBe(1490);
+    expect(s.loans).toHaveLength(0);
+  });
+
+  it('vay ngân hàng khi đang gom tiền', () => {
+    let s = mkGame();
+    pl(s, 'p1').cash = 50;
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 3])); // thuế 200
+    expect(s.phase.kind).toBe('raiseFunds');
+    ({ state: s } = act(s, 'p1', { type: 'bankLoan', amount: 200 }));
+    ({ state: s } = act(s, 'p1', { type: 'payDebt' }));
+    expect(pl(s, 'p1').cash).toBe(50);
+    expect(s.phase.kind).toBe('awaitEnd');
+  });
+
+  it('vay người chơi: đề nghị, chấp nhận, đến hạn tự trả cho người cho vay', () => {
+    let s = mkGame();
+    ({ state: s } = act(s, 'p1', {
+      type: 'proposeLoan',
+      to: 'p2',
+      lend: false,
+      amount: 200,
+      repay: 250,
+      turns: 1,
+    }));
+    expect(s.loanOffers[0]).toMatchObject({ lender: 'p2', borrower: 'p1' });
+    ({ state: s } = act(s, 'p2', { type: 'acceptLoan', id: s.loanOffers[0]!.id }));
+    expect(pl(s, 'p1').cash).toBe(1700);
+    expect(pl(s, 'p2').cash).toBe(1300);
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 2]));
+    ({ state: s } = act(s, 'p1', { type: 'decline' }));
+    ({ state: s } = act(s, 'system', { type: 'auctionClose' }));
+    ({ state: s } = act(s, 'p1', { type: 'endTurn' }));
+    ({ state: s } = act(s, 'p2', { type: 'roll' }, [1, 2]));
+    ({ state: s } = act(s, 'p2', { type: 'decline' }));
+    ({ state: s } = act(s, 'system', { type: 'auctionClose' }));
+    ({ state: s } = act(s, 'p2', { type: 'endTurn' })); // lượt p1 → đến hạn
+    expect(s.loans).toHaveLength(0);
+    expect(pl(s, 'p1').cash).toBe(1700 - 250);
+    expect(pl(s, 'p2').cash).toBe(1300 + 250);
+  });
+
+  it('đề nghị vay bị huỷ khi người cho vay không còn đủ tiền', () => {
+    let s = mkGame();
+    ({ state: s } = act(s, 'p2', {
+      type: 'proposeLoan',
+      to: 'p1',
+      lend: true,
+      amount: 1500,
+      repay: 1600,
+      turns: 3,
+    }));
+    pl(s, 'p2').cash = 100;
+    const r = act(s, 'p1', { type: 'acceptLoan', id: s.loanOffers[0]!.id });
+    expect(r.events).toContainEqual(
+      expect.objectContaining({ t: 'loanCancelled', reason: 'invalid' }),
+    );
+    expect(r.state.loans).toHaveLength(0);
+  });
+
+  it('khoản vay tính vào tổng tài sản', () => {
+    let s = mkGame(2, { timeLimitMinutes: 30 });
+    ({ state: s } = act(s, 'p1', { type: 'bankLoan', amount: 500 }));
+    ({ state: s } = act(s, 'system', { type: 'timeUp' }));
+    expect(s.winner).toBe('p2');
+  });
+});

@@ -1,10 +1,13 @@
 import { motion } from 'framer-motion';
+import { useEffect, useRef } from 'react';
 import { formatMoney, square } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
 import { cx, fmtClock, nameOf, playerColor, useGame, useNow } from '../lib';
-import { TokenIcon } from './TokenIcon';
+import { ActionBar } from './ActionBar';
+import { Avatar } from './Avatar';
 
+/** Giữa bàn cờ: xúc xắc, lượt + đồng hồ, nút hành động, nhật ký */
 export function CenterInfo() {
   const { room, game } = useGame();
   const events = useStore((s) => s.events);
@@ -16,72 +19,79 @@ export function CenterInfo() {
   const left = room.deadline ? room.deadline - now : null;
   const ph = game.phase;
   const actorId = ph.kind === 'raiseFunds' ? ph.debtor : cur.id;
+  const actor = game.players.find((p) => p.id === actorId) ?? cur;
 
   return (
-    <div className="relative flex h-full flex-col items-center justify-center gap-[3%] p-[4%] text-center">
+    <div className="relative flex h-full flex-col items-center gap-[1.6cqw] p-[2.2cqw]">
       <div
-        className="font-extrabold leading-none tracking-tight text-son drop-shadow-sm dark:text-nghe"
-        style={{ fontSize: 'clamp(14px, 4.4vmin, 40px)' }}
+        className="font-extrabold leading-none tracking-tight text-son dark:text-nghe"
+        style={{ fontSize: '2.6cqw' }}
       >
         Cờ Tỷ Phú
-        <span className="ml-2 rounded-md bg-nghe px-2 text-son-700" style={{ fontSize: '0.8em' }}>
+        <span
+          className="ml-1.5 rounded-md bg-nghe px-1.5 text-son-700"
+          style={{ fontSize: '0.85em' }}
+        >
           CLB30
         </span>
       </div>
 
-      <div className="flex gap-[6%]" style={{ width: 'clamp(70px, 22vmin, 180px)' }}>
-        {dice.map((d, i) => (
-          <motion.div
-            key={`${events.id}-${i}`}
-            initial={rolledNow ? { rotate: -360, scale: 0.4, y: -20 } : false}
-            animate={{ rotate: 0, scale: 1, y: 0 }}
-            transition={{
-              duration: 0.55,
-              delay: i * 0.05,
-              type: 'spring',
-              stiffness: 180,
-              damping: 14,
-            }}
-            className="flex-1"
-          >
-            <Die value={d} />
-          </motion.div>
-        ))}
+      <div className="flex w-full items-center justify-center gap-[2cqw]">
+        <div className="flex gap-[1cqw]" style={{ width: '14cqw' }}>
+          {dice.map((d, i) => (
+            <motion.div
+              key={`${events.id}-${i}`}
+              initial={rolledNow ? { rotate: -360, scale: 0.4, y: -20 } : false}
+              animate={{ rotate: 0, scale: 1, y: 0 }}
+              transition={{
+                duration: 0.55,
+                delay: i * 0.05,
+                type: 'spring',
+                stiffness: 180,
+                damping: 14,
+              }}
+              className="flex-1"
+            >
+              <Die value={d} />
+            </motion.div>
+          ))}
+        </div>
+        {ph.kind !== 'gameOver' && (
+          <div className="flex min-w-0 items-center gap-[1cqw] rounded-full bg-white/85 px-[1.4cqw] py-[0.6cqw] shadow-sm dark:bg-black/40">
+            <Avatar token={actor.token} color={playerColor(room, actorId)} size="4cqw" />
+            <div className="min-w-0 leading-tight">
+              <div className="truncate font-bold" style={{ fontSize: '1.7cqw' }}>
+                {ph.kind === 'auction'
+                  ? `${S.auction.title}: ${square(game.auction!.pos).short ?? square(game.auction!.pos).name}`
+                  : ph.kind === 'raiseFunds'
+                    ? S.raise.other(nameOf(room, ph.debtor))
+                    : S.game.turnOf(cur.name)}
+              </div>
+              {left !== null && (
+                <div
+                  className={cx(
+                    'font-bold tabular-nums',
+                    left < 10_000 ? 'text-son' : 'text-ngoc-600',
+                  )}
+                  style={{ fontSize: '1.6cqw' }}
+                >
+                  ⏱ {fmtClock(left)}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
-      {ph.kind !== 'gameOver' && (
-        <div
-          className="flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 shadow-sm dark:bg-black/40"
-          style={{ fontSize: 'clamp(10px, 2vmin, 16px)' }}
-        >
-          <span
-            className="inline-block h-3 w-3 rounded-full"
-            style={{ background: playerColor(room, actorId) }}
-          />
-          <TokenIcon
-            token={game.players.find((p) => p.id === actorId)?.token ?? cur.token}
-            size={20}
-          />
-          <span className="font-semibold">
-            {ph.kind === 'auction'
-              ? `${S.auction.title}: ${square(game.auction!.pos).name}`
-              : ph.kind === 'raiseFunds'
-                ? S.raise.other(nameOf(room, ph.debtor))
-                : S.game.turnOf(cur.name)}
-          </span>
-          {left !== null && (
-            <span
-              className={cx('tabular-nums font-bold', left < 10_000 ? 'text-son' : 'text-ngoc-600')}
-            >
-              ⏱ {fmtClock(left)}
-            </span>
-          )}
-        </div>
-      )}
+      <div className="w-full max-w-[60cqw]">
+        <ActionBar />
+      </div>
+
+      <LogFeed />
 
       <div
-        className="flex flex-wrap justify-center gap-x-3 gap-y-0.5 text-gray-600 dark:text-gray-300"
-        style={{ fontSize: 'clamp(8px, 1.5vmin, 13px)' }}
+        className="flex flex-wrap justify-center gap-x-3 text-gray-600 dark:text-gray-300"
+        style={{ fontSize: '1.25cqw' }}
       >
         <span>
           🏠 {game.bank.houses}/32 · 🏨 {game.bank.hotels}/12
@@ -96,6 +106,45 @@ export function CenterInfo() {
             ⌛ {S.game.gameTimeLeft} {fmtClock(room.gameEndsAt - now)}
           </span>
         )}
+      </div>
+    </div>
+  );
+}
+
+/** Nhật ký ván ở giữa bàn cờ */
+function LogFeed() {
+  const { room } = useGame();
+  const box = useRef<HTMLDivElement>(null);
+  const log = room?.log ?? [];
+  useEffect(() => {
+    const el = box.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [log.length]);
+  return (
+    <div className="flex min-h-0 w-full flex-1 flex-col rounded-xl bg-white/75 shadow-inner dark:bg-black/35">
+      <div
+        className="px-[1.4cqw] pt-[0.8cqw] font-bold text-ngoc-700 dark:text-ngoc-100"
+        style={{ fontSize: '1.45cqw' }}
+      >
+        📜 {S.log}
+      </div>
+      <div
+        ref={box}
+        className="min-h-0 flex-1 space-y-[0.3cqw] overflow-y-auto px-[1.4cqw] pb-[0.8cqw]"
+        style={{ fontSize: 'max(10px, 1.45cqw)' }}
+      >
+        {log.slice(-60).map((l) => (
+          <div
+            key={l.id}
+            className={cx(
+              l.text.startsWith('—')
+                ? 'mt-1 font-semibold text-ngoc-700 dark:text-ngoc-100'
+                : 'text-gray-800 dark:text-gray-200',
+            )}
+          >
+            {l.text}
+          </div>
+        ))}
       </div>
     </div>
   );

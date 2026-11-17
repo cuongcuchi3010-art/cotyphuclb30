@@ -1,33 +1,48 @@
-import { useState } from 'react';
-import { ROOM_CODE_LEN } from '@cotyphu/shared';
+import { useEffect, useState } from 'react';
+import { ROOM_CODE_LEN, type Profile } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { navigate } from '../router';
+import { api, saveAuth, useStore } from '../store';
 import { Btn, Panel } from './ui';
 import { TokenIcon } from './TokenIcon';
 
 export function Home() {
+  const auth = useStore((s) => s.auth);
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [rooms, setRooms] = useState<Profile['rooms']>([]);
+
+  useEffect(() => {
+    void api<Profile>('/api/me').then((r) => {
+      if (r.ok) setRooms(r.data.rooms ?? []);
+    });
+  }, []);
 
   const create = async () => {
     setBusy(true);
     setErr('');
     try {
-      const res = await fetch('/api/rooms', { method: 'POST' });
-      const data = (await res.json()) as { code?: string; hostKey?: string; error?: string };
-      if (!res.ok || !data.code) throw new Error(data.error ?? 'Lỗi');
+      const r = await api<{ code?: string; hostKey?: string; error?: string }>('/api/rooms', {
+        method: 'POST',
+      });
+      if (!r.ok || !r.data.code) throw new Error(r.data.error ?? 'Lỗi');
       try {
-        sessionStorage.setItem(`cotyphu:hostKey:${data.code}`, data.hostKey ?? '');
+        sessionStorage.setItem(`cotyphu:hostKey:${r.data.code}`, r.data.hostKey ?? '');
       } catch {
         /* bỏ qua */
       }
-      navigate(`/r/${data.code}`);
+      navigate(`/r/${r.data.code}`);
     } catch (e) {
       setErr((e as Error).message || 'Không tạo được phòng');
     } finally {
       setBusy(false);
     }
+  };
+
+  const logout = async () => {
+    await api('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    saveAuth(null);
   };
 
   const clean = (v: string) =>
@@ -54,6 +69,17 @@ export function Home() {
           Cờ Tỷ Phú <span className="rounded-lg bg-nghe px-2 text-son-700">CLB30</span>
         </h1>
         <p className="mt-2 text-gray-600 dark:text-gray-300">{S.tagline}</p>
+      </div>
+
+      <div className="flex items-center justify-between rounded-xl bg-white/70 px-4 py-2 text-sm shadow dark:bg-white/10">
+        <span>{S.auth.hello(auth?.username ?? '')}</span>
+        <button
+          type="button"
+          className="font-semibold text-son underline"
+          onClick={() => void logout()}
+        >
+          {S.auth.logout}
+        </button>
       </div>
 
       <Panel className="space-y-4 p-5">
@@ -89,6 +115,28 @@ export function Home() {
         </form>
         {err && <div className="text-center text-sm text-son">{err}</div>}
       </Panel>
+
+      {rooms.length > 0 && (
+        <Panel className="p-4">
+          <div className="mb-2 text-sm font-bold">{S.home.recent}</div>
+          <div className="space-y-1.5">
+            {rooms.map((r) => (
+              <div
+                key={r.code}
+                className="flex items-center justify-between rounded-xl bg-black/5 px-3 py-2 dark:bg-white/5"
+              >
+                <span className="font-mono text-lg tracking-widest">{r.code}</span>
+                <span className="text-xs text-gray-500">
+                  {new Date(r.at).toLocaleString('vi-VN')}
+                </span>
+                <Btn variant="secondary" onClick={() => navigate(`/r/${r.code}`)}>
+                  {S.home.rejoin}
+                </Btn>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      )}
       <p className="text-center text-sm text-gray-500">{S.home.how}</p>
     </div>
   );

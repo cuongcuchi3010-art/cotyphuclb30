@@ -12,16 +12,19 @@ import {
 class FakeClient implements Conn {
   playerId: string | null = null;
   spectator = false;
+  voice = false;
+  account: { id: string; name: string } | null;
   inbox: ServerMessage[] = [];
   open = true;
-  secret: string | null = null;
   constructor(
     public id: string,
     private env: FakeEnv,
-  ) {}
+    name?: string,
+  ) {
+    this.account = name ? { id: name.toLowerCase(), name } : null;
+  }
   send(msg: ServerMessage) {
     this.inbox.push(msg);
-    if (msg.type === 'welcome') this.secret = msg.secret;
   }
   close() {
     if (!this.open) return;
@@ -67,8 +70,8 @@ class FakeEnv implements RoomHost {
   destroy = () => {
     this.destroyed = true;
   };
-  connect(): FakeClient {
-    const c = new FakeClient(`c${this.clients.length}`, this);
+  connect(name?: string): FakeClient {
+    const c = new FakeClient(`c${this.clients.length}`, this, name);
     this.clients.push(c);
     this.core.onOpen(c);
     return c;
@@ -95,12 +98,12 @@ class FakeEnv implements RoomHost {
 
 function setup3() {
   const env = new FakeEnv();
-  const a = env.connect();
-  a.msg({ type: 'join', name: 'Lan', token: 'xe-may', hostKey: 'hostkey' });
-  const b = env.connect();
-  b.msg({ type: 'join', name: 'Minh', token: 'non-la' });
-  const c = env.connect();
-  c.msg({ type: 'join', name: 'Hùng', token: 'banh-mi' });
+  const a = env.connect('Lan');
+  a.msg({ type: 'join', token: 'xe-may', hostKey: 'hostkey' });
+  const b = env.connect('Minh');
+  b.msg({ type: 'join', token: 'non-la' });
+  const c = env.connect('Hùng');
+  c.msg({ type: 'join', token: 'banh-mi' });
   return { env, a, b, c };
 }
 
@@ -110,28 +113,31 @@ describe('Phòng chơi', () => {
     expect(a.room.players.map((p) => p.name)).toEqual(['Lan', 'Minh', 'Hùng']);
     expect(a.room.hostId).toBe(a.playerId);
     expect(c.room.players.every((p) => p.online)).toBe(true);
-    expect(b.secret).toBeTruthy();
+    expect(b.playerId).toBeTruthy();
   });
 
   it('không trùng quân cờ, validate sai schema', () => {
     const { env } = setup3();
-    const d = env.connect();
-    d.msg({ type: 'join', name: 'Tú', token: 'xe-may' });
+    const d = env.connect('Tú');
+    d.msg({ type: 'join', token: 'xe-may' });
     expect(d.lastError).toMatch('Quân cờ');
-    env.core.onMessage(d, '{"type":"join","name":"","token":"xe-may"}');
-    expect(d.lastError).toMatch('biệt danh');
+    env.core.onMessage(d, '{"type":"join","token":"khong-co"}');
+    expect(d.lastError).toBeTruthy();
+    const anon = env.connect();
+    anon.msg({ type: 'join', token: 'hoa-sen' });
+    expect(anon.lastError).toMatch('đăng nhập');
     env.core.onMessage(d, 'not json');
     expect(d.lastError).toMatch('không hợp lệ');
   });
 
   it('chỉ host được đổi luật và bắt đầu; cần ≥ 2 người', () => {
     const env = new FakeEnv();
-    const a = env.connect();
-    a.msg({ type: 'join', name: 'Lan', token: 'xe-may', hostKey: 'hostkey' });
+    const a = env.connect('Lan');
+    a.msg({ type: 'join', token: 'xe-may', hostKey: 'hostkey' });
     a.msg({ type: 'start' });
     expect(a.lastError).toMatch('ít nhất 2');
-    const b = env.connect();
-    b.msg({ type: 'join', name: 'Minh', token: 'non-la' });
+    const b = env.connect('Minh');
+    b.msg({ type: 'join', token: 'non-la' });
     b.msg({ type: 'start' });
     expect(b.lastError).toMatch('chủ phòng');
     a.msg({
@@ -152,13 +158,13 @@ describe('Phòng chơi', () => {
 
   it('mật khẩu phòng', () => {
     const env = new FakeEnv();
-    const a = env.connect();
-    a.msg({ type: 'join', name: 'Lan', token: 'xe-may', hostKey: 'hostkey' });
+    const a = env.connect('Lan');
+    a.msg({ type: 'join', token: 'xe-may', hostKey: 'hostkey' });
     a.msg({ type: 'setPassword', password: 'bimat' });
-    const b = env.connect();
-    b.msg({ type: 'join', name: 'Minh', token: 'non-la', password: 'sai' });
+    const b = env.connect('Minh');
+    b.msg({ type: 'join', token: 'non-la', password: 'sai' });
     expect(b.lastError).toMatch('Sai mật khẩu');
-    b.msg({ type: 'join', name: 'Minh', token: 'non-la', password: 'bimat' });
+    b.msg({ type: 'join', token: 'non-la', password: 'bimat' });
     expect(b.playerId).toBeTruthy();
   });
 
@@ -198,27 +204,28 @@ describe('Phòng chơi', () => {
     expect(a.room.game!.turn).toBeGreaterThan(turn0);
   });
 
-  it('mất kết nối: tự chơi thay, quay lại đúng ghế bằng secret', () => {
+  it('mất kết nối: tự chơi thay, đăng nhập thiết bị khác vào lại đúng ghế', () => {
     const { env, a, b, c } = setup3();
     a.msg({ type: 'start' });
     const g = a.room.game!;
     const cur = [a, b, c].find((x) => x.playerId === g.players[g.current]!.id)!;
     const watcher = [a, b, c].find((x) => x !== cur)!;
-    const { playerId, secret } = cur;
+    const { playerId } = cur;
+    const accName = cur.account!.name;
     cur.close();
     expect(watcher.room.players.find((p) => p.id === playerId)!.online).toBe(false);
     env.advance(4_000); // tự tung sau 3 giây
     expect(watcher.room.game!.lastDice).not.toBeNull();
     env.advance(20_000);
     // Vào lại
-    const again = env.connect();
-    again.msg({ type: 'resume', playerId: playerId!, secret: secret! });
+    const again = env.connect(accName);
+    again.msg({ type: 'resume' });
     expect(again.playerId).toBe(playerId);
     expect(watcher.room.players.find((p) => p.id === playerId)!.online).toBe(true);
-    // Secret sai
-    const bad = env.connect();
-    bad.msg({ type: 'resume', playerId: playerId!, secret: 'xxx' });
-    expect(bad.lastError).toMatch('không còn hợp lệ');
+    // Tài khoản khác không lấy được ghế
+    const other = env.connect('Người lạ');
+    other.msg({ type: 'resume' });
+    expect(other.playerId).toBeNull();
   });
 
   it('mất kết nối quá 3 phút: host chọn thay bằng bot hoặc cho phá sản', () => {
@@ -275,8 +282,8 @@ describe('Phòng chơi', () => {
   it('khán giả xem được, không thao tác được', () => {
     const { env, a } = setup3();
     a.msg({ type: 'start' });
-    const s = env.connect();
-    s.msg({ type: 'join', name: 'Tú', token: 'hoa-sen' });
+    const s = env.connect('Tú');
+    s.msg({ type: 'join', token: 'hoa-sen' });
     expect(s.lastError).toMatch('vào xem');
     s.msg({ type: 'spectate' });
     expect(s.room.status).toBe('playing');
@@ -302,5 +309,21 @@ describe('Phòng chơi', () => {
     const { env } = setup3();
     env.advance(2 * 60 * 60_000 + 1000);
     expect(env.destroyed).toBe(true);
+  });
+
+  it('voice chat: chuyển tín hiệu WebRTC giữa người đang bật voice', () => {
+    const { a, b, c } = setup3();
+    a.msg({ type: 'voice', on: true });
+    b.msg({ type: 'voice', on: true });
+    expect(c.room.players.filter((p) => p.voice)).toHaveLength(2);
+    a.msg({ type: 'rtc', to: b.playerId!, data: { sdp: 'offer' } });
+    const got = b.inbox.find((m) => m.type === 'rtc');
+    expect(got && got.type === 'rtc' && got.from).toBe(a.playerId);
+    // c chưa bật voice: không nhận
+    a.msg({ type: 'rtc', to: c.playerId!, data: { sdp: 'offer' } });
+    expect(c.inbox.some((m) => m.type === 'rtc')).toBe(false);
+    // Tín hiệu rtc không bị giới hạn tốc độ
+    for (let i = 0; i < 60; i++) a.msg({ type: 'rtc', to: b.playerId!, data: { candidate: i } });
+    expect(b.inbox.filter((m) => m.type === 'rtc').length).toBe(61);
   });
 });

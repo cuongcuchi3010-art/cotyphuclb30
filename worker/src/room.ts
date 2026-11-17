@@ -41,6 +41,10 @@ export interface Conn {
   /** null = khán giả / chưa vào */
   playerId: string | null;
   spectator: boolean;
+  /** Tài khoản đã đăng nhập của kết nối này */
+  account: { id: string; name: string } | null;
+  /** Đang bật voice chat */
+  voice: boolean;
   send(msg: ServerMessage): void;
   close(code?: number, reason?: string): void;
 }
@@ -59,13 +63,16 @@ export interface RoomHost {
   attach(conn: Conn): void;
   /** Xoá phòng hoàn toàn */
   destroy(): void;
+  /** Báo cho tài khoản biết đang ở phòng này (để vào lại từ thiết bị khác) */
+  onSeat?(accountId: string, code: string): void;
 }
 
 export interface SeatRecord {
   id: string;
   name: string;
   token: TokenId;
-  secret: string;
+  /** Tài khoản sở hữu ghế */
+  accountId: string;
   isBot: boolean;
   offlineSince: number | null;
   awaitingHostDecision: boolean;
@@ -158,10 +165,6 @@ export class RoomCore {
   }
 
   onMessage(conn: Conn, raw: string): void {
-    if (!this.rateOk(conn)) {
-      conn.send({ type: 'error', message: 'Bạn thao tác quá nhanh, chậm lại chút nhé' });
-      return;
-    }
     let data: unknown;
     try {
       data = JSON.parse(raw);
@@ -169,8 +172,14 @@ export class RoomCore {
       conn.send({ type: 'error', message: 'Tin nhắn không hợp lệ' });
       return;
     }
+    const isRtc = (data as { type?: unknown } | null)?.type === 'rtc';
+    if (!isRtc && !this.rateOk(conn)) {
+      conn.send({ type: 'error', message: 'Bạn thao tác quá nhanh, chậm lại chút nhé' });
+      return;
+    }
     const parsed = clientMessageSchema.safeParse(data);
     if (!parsed.success) {
+      if (isRtc) return;
       conn.send({
         type: 'error',
         message: parsed.error.issues[0]?.message ?? 'Tin nhắn không hợp lệ',
@@ -231,20 +240,24 @@ export class RoomCore {
         conn.send({ type: 'pong' });
         return;
       case 'join': {
+        if (!conn.account) throw new UserError('Bạn cần đăng nhập');
         if (conn.playerId) throw new UserError('Bạn đã ở trong phòng');
+        const existing = snap.seats.find((x) => x.accountId === conn.account!.id);
+        if (existing) {
+          this.resumeSeat(conn, existing);
+          return;
+        }
         if (snap.status !== 'lobby') throw new UserError('Ván đã bắt đầu — bạn có thể vào xem');
         const isHostKey = m.hostKey !== undefined && m.hostKey === snap.hostKey;
         if (!isHostKey) this.checkPassword(m.password);
         if (snap.seats.length >= MAX_PLAYERS) throw new UserError('Phòng đã đủ 6 người');
         if (snap.seats.some((s) => s.token === m.token))
           throw new UserError('Quân cờ này đã có người chọn');
-        if (snap.seats.some((s) => s.name.toLowerCase() === m.name.toLowerCase()))
-          throw new UserError('Biệt danh đã có người dùng');
         const seat: SeatRecord = {
           id: this.host.randomId(6),
-          name: m.name,
+          name: conn.account.name,
           token: m.token,
-          secret: this.host.randomId(18),
+          accountId: conn.account.id,
           isBot: false,
           offlineSince: null,
           awaitingHostDecision: false,
@@ -252,19 +265,36 @@ export class RoomCore {
         snap.seats.push(seat);
         if (isHostKey || !snap.hostId) snap.hostId = seat.id;
         this.bindConn(conn, seat.id);
-        conn.send({ type: 'welcome', playerId: seat.id, secret: seat.secret, spectator: false });
+        conn.send({ type: 'welcome', playerId: seat.id, spectator: false });
+        this.host.onSeat?.(seat.accountId, snap.code);
         this.addLog(`${seat.name} vào phòng`);
         this.afterChange([]);
         return;
       }
       case 'resume': {
-        const seat = this.seat(m.playerId);
-        if (!seat || seat.secret !== m.secret) throw new UserError('Phiên cũ không còn hợp lệ');
-        this.bindConn(conn, seat.id);
-        seat.offlineSince = null;
-        seat.awaitingHostDecision = false;
-        conn.send({ type: 'welcome', playerId: seat.id, secret: seat.secret, spectator: false });
-        this.afterChange([]);
+        const seat = conn.account
+          ? snap.seats.find((x) => x.accountId === conn.account!.id)
+          : undefined;
+        if (!seat) {
+          conn.send({ type: 'welcome', playerId: null, spectator: false });
+          return;
+        }
+        this.resumeSeat(conn, seat);
+        return;
+      }
+      case 'voice': {
+        this.requireSeat(conn);
+        conn.voice = m.on;
+        this.host.attach(conn);
+        this.broadcast();
+        return;
+      }
+      case 'rtc': {
+        if (!conn.playerId || !conn.voice) return;
+        for (const c of this.host.conns()) {
+          if (c.playerId === m.to && c.voice)
+            c.send({ type: 'rtc', from: conn.playerId, data: m.data });
+        }
         return;
       }
       case 'spectate': {
@@ -272,22 +302,17 @@ export class RoomCore {
         conn.spectator = true;
         conn.playerId = null;
         this.host.attach(conn);
-        conn.send({ type: 'welcome', playerId: null, secret: null, spectator: true });
+        conn.send({ type: 'welcome', playerId: null, spectator: true });
         this.broadcast();
         return;
       }
       case 'setProfile': {
         const seat = this.requireSeat(conn);
         if (snap.status !== 'lobby') throw new UserError('Chỉ đổi được ở sảnh');
-        if (m.token && m.token !== seat.token) {
+        if (m.token !== seat.token) {
           if (snap.seats.some((s) => s.token === m.token))
             throw new UserError('Quân cờ này đã có người chọn');
           seat.token = m.token;
-        }
-        if (m.name && m.name !== seat.name) {
-          if (snap.seats.some((s) => s !== seat && s.name.toLowerCase() === m.name!.toLowerCase()))
-            throw new UserError('Biệt danh đã có người dùng');
-          seat.name = m.name;
         }
         this.afterChange([]);
         return;
@@ -403,6 +428,18 @@ export class RoomCore {
         return;
       }
     }
+  }
+
+  private resumeSeat(conn: Conn, seat: SeatRecord): void {
+    this.bindConn(conn, seat.id);
+    seat.offlineSince = null;
+    seat.awaitingHostDecision = false;
+    if (seat.isBot && this.snap.status === 'playing') {
+      seat.isBot = false;
+      this.addLog(`${seat.name} quay lại, thay cho bot`);
+    }
+    conn.send({ type: 'welcome', playerId: seat.id, spectator: false });
+    this.afterChange([]);
   }
 
   private bindConn(conn: Conn, playerId: string): void {
@@ -633,6 +670,7 @@ export class RoomCore {
         isBot: s.isBot,
         offlineSince: s.offlineSince,
         awaitingHostDecision: s.awaitingHostDecision,
+        voice: this.host.conns().some((c) => c.playerId === s.id && c.voice),
       })),
       spectators: this.host.conns().filter((c) => c.spectator).length,
       rules: snap.rules,

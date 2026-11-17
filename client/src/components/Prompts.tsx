@@ -7,6 +7,7 @@ import {
   ownable,
   square,
   totalOwed,
+  type LoanOffer,
   type Trade,
   type TradeSide,
 } from '@cotyphu/shared';
@@ -24,6 +25,7 @@ export function Prompts() {
       <RaiseFundsBanner />
       <IncomingTrade />
       <MortgageChoice />
+      <IncomingLoan />
       <HostDisconnect />
     </>
   );
@@ -388,6 +390,67 @@ function HostDisconnect() {
           {S.disconnect.bankrupt}
         </Btn>
       </div>
+    </Modal>
+  );
+}
+
+export function LoanActions({ o, onDone }: { o: LoanOffer; onDone?: () => void }) {
+  const { me } = useGame();
+  const act = useStore((s) => s.act);
+  if (o.to === me)
+    return (
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <Btn
+          onClick={() => {
+            act({ type: 'acceptLoan', id: o.id });
+            onDone?.();
+          }}
+        >
+          {S.loan.accept}
+        </Btn>
+        <Btn
+          variant="ghost"
+          onClick={() => {
+            act({ type: 'rejectLoan', id: o.id });
+            onDone?.();
+          }}
+        >
+          {S.loan.reject}
+        </Btn>
+      </div>
+    );
+  if (o.from === me)
+    return (
+      <Btn
+        variant="ghost"
+        className="mt-1 !min-h-[30px]"
+        onClick={() => act({ type: 'cancelLoan', id: o.id })}
+      >
+        {S.loan.cancel}
+      </Btn>
+    );
+  return null;
+}
+
+function IncomingLoan() {
+  const { room, game, me } = useGame();
+  const [seen, setSeen] = useState<string[]>([]);
+  const o = game?.loanOffers?.find((x) => x.to === me && !seen.includes(x.id));
+  if (!o || !room) return null;
+  const close = () => setSeen((s) => [...s, o.id]);
+  return (
+    <Modal open onClose={close}>
+      <div className="mb-3 text-center text-lg font-bold">
+        💰{' '}
+        {o.lender === o.from
+          ? S.loan.incomingLend(nameOf(room, o.from))
+          : S.loan.incomingBorrow(nameOf(room, o.from))}
+      </div>
+      <div className="rounded-xl bg-black/5 p-3 text-center dark:bg-white/10">
+        {S.loan.terms(formatMoney(o.amount), formatMoney(o.repay), o.turns)}
+        <div className="mt-1 text-xs text-gray-500">{S.loan.rentHint}</div>
+      </div>
+      <LoanActions o={o} onDone={close} />
     </Modal>
   );
 }

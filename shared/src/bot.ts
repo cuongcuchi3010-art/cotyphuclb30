@@ -29,6 +29,8 @@ export function botDecision(s: GameState, botId: PlayerId): Plan | null {
   // Từ chối mọi đề nghị giao dịch gửi tới bot
   const incoming = s.trades.find((t) => t.to === botId);
   if (incoming) return { by: botId, action: { type: 'rejectTrade', id: incoming.id } };
+  const loanOffer = s.loanOffers?.find((o) => o.to === botId);
+  if (loanOffer) return { by: botId, action: { type: 'rejectLoan', id: loanOffer.id } };
   // Giữ thế chấp các ô vừa nhận
   const choice = s.mortgageChoices.find((m) => m.playerId === botId);
   if (choice && ph.kind !== 'auction')
@@ -103,8 +105,27 @@ export function candidateActions(s: GameState, id: PlayerId, rng: Rng): PlayerAc
   }
   for (const m of s.mortgageChoices.filter((x) => x.playerId === id))
     out.push({ type: 'mortgageChoice', pos: m.pos, redeem: rng.int(0, 1) === 1 });
+  out.push({ type: 'bankLoan', amount: [10, 50, 200][rng.int(0, 2)]! });
+  for (const l of s.loans) if (l.borrower === id) out.push({ type: 'repayLoan', id: l.id });
+  for (const o of s.loanOffers) {
+    if (o.to === id) out.push({ type: 'acceptLoan', id: o.id }, { type: 'rejectLoan', id: o.id });
+  }
   for (const t of s.trades) {
     if (t.to === id) out.push({ type: 'acceptTrade', id: t.id }, { type: 'rejectTrade', id: t.id });
+  }
+  {
+    const o = s.players.filter((p) => !p.bankrupt && p.id !== id);
+    if (o.length) {
+      const amount = rng.int(1, 10) * 10;
+      out.push({
+        type: 'proposeLoan',
+        to: o[rng.int(0, o.length - 1)]!.id,
+        lend: rng.int(0, 1) === 1,
+        amount,
+        repay: amount + rng.int(0, 5) * 10,
+        turns: rng.int(1, 6),
+      });
+    }
   }
   // Đề nghị giao dịch ngẫu nhiên
   const others = s.players.filter((p) => !p.bankrupt && p.id !== id);

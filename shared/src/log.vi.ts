@@ -12,6 +12,7 @@ const REASON: Record<string, string> = {
   mortgageFee: 'phí 10% nhận ô thế chấp',
   payEach: 'theo thẻ Chủ tịch HĐQT',
   collectEach: 'lì xì Tết',
+  loan: 'trả nợ vay đến hạn',
 };
 
 /** Câu nhật ký tiếng Việt cho một sự kiện. null = không cần ghi. */
@@ -98,6 +99,20 @@ export function describeEvent(ev: GameEvent, s: Pick<GameState, 'players'>): str
         : ev.reason === 'replaced'
           ? null
           : 'Một đề nghị giao dịch đã bị huỷ';
+    case 'loanTaken':
+      return `${name(ev.borrower)} vay ${name(ev.lender)} ${formatMoney(ev.amount)}, trả ${formatMoney(ev.repay)} trong ${ev.turns} lượt`;
+    case 'loanRepaid':
+      return `${name(ev.borrower)} trả hết nợ ${formatMoney(ev.amount)} cho ${name(ev.lender)}`;
+    case 'loanDue':
+      return `Khoản vay của ${name(ev.borrower)} đến hạn: phải trả ${formatMoney(ev.amount)} cho ${name(ev.lender)}`;
+    case 'loanOffered':
+      return ev.offer.lender === ev.offer.from
+        ? `${name(ev.offer.from)} đề nghị cho ${name(ev.offer.to)} vay ${formatMoney(ev.offer.amount)}`
+        : `${name(ev.offer.from)} xin vay ${name(ev.offer.to)} ${formatMoney(ev.offer.amount)}`;
+    case 'loanRejected':
+      return `${name(ev.by)} từ chối một đề nghị vay`;
+    case 'loanCancelled':
+      return ev.reason === 'invalid' ? 'Một đề nghị vay bị huỷ vì không còn đủ tiền' : null;
     case 'raiseFunds':
       return `${name(ev.playerId)} thiếu ${formatMoney(ev.owed)} — phải gom tiền!`;
     case 'bankrupt':

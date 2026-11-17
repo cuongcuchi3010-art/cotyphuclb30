@@ -6,6 +6,8 @@ Chạy hoàn toàn trên **Cloudflare (gói miễn phí)**: không phải thuê 
 - 2–6 người/phòng, có chế độ xem (spectator) khi ván đã bắt đầu.
 - Đủ luật chính thức: mua, đấu giá realtime, xây nhà/khách sạn đều, thế chấp, giao dịch, tạm giữ, gom tiền, phá sản.
 - Luật tuỳ chọn: hũ tiền Cà Phê Vỉa Hè, Khởi Hành ×2, tắt đấu giá, giới hạn thời gian ván, đồng hồ lượt.
+- Có **tài khoản** (biệt danh + mật khẩu): đăng nhập ở thiết bị nào cũng chơi tiếp được đúng ghế.
+- **Voice chat** trong phòng, **vay ngân hàng / vay người chơi**.
 - Mất mạng hoặc reload trang thì tự vào lại đúng ghế. Người rời đi quá 3 phút, chủ phòng có thể thay bằng bot.
 - Giao diện tiếng Việt, hỗ trợ điện thoại dọc và dark mode.
 
@@ -103,7 +105,6 @@ cd worker && npx wrangler login
 ```bash
 cd .. && pnpm run deploy
 ```
-
 
 ### Ghi chú
 

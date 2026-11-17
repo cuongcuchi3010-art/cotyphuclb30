@@ -2,14 +2,20 @@ import { DurableObject } from 'cloudflare:workers';
 import {
   ROOM_CODE_ALPHABET,
   ROOM_CODE_LEN,
+  accountKey,
+  authRequestSchema,
   cryptoRng,
   roomCodeSchema,
   type ServerMessage,
 } from '@cotyphu/shared';
+import { Account } from './accounts.js';
 import { RoomCore, newSnapshot, type Conn, type RoomHost, type RoomSnapshot } from './room.js';
+
+export { Account };
 
 export interface Env {
   ROOMS: DurableObjectNamespace<Room>;
+  ACCOUNTS: DurableObjectNamespace<Account>;
   ASSETS: Fetcher;
 }
 
@@ -17,6 +23,42 @@ interface Attachment {
   id: string;
   playerId: string | null;
   spectator: boolean;
+  account: { id: string; name: string } | null;
+  voice: boolean;
+}
+
+function accountStub(env: Env, key: string) {
+  return env.ACCOUNTS.get(env.ACCOUNTS.idFromName(`acc:${key}`));
+}
+
+interface Verified {
+  id: string;
+  username: string;
+  rooms: { code: string; at: number }[];
+}
+
+/** Kiểm tra token đăng nhập ("<khoá>.<ngẫu nhiên>") */
+async function verifyToken(env: Env, token: string | null): Promise<Verified | null> {
+  if (!token || token.length > 400) return null;
+  const dot = token.lastIndexOf('.');
+  if (dot <= 0) return null;
+  let key: string;
+  try {
+    key = decodeURIComponent(token.slice(0, dot));
+  } catch {
+    return null;
+  }
+  const res = await accountStub(env, key).fetch('https://acc/verify', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+  });
+  if (!res.ok) return null;
+  return (await res.json()) as Verified;
+}
+
+function bearer(req: Request): string | null {
+  const h = req.headers.get('authorization') ?? '';
+  return h.startsWith('Bearer ') ? h.slice(7) : null;
 }
 
 function randomId(bytes: number): string {
@@ -64,11 +106,15 @@ export class Room extends DurableObject<Env> {
       id: randomId(8),
       playerId: null,
       spectator: false,
+      account: null,
+      voice: false,
     };
     const conn: Conn = {
       id: att.id,
       playerId: att.playerId,
       spectator: att.spectator,
+      account: att.account ?? null,
+      voice: att.voice ?? false,
       send(msg: ServerMessage) {
         try {
           ws.send(JSON.stringify(msg));
@@ -108,7 +154,13 @@ export class Room extends DurableObject<Env> {
           .filter((c) => !this.closing.has(c.id)),
       attach: (conn) => {
         const ws = (conn as Conn & { ws?: WebSocket }).ws;
-        const att: Attachment = { id: conn.id, playerId: conn.playerId, spectator: conn.spectator };
+        const att: Attachment = {
+          id: conn.id,
+          playerId: conn.playerId,
+          spectator: conn.spectator,
+          account: conn.account,
+          voice: conn.voice,
+        };
         if (ws) ws.serializeAttachment(att);
         else {
           for (const w of ctx.getWebSockets()) {
@@ -116,6 +168,11 @@ export class Room extends DurableObject<Env> {
             if (a?.id === conn.id) w.serializeAttachment(att);
           }
         }
+      },
+      onSeat: (accountId, code) => {
+        void accountStub(this.env, accountId)
+          .fetch('https://acc/addRoom', { method: 'POST', body: JSON.stringify({ code }) })
+          .catch(() => {});
       },
       destroy: () => {
         this.core = null;
@@ -144,10 +201,17 @@ export class Room extends DurableObject<Env> {
       const pair = new WebSocketPair();
       const [client, server] = [pair[0], pair[1]];
       this.ctx.acceptWebSocket(server);
+      const accId = req.headers.get('x-account-id');
+      const accName = req.headers.get('x-account-name');
       server.serializeAttachment({
         id: randomId(8),
         playerId: null,
         spectator: false,
+        account:
+          accId && accName
+            ? { id: decodeURIComponent(accId), name: decodeURIComponent(accName) }
+            : null,
+        voice: false,
       } satisfies Attachment);
       return new Response(null, { status: 101, webSocket: client });
     }
@@ -199,6 +263,57 @@ export default {
 
     if (path === '/healthz') return json({ ok: true, time: Date.now() });
 
+    // ---- Tài khoản
+    if ((path === '/api/auth/register' || path === '/api/auth/login') && req.method === 'POST') {
+      let body: unknown;
+      try {
+        body = await req.json();
+      } catch {
+        return json({ error: 'Dữ liệu không hợp lệ' }, 400);
+      }
+      const parsed = authRequestSchema.safeParse(body);
+      if (!parsed.success)
+        return json({ error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' }, 400);
+      const { username, password } = parsed.data;
+      const key = accountKey(username);
+      const op = path.endsWith('register') ? 'register' : 'login';
+      return accountStub(env, key).fetch(`https://acc/${op}`, {
+        method: 'POST',
+        body: JSON.stringify({ username, key, password }),
+      });
+    }
+    if (path === '/api/auth/logout' && req.method === 'POST') {
+      const token = bearer(req);
+      const v = await verifyToken(env, token);
+      if (v)
+        await accountStub(env, v.id).fetch('https://acc/logout', {
+          method: 'POST',
+          body: JSON.stringify({ token }),
+        });
+      return json({ ok: true });
+    }
+    if (path === '/api/me') {
+      const v = await verifyToken(env, bearer(req));
+      if (!v) return json({ error: 'Phiên đăng nhập hết hạn' }, 401);
+      return json({ username: v.username, rooms: v.rooms });
+    }
+
+    if (path.startsWith('/api/rooms') || path.startsWith('/ws/')) {
+      const token = bearer(req) ?? url.searchParams.get('token');
+      const v = await verifyToken(env, token);
+      if (!v) return json({ error: 'Bạn cần đăng nhập' }, 401);
+      const ws = path.match(/^\/ws\/([A-Za-z0-9]+)$/);
+      if (ws) {
+        const code = ws[1]!.toUpperCase();
+        if (!roomCodeSchema.safeParse(code).success)
+          return json({ error: 'Mã phòng không hợp lệ' }, 400);
+        const fwd = new Request('https://room/ws', req);
+        fwd.headers.set('x-account-id', encodeURIComponent(v.id));
+        fwd.headers.set('x-account-name', encodeURIComponent(v.username));
+        return env.ROOMS.get(env.ROOMS.idFromName(code)).fetch(fwd);
+      }
+    }
+
     if (path === '/api/rooms' && req.method === 'POST') {
       for (let attempt = 0; attempt < 5; attempt++) {
         const code = randomCode();
@@ -219,14 +334,6 @@ export default {
       if (!roomCodeSchema.safeParse(code).success)
         return json({ error: 'Mã phòng không hợp lệ' }, 400);
       return env.ROOMS.get(env.ROOMS.idFromName(code)).fetch('https://room/info');
-    }
-
-    const ws = path.match(/^\/ws\/([A-Za-z0-9]+)$/);
-    if (ws) {
-      const code = ws[1]!.toUpperCase();
-      if (!roomCodeSchema.safeParse(code).success)
-        return json({ error: 'Mã phòng không hợp lệ' }, 400);
-      return env.ROOMS.get(env.ROOMS.idFromName(code)).fetch(new Request('https://room/ws', req));
     }
 
     if (path.startsWith('/api/')) return json({ error: 'Không tìm thấy' }, 404);

@@ -4,7 +4,7 @@ import { S } from '../strings.vi';
 import { useStore } from '../store';
 import { cx, useGame } from '../lib';
 import { isMuted, setMuted } from '../sound';
-import { ActionBar } from './ActionBar';
+import { VoiceControls } from './VoiceControls';
 import { Board } from './Board';
 import { GameOver } from './GameOver';
 import { PlayerList } from './PlayerList';
@@ -20,7 +20,7 @@ export function GameScreen() {
   if (!room || !game) return null;
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] max-w-[1400px] flex-col gap-3 p-2 pb-36 lg:flex-row lg:items-start lg:p-4 lg:pb-4">
+    <div className="mx-auto flex min-h-[100dvh] max-w-[1400px] flex-col gap-3 p-2 pb-24 lg:flex-row lg:items-start lg:p-4 lg:pb-4">
       {/* Bàn cờ */}
       <div className="w-full lg:sticky lg:top-4 lg:max-w-[min(100vh-2rem,900px)] lg:flex-1">
         <div className="touch-pinch-zoom overflow-auto">
@@ -32,10 +32,7 @@ export function GameScreen() {
       <aside className="hidden w-[380px] shrink-0 flex-col gap-3 lg:flex">
         <TopBar />
         <PlayerList />
-        <div className="rounded-2xl bg-white/90 p-3 shadow-card dark:bg-[#211d16]">
-          <ActionBar />
-        </div>
-        <div className="flex h-[48vh] flex-col rounded-2xl bg-white/90 p-2 shadow-card dark:bg-[#211d16]">
+        <div className="flex h-[58vh] flex-col rounded-2xl bg-white/90 p-2 shadow-card dark:bg-[#211d16]">
           <TabBar />
           <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
             <TabContent />
@@ -51,10 +48,7 @@ export function GameScreen() {
         <PlayerList compact />
       </div>
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-black/10 bg-giay/95 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur dark:border-white/10 dark:bg-giay-dark/95 lg:hidden">
-        <ActionBar />
-        <div className="mt-2">
-          <TabBar />
-        </div>
+        <TabBar />
       </div>
       <AnimatePresence>
         {sheetOpen && (
@@ -109,6 +103,7 @@ function TopBar() {
         {room && room.spectators > 0 && <span className="ml-2">👀 {room.spectators}</span>}
       </div>
       <div className="flex gap-1">
+        <VoiceControls />
         <Btn
           variant="ghost"
           aria-label={muted ? S.sound.on : S.sound.off}

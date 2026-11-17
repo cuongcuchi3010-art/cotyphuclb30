@@ -1,5 +1,5 @@
 import type { DeckId } from './data/cards.vi.js';
-import type { Creditor, DebtReason, PlayerId, Trade, TradeSide } from './types.js';
+import type { Creditor, DebtReason, LoanOffer, PlayerId, Trade, TradeSide } from './types.js';
 
 export type PlayerAction =
   | { type: 'roll' }
@@ -26,7 +26,21 @@ export type PlayerAction =
   | { type: 'acceptTrade'; id: string }
   | { type: 'rejectTrade'; id: string }
   | { type: 'cancelTrade'; id: string }
-  | { type: 'resign' };
+  | { type: 'resign' }
+  | { type: 'bankLoan'; amount: number }
+  | { type: 'repayLoan'; id: string }
+  | {
+      type: 'proposeLoan';
+      to: PlayerId;
+      /** true = mình cho người kia vay; false = mình xin vay */
+      lend: boolean;
+      amount: number;
+      repay: number;
+      turns: number;
+    }
+  | { type: 'acceptLoan'; id: string }
+  | { type: 'rejectLoan'; id: string }
+  | { type: 'cancelLoan'; id: string };
 
 export type SystemAction =
   | { type: 'auctionClose' }
@@ -95,6 +109,19 @@ export type GameEvent =
       tradeId: string;
       reason: 'withdrawn' | 'invalid' | 'bankrupt' | 'replaced';
     }
+  | {
+      t: 'loanTaken';
+      lender: Creditor;
+      borrower: PlayerId;
+      amount: number;
+      repay: number;
+      turns: number;
+    }
+  | { t: 'loanRepaid'; lender: Creditor; borrower: PlayerId; amount: number }
+  | { t: 'loanDue'; lender: Creditor; borrower: PlayerId; amount: number }
+  | { t: 'loanOffered'; offer: LoanOffer }
+  | { t: 'loanRejected'; id: string; by: PlayerId }
+  | { t: 'loanCancelled'; id: string; reason: 'withdrawn' | 'invalid' | 'bankrupt' | 'replaced' }
   | { t: 'raiseFunds'; playerId: PlayerId; owed: number; to: Creditor }
   | { t: 'bankrupt'; playerId: PlayerId; to: Creditor }
   | {

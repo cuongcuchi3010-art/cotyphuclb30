@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { TOKENS, formatMoney, type Rules } from '@cotyphu/shared';
 import { PLAYER_COLORS, S, TOKEN_NAMES } from '../strings.vi';
-import { forgetSession, useStore } from '../store';
+import { useStore } from '../store';
 import { cx, useGame } from '../lib';
 import { TokenIcon } from './TokenIcon';
+import { Avatar } from './Avatar';
 import { Btn, Panel } from './ui';
 
 export function Lobby() {
@@ -59,12 +60,7 @@ export function Lobby() {
               key={p.id}
               className="flex items-center gap-2 rounded-xl bg-black/5 px-3 py-2 dark:bg-white/5"
             >
-              <span
-                className="rounded-full border-2 bg-white p-0.5 dark:bg-gray-900"
-                style={{ borderColor: PLAYER_COLORS[i] }}
-              >
-                <TokenIcon token={p.token} size={28} />
-              </span>
+              <Avatar token={p.token} color={PLAYER_COLORS[i]!} size={36} />
               <span className="flex-1 font-semibold">
                 {p.name}{' '}
                 {p.id === me && <span className="text-xs text-gray-400">({S.lobby.you})</span>}
@@ -188,7 +184,6 @@ export function Lobby() {
           big
           onClick={() => {
             send({ type: 'leave' });
-            forgetSession(room.code);
             location.href = '/';
           }}
         >

@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
+import { AuthScreen } from './components/AuthScreen';
 import { Home } from './components/Home';
 import { RoomPage } from './components/RoomPage';
 import { usePath } from './router';
@@ -7,10 +8,17 @@ import { cx } from './lib';
 
 export function App() {
   const path = usePath();
+  const auth = useStore((s) => s.auth);
   const m = path.match(/^\/r\/([A-Za-z0-9]{6})\/?$/);
   return (
     <div className="lotus-bg min-h-[100dvh]">
-      {m ? <RoomPage key={m[1]!.toUpperCase()} code={m[1]!.toUpperCase()} /> : <Home />}
+      {!auth ? (
+        <AuthScreen />
+      ) : m ? (
+        <RoomPage key={m[1]!.toUpperCase()} code={m[1]!.toUpperCase()} />
+      ) : (
+        <Home />
+      )}
       <Toasts />
     </div>
   );

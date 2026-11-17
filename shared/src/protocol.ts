@@ -48,6 +48,19 @@ export const playerActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('rejectTrade'), id: z.string().max(20) }),
   z.object({ type: z.literal('cancelTrade'), id: z.string().max(20) }),
   z.object({ type: z.literal('resign') }),
+  z.object({ type: z.literal('bankLoan'), amount: money }),
+  z.object({ type: z.literal('repayLoan'), id: z.string().max(20) }),
+  z.object({
+    type: z.literal('proposeLoan'),
+    to: z.string().min(1).max(40),
+    lend: z.boolean(),
+    amount: money,
+    repay: money,
+    turns: z.number().int().min(1).max(50),
+  }),
+  z.object({ type: z.literal('acceptLoan'), id: z.string().max(20) }),
+  z.object({ type: z.literal('rejectLoan'), id: z.string().max(20) }),
+  z.object({ type: z.literal('cancelLoan'), id: z.string().max(20) }),
 ]);
 
 export const rulesSchema = z.object({
@@ -64,35 +77,54 @@ export const rulesSchema = z.object({
     }),
 });
 
-const nameSchema = z
+/** Biệt danh = tên đăng nhập: chữ (có dấu), số, khoảng trắng, . _ - */
+export const usernameSchema = z
   .string()
-  .transform((s) => s.replace(/\s+/g, ' ').trim())
+  .transform((s) => s.normalize('NFC').replace(/\s+/g, ' ').trim())
   .pipe(
-    z.string().min(1, 'Hãy nhập biệt danh').max(NAME_MAX, `Biệt danh tối đa ${NAME_MAX} ký tự`),
+    z
+      .string()
+      .min(2, 'Biệt danh tối thiểu 2 ký tự')
+      .max(NAME_MAX, `Biệt danh tối đa ${NAME_MAX} ký tự`)
+      .regex(/^[\p{L}\p{N} ._-]+$/u, 'Biệt danh chỉ gồm chữ, số, khoảng trắng và . _ -'),
   );
+
+export const passwordSchema = z
+  .string()
+  .min(6, 'Mật khẩu tối thiểu 6 ký tự')
+  .max(64, 'Mật khẩu tối đa 64 ký tự');
+
+export const authRequestSchema = z.object({ username: usernameSchema, password: passwordSchema });
+
+/** Khoá tài khoản: không phân biệt hoa/thường */
+export function accountKey(username: string): string {
+  return username.normalize('NFC').trim().toLocaleLowerCase('vi');
+}
+
+export interface AuthResponse {
+  token: string;
+  username: string;
+}
+
+export interface Profile {
+  username: string;
+  rooms: { code: string; at: number }[];
+}
 
 const tokenSchema = z.enum(TOKENS);
 
 export const clientMessageSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('join'),
-    name: nameSchema,
     token: tokenSchema,
     password: z.string().max(40).optional(),
     /** Khoá chủ phòng do API tạo phòng trả về */
     hostKey: z.string().max(80).optional(),
   }),
-  z.object({
-    type: z.literal('resume'),
-    playerId: z.string().max(40),
-    secret: z.string().max(80),
-  }),
+  /** Vào lại ghế của tài khoản (đổi thiết bị / tải lại trang) */
+  z.object({ type: z.literal('resume') }),
   z.object({ type: z.literal('spectate'), password: z.string().max(40).optional() }),
-  z.object({
-    type: z.literal('setProfile'),
-    name: nameSchema.optional(),
-    token: tokenSchema.optional(),
-  }),
+  z.object({ type: z.literal('setProfile'), token: tokenSchema }),
   z.object({ type: z.literal('setRules'), rules: rulesSchema }),
   z.object({ type: z.literal('setPassword'), password: z.string().max(40) }),
   z.object({ type: z.literal('kick'), playerId: z.string().max(40) }),
@@ -107,6 +139,12 @@ export const clientMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('playAgain') }),
   z.object({ type: z.literal('leave') }),
   z.object({ type: z.literal('ping') }),
+  z.object({ type: z.literal('voice'), on: z.boolean() }),
+  z.object({
+    type: z.literal('rtc'),
+    to: z.string().max(40),
+    data: z.record(z.unknown()),
+  }),
 ]);
 
 export type ClientMessage = z.infer<typeof clientMessageSchema>;
@@ -121,6 +159,8 @@ export interface RoomPlayer {
   offlineSince: number | null;
   /** Đã quá 3 phút mất kết nối, chờ host quyết định */
   awaitingHostDecision: boolean;
+  /** Đang tham gia voice chat */
+  voice: boolean;
 }
 
 export interface ChatMessage {
@@ -155,7 +195,8 @@ export interface RoomView {
 }
 
 export type ServerMessage =
-  | { type: 'welcome'; playerId: PlayerId | null; secret: string | null; spectator: boolean }
+  | { type: 'welcome'; playerId: PlayerId | null; spectator: boolean }
+  | { type: 'rtc'; from: PlayerId; data: Record<string, unknown> }
   | { type: 'room'; room: RoomView; events?: GameEvent[] }
   | { type: 'chat'; message: ChatMessage }
   | { type: 'error'; message: string; fatal?: boolean }

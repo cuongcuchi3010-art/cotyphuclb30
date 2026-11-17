@@ -36,7 +36,13 @@ import type {
   Trade,
   TradeSide,
 } from './types.js';
-import { DEFAULT_RULES } from './types.js';
+import {
+  BANK_LOAN_MAX,
+  BANK_LOAN_RATE_PCT,
+  BANK_LOAN_TURNS,
+  DEFAULT_RULES,
+  PLAYER_LOAN_MAX_TURNS,
+} from './types.js';
 
 export class GameError extends Error {
   constructor(message: string) {
@@ -144,6 +150,9 @@ export function createGame(players: NewPlayer[], rulesIn: Partial<Rules>, rng: R
     landings: new Array(BOARD_SIZE).fill(0),
     seq: 0,
     nextTradeId: 1,
+    loans: [],
+    loanOffers: [],
+    nextLoanId: 1,
   };
   events.push({ t: 'orderRolls', rolls, order });
   events.push({ t: 'turnStart', playerId: ps[0]!.id, turn: 1 });
@@ -267,7 +276,22 @@ export function netWorth(s: GameState, id: PlayerId): number {
     v += st.mortgaged ? Math.floor(sq.price / 2) : sq.price;
     if (sq.kind === 'street') v += st.houses * sq.houseCost;
   }
+  for (const l of s.loans ?? []) {
+    if (l.borrower === id) v -= l.repay;
+    if (l.lender === id) v += l.repay;
+  }
   return v;
+}
+
+/** Dư nợ gốc đang vay ngân hàng */
+export function bankLoanPrincipal(s: GameState, id: PlayerId): number {
+  return (s.loans ?? [])
+    .filter((l) => l.lender === 'bank' && l.borrower === id)
+    .reduce((a, l) => a + l.principal, 0);
+}
+
+export function bankLoanRepay(amount: number): number {
+  return Math.ceil((amount * (100 + BANK_LOAN_RATE_PCT)) / 100);
 }
 
 export function totalOwed(s: GameState, id: PlayerId): number {
@@ -454,6 +478,32 @@ function applyPlayer(c: Ctx, p: PlayerState, a: PlayerAction): void {
     case 'resign':
       forceBankrupt(c, p);
       return;
+    case 'bankLoan':
+      takeBankLoan(c, p, a.amount);
+      return;
+    case 'repayLoan':
+      repayLoan(c, p, a.id);
+      return;
+    case 'proposeLoan':
+      proposeLoan(c, p, a);
+      return;
+    case 'acceptLoan':
+      acceptLoan(c, p, a.id);
+      return;
+    case 'rejectLoan': {
+      const o = s.loanOffers.find((x) => x.id === a.id);
+      if (!o || o.to !== p.id) fail('Không tìm thấy đề nghị vay');
+      s.loanOffers = s.loanOffers.filter((x) => x !== o);
+      c.ev.push({ t: 'loanRejected', id: o.id, by: p.id });
+      return;
+    }
+    case 'cancelLoan': {
+      const o = s.loanOffers.find((x) => x.id === a.id);
+      if (!o || o.from !== p.id) fail('Không tìm thấy đề nghị vay');
+      s.loanOffers = s.loanOffers.filter((x) => x !== o);
+      c.ev.push({ t: 'loanCancelled', id: o.id, reason: 'withdrawn' });
+      return;
+    }
     case 'proposeTrade':
       proposeTrade(c, p, a);
       return;
@@ -867,7 +917,20 @@ function nextTurn(c: Ctx): void {
   s.resume = { kind: 'none' };
   s.mortgageChoices = [];
   s.phase = { kind: 'awaitRoll' };
-  c.ev.push({ t: 'turnStart', playerId: s.players[i]!.id, turn: s.turn });
+  const cur = s.players[i]!;
+  c.ev.push({ t: 'turnStart', playerId: cur.id, turn: s.turn });
+  // Khoản vay đến hạn: tự động thu (thiếu thì vào pha Gom tiền)
+  let due = false;
+  for (const l of s.loans.filter((x) => x.borrower === cur.id)) {
+    l.turnsLeft--;
+    if (l.turnsLeft <= 0) {
+      s.loans = s.loans.filter((x) => x !== l);
+      s.debts.push({ from: cur.id, to: l.lender, amount: l.repay, reason: 'loan' });
+      c.ev.push({ t: 'loanDue', lender: l.lender, borrower: cur.id, amount: l.repay });
+      due = true;
+    }
+  }
+  if (due) proceed(c);
 }
 
 function endGame(c: Ctx, reason: 'lastStanding' | 'timeUp'): void {
@@ -877,6 +940,7 @@ function endGame(c: Ctx, reason: 'lastStanding' | 'timeUp'): void {
   s.auctionQueue = [];
   s.debts = [];
   s.trades = [];
+  s.loanOffers = [];
   const rank = ranking(s);
   s.winner = rank[0] ?? null;
   s.phase = { kind: 'gameOver' };
@@ -1134,6 +1198,12 @@ function bankrupt(c: Ctx, p: PlayerState, to: Creditor): void {
     c.ev.push({ t: 'tradeCancelled', tradeId: t.id, reason: 'bankrupt' });
   }
   s.trades = s.trades.filter((x) => x.from !== p.id && x.to !== p.id);
+  // Khoản vay của / cho người phá sản bị xoá (người cho vay mất khoản đó)
+  s.loans = s.loans.filter((l) => l.borrower !== p.id && l.lender !== p.id);
+  for (const o of s.loanOffers.filter((x) => x.from === p.id || x.to === p.id)) {
+    c.ev.push({ t: 'loanCancelled', id: o.id, reason: 'bankrupt' });
+  }
+  s.loanOffers = s.loanOffers.filter((x) => x.from !== p.id && x.to !== p.id);
   if (currentPlayer(s).id === p.id) s.resume = { kind: 'none' };
   c.ev.push({ t: 'bankrupt', playerId: p.id, to });
 }
@@ -1311,6 +1381,126 @@ function acceptTrade(c: Ctx, p: PlayerState, id: string): void {
   c.ev.push({ t: 'tradeAccepted', trade: t });
   transfer(a, b, t.give);
   transfer(b, a, t.take);
+}
+
+// ---------------------------------------------------------------------------
+// Vay tiền
+// ---------------------------------------------------------------------------
+
+export function canBorrowFromBank(s: GameState, p: PlayerState): boolean {
+  if (s.phase.kind === 'raiseFunds') return s.phase.debtor === p.id;
+  return (
+    currentPlayer(s).id === p.id &&
+    (s.phase.kind === 'awaitRoll' || s.phase.kind === 'awaitBuy' || s.phase.kind === 'awaitEnd')
+  );
+}
+
+function takeBankLoan(c: Ctx, p: PlayerState, amount: number): void {
+  const { s } = c;
+  if (!canBorrowFromBank(s, p))
+    fail('Chỉ vay ngân hàng trong lượt của mình hoặc khi đang gom tiền');
+  if (!Number.isInteger(amount) || amount < 10) fail('Số tiền vay tối thiểu 10 tr');
+  const left = BANK_LOAN_MAX - bankLoanPrincipal(s, p.id);
+  if (amount > left) fail(`Ngân hàng chỉ cho vay thêm tối đa ${left} tr`);
+  const repay = bankLoanRepay(amount);
+  p.cash += amount;
+  s.loans.push({
+    id: `L${s.nextLoanId++}`,
+    lender: 'bank',
+    borrower: p.id,
+    principal: amount,
+    repay,
+    turnsLeft: BANK_LOAN_TURNS,
+  });
+  c.ev.push({
+    t: 'loanTaken',
+    lender: 'bank',
+    borrower: p.id,
+    amount,
+    repay,
+    turns: BANK_LOAN_TURNS,
+  });
+}
+
+function repayLoan(c: Ctx, p: PlayerState, id: string): void {
+  const { s } = c;
+  const l = s.loans.find((x) => x.id === id);
+  if (!l || l.borrower !== p.id) fail('Không tìm thấy khoản vay');
+  if (s.phase.kind === 'auction') fail('Đợi đấu giá kết thúc');
+  if (p.cash < l.repay) fail('Không đủ tiền mặt để trả');
+  p.cash -= l.repay;
+  if (l.lender !== 'bank') getPlayer(s, l.lender).cash += l.repay;
+  s.loans = s.loans.filter((x) => x !== l);
+  c.ev.push({ t: 'loanRepaid', lender: l.lender, borrower: p.id, amount: l.repay });
+}
+
+export function validateLoanOffer(
+  s: GameState,
+  o: { lender: PlayerId; borrower: PlayerId; amount: number; repay: number; turns: number },
+): string | null {
+  const lender = s.players.find((x) => x.id === o.lender);
+  const borrower = s.players.find((x) => x.id === o.borrower);
+  if (!lender || !borrower || lender.bankrupt || borrower.bankrupt)
+    return 'Người chơi không hợp lệ';
+  if (lender.id === borrower.id) return 'Không thể tự vay chính mình';
+  if (!Number.isInteger(o.amount) || o.amount < 10) return 'Số tiền vay tối thiểu 10 tr';
+  if (!Number.isInteger(o.repay) || o.repay < o.amount) return 'Số tiền trả lại phải ≥ số tiền vay';
+  if (o.repay > o.amount * 3) return 'Số tiền trả lại tối đa gấp 3 số tiền vay';
+  if (!Number.isInteger(o.turns) || o.turns < 1 || o.turns > PLAYER_LOAN_MAX_TURNS)
+    return `Thời hạn từ 1 đến ${PLAYER_LOAN_MAX_TURNS} lượt`;
+  if (lender.cash < o.amount) return `${lender.name} không đủ tiền mặt để cho vay`;
+  return null;
+}
+
+function proposeLoan(
+  c: Ctx,
+  p: PlayerState,
+  a: Extract<PlayerAction, { type: 'proposeLoan' }>,
+): void {
+  const { s } = c;
+  const lender = a.lend ? p.id : a.to;
+  const borrower = a.lend ? a.to : p.id;
+  const draft = { lender, borrower, amount: a.amount, repay: a.repay, turns: a.turns };
+  const err = validateLoanOffer(s, draft);
+  if (err) fail(err);
+  const old = s.loanOffers.find((x) => x.from === p.id && x.to === a.to);
+  if (old) {
+    s.loanOffers = s.loanOffers.filter((x) => x !== old);
+    c.ev.push({ t: 'loanCancelled', id: old.id, reason: 'replaced' });
+  }
+  const offer = { id: `V${s.nextLoanId++}`, from: p.id, to: a.to, ...draft };
+  s.loanOffers.push(offer);
+  c.ev.push({ t: 'loanOffered', offer });
+}
+
+function acceptLoan(c: Ctx, p: PlayerState, id: string): void {
+  const { s } = c;
+  const o = s.loanOffers.find((x) => x.id === id);
+  if (!o || o.to !== p.id) fail('Không tìm thấy đề nghị vay');
+  if (s.phase.kind === 'auction') fail('Đợi đấu giá kết thúc');
+  s.loanOffers = s.loanOffers.filter((x) => x !== o);
+  if (validateLoanOffer(s, o)) {
+    c.ev.push({ t: 'loanCancelled', id: o.id, reason: 'invalid' });
+    return;
+  }
+  getPlayer(s, o.lender).cash -= o.amount;
+  getPlayer(s, o.borrower).cash += o.amount;
+  s.loans.push({
+    id: `L${s.nextLoanId++}`,
+    lender: o.lender,
+    borrower: o.borrower,
+    principal: o.amount,
+    repay: o.repay,
+    turnsLeft: o.turns,
+  });
+  c.ev.push({
+    t: 'loanTaken',
+    lender: o.lender,
+    borrower: o.borrower,
+    amount: o.amount,
+    repay: o.repay,
+    turns: o.turns,
+  });
 }
 
 // ---------------------------------------------------------------------------
