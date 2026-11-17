@@ -30,14 +30,22 @@ export function BrandLogo({
       />
     );
   }
-  const initials = name
+  const words = name
     .replace(/[–-].*$/, '')
     .split(/\s+/)
-    .filter(Boolean)
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 3)
-    .toUpperCase();
+    .filter(Boolean);
+  // Tên một từ ngắn (METUB, M2B, VNNL): hiện nguyên tên; còn lại: chữ cái đầu / 2 ký tự đầu
+  const initials = (
+    words.length === 1
+      ? words[0]!.length <= 5
+        ? words[0]!
+        : words[0]!.replace(/[a-z]/g, '').slice(0, 3) || words[0]!.slice(0, 2)
+      : words
+          .map((w) => w[0])
+          .join('')
+          .slice(0, 3)
+  ).toUpperCase();
+  const k = Math.min(0.36, 1.05 / Math.max(initials.length, 1));
   return (
     <span
       className="inline-flex items-center justify-center rounded-md font-bold text-white leading-none"
@@ -45,7 +53,7 @@ export function BrandLogo({
         background: color,
         width: size,
         height: size,
-        fontSize: typeof size === 'number' ? size * 0.36 : `calc(${size} * 0.36)`,
+        fontSize: typeof size === 'number' ? size * k : `calc(${size} * ${k})`,
       }}
       title={name}
     >

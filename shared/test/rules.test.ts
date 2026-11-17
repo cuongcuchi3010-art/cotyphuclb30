@@ -92,7 +92,7 @@ describe('Tiền thuê', () => {
 });
 
 describe('Thẻ bài', () => {
-  it('Xanh SM: trả gấp đôi tiền thuê vận tải', () => {
+  it('Công ty gần nhất: trả gấp đôi tiền thuê vận tải', () => {
     let s = mkGame();
     own(s, 'p2', 15);
     topCard(s, 'chance', CH_TRANSPORT);
@@ -102,7 +102,7 @@ describe('Thẻ bài', () => {
     expect(pl(s, 'p1').cash).toBe(1500 - 50);
   });
 
-  it('Xanh SM: công ty chưa có chủ thì được mua', () => {
+  it('Công ty gần nhất: chưa có chủ thì được mua', () => {
     let s = mkGame();
     topCard(s, 'chance', CH_TRANSPORT);
     ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));

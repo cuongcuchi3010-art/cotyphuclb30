@@ -71,16 +71,14 @@ export const CHANCE_CARDS: readonly Card[] = [
   {
     id: 'ch05',
     deck: 'chance',
-    text: 'Đặt Xanh SM tới công ty vận tải gần nhất phía trước. Có chủ: trả gấp đôi tiền thuê. Chưa có chủ: được mua.',
+    text: 'Đi công tác tới công ty gần nhất phía trước (METUB/MMusic/M2B/VNNL). Có chủ: trả gấp đôi tiền thuê. Chưa có chủ: được mua.',
     effect: { type: 'nearestTransport' },
-    logo: 'xanh-sm',
   },
   {
     id: 'ch06',
     deck: 'chance',
-    text: 'Đặt Xanh SM tới công ty vận tải gần nhất phía trước. Có chủ: trả gấp đôi tiền thuê. Chưa có chủ: được mua.',
+    text: 'Đi công tác tới công ty gần nhất phía trước (METUB/MMusic/M2B/VNNL). Có chủ: trả gấp đôi tiền thuê. Chưa có chủ: được mua.',
     effect: { type: 'nearestTransport' },
-    logo: 'xanh-sm',
   },
   {
     id: 'ch07',
@@ -123,9 +121,9 @@ export const CHANCE_CARDS: readonly Card[] = [
   {
     id: 'ch14',
     deck: 'chance',
-    text: 'Đi tàu Đường sắt Việt Nam. Đi qua Khởi Hành thì nhận 200 tr.',
+    text: 'Ghé thăm METUB. Đi qua Khởi Hành thì nhận 200 tr.',
     effect: { type: 'moveTo', to: 5 },
-    logo: 'vnr',
+    logo: 'metub',
   },
   {
     id: 'ch15',
