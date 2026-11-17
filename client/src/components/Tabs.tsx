@@ -633,9 +633,10 @@ function ChatTab() {
   const send = useStore((s) => s.send);
   const [text, setText] = useState('');
   const end = useRef<HTMLDivElement>(null);
+  const lastChatId = chat[chat.length - 1]?.id;
   useEffect(() => {
     end.current?.scrollIntoView({ block: 'end' });
-  }, [chat.length]);
+  }, [lastChatId]);
   return (
     <div className="flex h-full flex-col">
       <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-1 text-sm">

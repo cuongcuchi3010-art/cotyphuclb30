@@ -116,10 +116,13 @@ export function LogFeed({ panel }: { panel?: boolean } = {}) {
   const { room } = useGame();
   const box = useRef<HTMLDivElement>(null);
   const log = room?.log ?? [];
+  const lastId = log[log.length - 1]?.id ?? 0;
+  /** Đang ở cuối danh sách → tự cuộn theo dòng mới; đang kéo lên đọc → giữ nguyên */
+  const stick = useRef(true);
   useEffect(() => {
     const el = box.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [log.length]);
+    if (el && stick.current) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  }, [lastId]);
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col rounded-xl bg-white/75 shadow-inner dark:bg-black/35">
       <div
@@ -133,6 +136,10 @@ export function LogFeed({ panel }: { panel?: boolean } = {}) {
       </div>
       <div
         ref={box}
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+        }}
         className={cx(
           'min-h-0 flex-1 overflow-y-auto',
           panel ? 'space-y-0.5 px-3 pb-2' : 'space-y-[0.3cqw] px-[1.4cqw] pb-[0.8cqw]',
