@@ -125,3 +125,11 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 | --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | K1  | Chủ phòng chọn ở sảnh **Số nhà tối đa** (16–120, chuẩn 32) và **Số khách sạn tối đa** (4–30, chuẩn 12). Đây là kho chung của ngân hàng cho cả ván; hết kho thì không ai xây được (bỏ đấu giá nhà khi khan hiếm như trước). |
 | K2  | Giữa bàn cờ hiển thị số nhà/khách sạn còn trong kho theo mức đã chọn.                                                                                                                                                      |
+
+## Cập nhật lần 9: nút hai bên & nhạc nền
+
+| #   | Quyết định                                                                                                                                                                                                                                                                       |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M1  | Màn hình rộng gần vuông (Z Fold mở trong, ≥ 600px): mã phòng + Voice ở **cột trái**, nhạc + loa + Bỏ cuộc ở **cột phải** bàn cờ. Chỉ bật khi bàn cờ không nhỏ đi quá 12px so với để hàng nút bên dưới; màn hình cao (Fold cầm dọc, tablet dọc) giữ hàng nút dưới để bàn to nhất. |
+| M2  | **Nhạc nền** tổng hợp bằng Web Audio (không file, không bản quyền): giai điệu ngũ cung kiểu dân gian, 118 BPM, hợp âm C–Am–F–G, bass + trống nhẹ, lặp 8 ô nhịp; âm lượng nhỏ để không át voice chat.                                                                             |
+| M3  | Nhạc **mặc định bật**, chỉ phát trong màn hình chơi, bắt đầu sau lần chạm/bấm đầu tiên (luật trình duyệt). Nút 🎵 bật/tắt riêng, nhớ theo từng máy; nút 🔊 vẫn chỉ bật/tắt hiệu ứng âm thanh.                                                                                    |

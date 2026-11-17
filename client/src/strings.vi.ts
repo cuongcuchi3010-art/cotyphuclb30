@@ -240,6 +240,7 @@ export const S = {
   },
 
   sound: { on: 'Bật tiếng', off: 'Tắt tiếng' },
+  music: { on: 'Bật nhạc nền', off: 'Tắt nhạc nền' },
 
   voice: {
     join: 'Voice',

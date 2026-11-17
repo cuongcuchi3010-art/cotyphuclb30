@@ -108,7 +108,7 @@ export interface GameLayout {
 }
 
 /** Chọn bố cục theo tỉ lệ màn hình, bàn cờ luôn vừa khít không tràn */
-export function computeLayout(w: number, h: number, reserved = 226): GameLayout {
+export function computeLayout(w: number, h: number, reserved = 226, sideW = 0): GameLayout {
   const pad = 16;
   if (w / h >= 1.15 && w >= 560) {
     const panel = Math.round(Math.min(400, Math.max(260, w * 0.36)));
@@ -116,7 +116,7 @@ export function computeLayout(w: number, h: number, reserved = 226): GameLayout 
     return { mode: 'side', board, panel, compact: h < 640 };
   }
   // Dọc: chừa đúng chiều cao thật của phần dưới bàn cờ (thanh trên, người chơi, thanh tab)
-  const board = Math.floor(Math.max(240, Math.min(w - pad, h - reserved, 900)));
+  const board = Math.floor(Math.max(240, Math.min(w - pad - sideW, h - reserved, 900)));
   return { mode: 'stack', board, panel: 0, compact: true };
 }
 
