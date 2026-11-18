@@ -216,3 +216,12 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 | V1  | **Gỡ voice chat WebRTC** có sẵn (client, server, giao thức, test). Nhóm dùng voice của Discord thay thế; giảm mã và bớt lỗi kết nối 4G.                                                                                                                                                        |
 | V2  | Nút chọn bàn **Vuông / Thoi** đặt ngay trong màn hình chơi (dạng nút 2 lựa chọn), lưu theo máy.                                                                                                                                                                                                |
 | V3  | Tab **Chat** có 2 mục: _Phòng_ (chat trong ván) và _Discord_ (nhúng widget chính thức của server: xem ai online, bấm vào kênh voice). Widget chính thức không hiện tin nhắn; muốn chat Discord ngay trong game thì điền `WIDGETBOT_CHANNEL_ID` trong `shared/src/discord.ts` (dùng WidgetBot). |
+
+## Cập nhật lần 21
+
+| #   | Quyết định                                                                                                                                                                                                                                               |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B1  | **Chọn chế độ xây nhà ở sảnh chờ** (`rules.buildRule`, mặc định `combined`). Ván cũ chưa có trường này coi là `combined`.                                                                                                                                |
+| B2  | **Trăm điều khó** (`combined`): trọn nhóm màu, không ô nào thế chấp, rồi bước vào lại ô đó mới được xây (như trước).                                                                                                                                     |
+| B3  | **Theo màu** (`color`): trọn nhóm màu, không ô nào thế chấp, là xây được bất cứ lúc nào trong lượt mình (ở tab Tài sản / thẻ ô). Không bắt xây đều, giữ thống nhất với các chế độ khác. Đủ 4 nhà thì lên khách sạn ngay.                                 |
+| B4  | **Theo ô** (`landing`): không cần trọn màu, chỉ cần ô của mình không thế chấp; bước vào lại ô là xây tuỳ ý tới 4 nhà, khách sạn khi lúc bước vào ô đã có sẵn 4 nhà. Tiền thuê đất trống vẫn chỉ ×2 khi trọn nhóm; thế chấp vẫn cần cả nhóm không có nhà. |

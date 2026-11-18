@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TOKENS, formatMoney, type Rules } from '@cotyphu/shared';
+import { TOKENS, formatMoney, type BuildRule, type Rules } from '@cotyphu/shared';
 import { PLAYER_COLORS, S, TOKEN_NAMES } from '../strings.vi';
 import { useStore } from '../store';
 import { cx, useGame } from '../lib';
@@ -173,8 +173,22 @@ export function Lobby() {
               ))}
             </select>
           </label>
+          <label className="flex items-center justify-between gap-2">
+            {S.lobby.buildRule}
+            <select
+              value={rules.buildRule ?? 'combined'}
+              onChange={(e) => setRules({ buildRule: e.target.value as BuildRule })}
+              className="max-w-[60%] rounded-lg border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-black/30"
+            >
+              {(['combined', 'color', 'landing'] as const).map((v) => (
+                <option key={v} value={v}>
+                  {S.lobby.buildRules[v]}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="rounded-lg bg-nghe-50 px-2 py-1.5 text-xs text-gray-700 dark:bg-white/10 dark:text-gray-200">
-            🏠 {S.lobby.buildInfo}
+            🏠 {S.lobby.buildInfos[rules.buildRule ?? 'combined']}
           </div>
           <label className="flex items-center justify-between gap-2">
             {S.lobby.turnTimer}

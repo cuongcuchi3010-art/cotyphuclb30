@@ -149,6 +149,7 @@ export function runSimulation(from: number, count: number): { finished: number; 
         auctions: g % 7 !== 0,
         houseStock: [32, 12, 64][g % 3]!,
         hotelStock: [12, 3, 24][g % 3]!,
+        buildRule: (['combined', 'color', 'landing'] as const)[g % 3]!,
       },
       rng,
     );

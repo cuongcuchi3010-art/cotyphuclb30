@@ -82,6 +82,7 @@ export const rulesSchema = z.object({
   houseStock: z.number().int().min(4).max(200).default(32),
   hotelStock: z.number().int().min(1).max(100).default(12),
   showStandings: z.boolean().default(false),
+  buildRule: z.enum(['combined', 'color', 'landing']).default('combined'),
 });
 
 /** Biệt danh = tên đăng nhập: chữ (có dấu), số, khoảng trắng, . _ - */

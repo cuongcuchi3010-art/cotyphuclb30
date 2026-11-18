@@ -374,6 +374,48 @@ describe('Xây & bán nhà (trọn nhóm màu + bước vào lại ô)', () => {
   });
 });
 
+describe('Chế độ xây nhà: Theo màu / Theo ô', () => {
+  it('Theo màu: trọn nhóm là xây ngay trong lượt, không cần bước vào ô', () => {
+    let s = mkGame(2, { buildRule: 'color' });
+    own(s, 'p1', 1);
+    expect(() => act(s, 'p1', { type: 'build', pos: 1 })).toThrow('trọn nhóm');
+    own(s, 'p1', 3);
+    for (let k = 0; k < 4; k++) ({ state: s } = act(s, 'p1', { type: 'build', pos: 1 }));
+    ({ state: s } = act(s, 'p1', { type: 'build', pos: 3 }));
+    // Đủ 4 nhà thì lên khách sạn ngay
+    ({ state: s } = act(s, 'p1', { type: 'build', pos: 1 }));
+    expect(s.properties[1]!.houses).toBe(5);
+    expect(s.properties[3]!.houses).toBe(1);
+  });
+
+  it('Theo màu: dừng ở ô của mình không mở lượt xây riêng', () => {
+    let s = mkGame(2, { buildRule: 'color' });
+    own(s, 'p1', 1, 3);
+    pl(s, 'p1').position = 39;
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 1]));
+    expect(s.buildPass ?? null).toBeNull();
+  });
+
+  it('Theo ô: không cần trọn màu, bước vào lại ô của mình là xây được', () => {
+    let s = mkGame(2, { buildRule: 'landing' });
+    own(s, 'p1', 6);
+    expect(() => act(s, 'p1', { type: 'build', pos: 6 })).toThrow('bước vào lại');
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [2, 4]));
+    expect(s.buildPass).toBe(6);
+    for (let k = 0; k < 4; k++) ({ state: s } = act(s, 'p1', { type: 'build', pos: 6 }));
+    expect(s.properties[6]!.houses).toBe(4);
+    expect(() => act(s, 'p1', { type: 'build', pos: 6 })).toThrow('sẵn 4 nhà');
+  });
+
+  it('Theo ô: ô đang thế chấp không được xây', () => {
+    let s = mkGame(2, { buildRule: 'landing' });
+    own(s, 'p1', 6);
+    s.properties[6]!.mortgaged = true;
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [2, 4]));
+    expect(s.buildPass ?? null).toBeNull();
+  });
+});
+
 describe('Thế chấp', () => {
   it('nhận 50%, chuộc 110% làm tròn lên', () => {
     let s = mkGame();

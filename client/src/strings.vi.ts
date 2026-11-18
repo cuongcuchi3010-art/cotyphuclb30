@@ -106,8 +106,20 @@ export const S = {
     hotelStock: 'Số khách sạn tối đa (cả ván)',
     showStandings: 'Hiện tổng tài sản & thứ hạng trong ván',
     standard: 'chuẩn',
-    buildInfo:
-      'Luật xây nhà: sở hữu trọn nhóm màu, rồi bước vào lại ô đó mới được xây (mỗi lần tuỳ ý tới 4 nhà). Ô đã có sẵn 4 nhà khi bước vào thì được xây khách sạn.',
+    buildRule: 'Chế độ xây nhà',
+    buildRules: {
+      combined: 'Trăm điều khó (trọn màu + bước vào ô)',
+      color: 'Theo màu (trọn nhóm màu)',
+      landing: 'Theo ô (bước vào lại ô)',
+    },
+    buildInfos: {
+      combined:
+        'Sở hữu trọn nhóm màu, rồi bước vào lại ô đó mới được xây (mỗi lần tuỳ ý tới 4 nhà). Ô đã có sẵn 4 nhà khi bước vào thì được xây khách sạn.',
+      color:
+        'Sở hữu trọn nhóm màu (không ô nào thế chấp) là xây được bất cứ lúc nào trong lượt của mình. Đủ 4 nhà thì nâng lên khách sạn.',
+      landing:
+        'Không cần trọn màu: bước vào lại ô của mình là được xây (mỗi lần tuỳ ý tới 4 nhà). Ô đã có sẵn 4 nhà khi bước vào thì được xây khách sạn.',
+    },
     seconds: (n: number) => `${n} giây`,
     password: 'Mật khẩu phòng (để trống = không có)',
     savePassword: 'Lưu',

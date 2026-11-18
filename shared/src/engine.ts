@@ -30,6 +30,7 @@ import type {
   PlayerId,
   PlayerState,
   PropertyState,
+  BuildRule,
   Rng,
   Rules,
   TokenId,
@@ -250,6 +251,19 @@ function canBuildGroup(s: GameState, owner: PlayerId, pos: number): boolean {
     ownsWholeGroup(s, owner, pos) &&
     GROUP_MEMBERS[sq.group].every((i) => !s.properties[i]!.mortgaged)
   );
+}
+
+/** Chế độ xây nhà của ván (ván cũ chưa có trường này = Trăm điều khó) */
+export function buildRuleOf(s: GameState): BuildRule {
+  return s.rules.buildRule ?? 'combined';
+}
+
+/** Dừng ở ô của mình có được tính là "bước vào lại" để xây không */
+function buildPassEligible(s: GameState, owner: PlayerId, pos: number): boolean {
+  const rule = buildRuleOf(s);
+  if (rule === 'color') return false;
+  if (rule === 'landing') return !s.properties[pos]!.mortgaged;
+  return canBuildGroup(s, owner, pos);
 }
 
 export function countOwned(s: GameState, owner: PlayerId, indices: readonly number[]): number {
@@ -743,7 +757,7 @@ function landOn(c: Ctx, p: PlayerState, ctx: RentContext): void {
       c.ev.push({ t: 'offer', playerId: p.id, pos });
       return;
     }
-    if (st.owner === p.id && sq.kind === 'street' && canBuildGroup(s, p.id, pos)) {
+    if (st.owner === p.id && sq.kind === 'street' && buildPassEligible(s, p.id, pos)) {
       s.buildPass = pos;
       s.buildPassLevel = st.houses;
       c.ev.push({ t: 'buildChance', playerId: p.id, pos });
@@ -1315,21 +1329,29 @@ function requireOwnedStreet(s: GameState, p: PlayerState, pos: number): StreetSq
 }
 
 /**
- * Luật xây nhà: phải trọn nhóm màu (không ô nào thế chấp), rồi BƯỚC VÀO LẠI ô đó mới được xây.
- * Mỗi lần dừng xây tuỳ ý tới 4 nhà; khách sạn chỉ khi lúc bước vào ô đã có sẵn 4 nhà.
+ * Luật xây nhà theo `rules.buildRule`:
+ * - combined (Trăm điều khó): trọn nhóm màu (không ô nào thế chấp) + BƯỚC VÀO LẠI ô đó.
+ * - color: trọn nhóm màu, xây bất cứ lúc nào trong lượt mình; khách sạn khi ô đã có 4 nhà.
+ * - landing: bước vào lại ô của mình (ô không thế chấp), không cần trọn màu.
+ * Khi phải bước vào ô: mỗi lần dừng xây tuỳ ý tới 4 nhà; khách sạn chỉ khi lúc bước vào đã có 4 nhà.
  */
 export function canBuild(s: GameState, p: PlayerState, pos: number): string | null {
   const sq = square(pos);
   if (sq.kind !== 'street') return 'Chỉ xây nhà trên ô đất';
   const st = s.properties[pos]!;
   if (st.owner !== p.id) return 'Ô này không phải của bạn';
-  if (!ownsWholeGroup(s, p.id, pos)) return 'Cần sở hữu trọn nhóm màu';
-  if (GROUP_MEMBERS[sq.group].some((i) => s.properties[i]!.mortgaged))
-    return 'Có ô trong nhóm đang thế chấp';
-  if (s.buildPass !== pos) return 'Chỉ được xây khi bước vào lại ô này';
+  const rule = buildRuleOf(s);
+  if (rule !== 'landing') {
+    if (!ownsWholeGroup(s, p.id, pos)) return 'Cần sở hữu trọn nhóm màu';
+    if (GROUP_MEMBERS[sq.group].some((i) => s.properties[i]!.mortgaged))
+      return 'Có ô trong nhóm đang thế chấp';
+  } else if (st.mortgaged) return 'Ô đang thế chấp';
   if (st.houses >= HOTEL_LEVEL) return 'Ô đã có khách sạn';
-  if (st.houses === 4 && s.buildPassLevel !== 4)
-    return 'Khách sạn chỉ xây được khi bước vào ô đã có sẵn 4 nhà';
+  if (rule !== 'color') {
+    if (s.buildPass !== pos) return 'Chỉ được xây khi bước vào lại ô này';
+    if (st.houses === 4 && s.buildPassLevel !== 4)
+      return 'Khách sạn chỉ xây được khi bước vào ô đã có sẵn 4 nhà';
+  }
   if (st.houses === 4) {
     if (s.bank.hotels < 1) return 'Ngân hàng đã hết khách sạn';
   } else if (s.bank.houses < 1) return 'Ngân hàng đã hết nhà';

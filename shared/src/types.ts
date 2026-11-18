@@ -32,7 +32,16 @@ export interface Rules {
   hotelStock: number;
   /** Hiện tổng tài sản & thứ hạng của mọi người suốt ván */
   showStandings: boolean;
+  /**
+   * Chế độ xây nhà:
+   * - combined ("Trăm điều khó"): trọn nhóm màu + bước vào lại ô mới được xây
+   * - color: trọn nhóm màu là xây được bất cứ lúc nào trong lượt mình
+   * - landing: bước vào lại ô của mình là xây được (không cần trọn màu)
+   */
+  buildRule: BuildRule;
 }
+
+export type BuildRule = 'combined' | 'color' | 'landing';
 
 export const DEFAULT_RULES: Rules = {
   startingCash: 1500,
@@ -44,6 +53,7 @@ export const DEFAULT_RULES: Rules = {
   houseStock: 32,
   hotelStock: 12,
   showStandings: false,
+  buildRule: 'combined',
 };
 
 export interface PlayerStats {
