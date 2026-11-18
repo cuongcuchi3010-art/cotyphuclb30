@@ -4,6 +4,7 @@ import { S } from '../strings.vi';
 import { navigate } from '../router';
 import { api, saveAuth, useStore } from '../store';
 import { Btn, Panel } from './ui';
+import { AvatarEditor } from './AvatarEditor';
 import { TokenIcon } from './TokenIcon';
 
 export function Home() {
@@ -12,10 +13,15 @@ export function Home() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [rooms, setRooms] = useState<Profile['rooms']>([]);
+  const [avatar, setAvatar] = useState<string | null>(null);
 
   useEffect(() => {
     void api<Profile>('/api/me').then((r) => {
-      if (r.ok) setRooms(r.data.rooms ?? []);
+      if (r.ok) {
+        setRooms(r.data.rooms ?? []);
+        if (r.data.avatarV && r.data.id)
+          setAvatar(`/api/avatar/${encodeURIComponent(r.data.id)}?v=${r.data.avatarV}`);
+      }
     });
   }, []);
 
@@ -81,6 +87,11 @@ export function Home() {
           {S.auth.logout}
         </button>
       </div>
+
+      <Panel className="p-4">
+        <div className="mb-2 text-sm font-bold">{S.avatar.title}</div>
+        <AvatarEditor current={avatar} onChange={setAvatar} />
+      </Panel>
 
       <Panel className="space-y-4 p-5">
         <Btn big className="w-full text-lg" disabled={busy} onClick={create}>

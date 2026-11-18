@@ -15,7 +15,7 @@ import {
 } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
-import { cx, fmtClock, nameOf, playerColor, useGame, useNow } from '../lib';
+import { cx, fmtClock, nameOf, playerColor, useGame, useNow, photoOf } from '../lib';
 import { Btn, Modal } from './ui';
 import { Avatar } from './Avatar';
 import { motion } from 'framer-motion';
@@ -630,7 +630,12 @@ function DrawOrderPrompt() {
                   <span className="text-4xl font-black text-son dark:text-nghe">{got?.number}</span>
                   {p && (
                     <>
-                      <Avatar token={p.token} color={playerColor(room, p.id)} size={28} />
+                      <Avatar
+                        token={p.token}
+                        color={playerColor(room, p.id)}
+                        size={28}
+                        photo={photoOf(room, p.id)}
+                      />
                       <span className="max-w-full truncate px-1 text-xs font-semibold">
                         {p.id === me ? 'Bạn' : p.name}
                       </span>

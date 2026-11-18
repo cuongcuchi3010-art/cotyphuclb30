@@ -16,6 +16,16 @@ export const S = {
     stamp2: 'báo danh',
   },
 
+  avatar: {
+    title: 'Ảnh đại diện',
+    upload: 'Tải ảnh lên',
+    presets: 'Chọn biểu tượng',
+    reset: 'Dùng quân cờ',
+    token: 'Quân cờ',
+    bad: 'Không đọc được ảnh, thử ảnh khác nhé',
+    hint: 'Ảnh lưu theo tài khoản, đổi thiết bị vẫn giữ. Áp dụng từ lần vào phòng tiếp theo.',
+  },
+
   auth: {
     login: 'Đăng nhập',
     register: 'Tạo tài khoản',

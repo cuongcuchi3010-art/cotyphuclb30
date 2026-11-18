@@ -26,7 +26,7 @@ interface Attachment {
   id: string;
   playerId: string | null;
   spectator: boolean;
-  account: { id: string; name: string } | null;
+  account: { id: string; name: string; avatarV?: number } | null;
   voice: boolean;
 }
 
@@ -38,7 +38,10 @@ interface Verified {
   id: string;
   username: string;
   rooms: { code: string; at: number }[];
+  avatarV: number;
 }
+
+const AVATAR_MAX = 120_000; // ~90 KB ảnh sau base64
 
 /** Kiểm tra token đăng nhập ("<khoá>.<ngẫu nhiên>") */
 async function verifyToken(env: Env, token: string | null): Promise<Verified | null> {
@@ -212,7 +215,11 @@ export class Room extends DurableObject<Env> {
         spectator: false,
         account:
           accId && accName
-            ? { id: decodeURIComponent(accId), name: decodeURIComponent(accName) }
+            ? {
+                id: decodeURIComponent(accId),
+                name: decodeURIComponent(accName),
+                avatarV: Number(req.headers.get('x-account-avatar') ?? 0) || 0,
+              }
             : null,
         voice: false,
       } satisfies Attachment);
@@ -324,7 +331,36 @@ export default {
     if (path === '/api/me') {
       const v = await verifyToken(env, bearer(req));
       if (!v) return json({ error: 'Phiên đăng nhập hết hạn' }, 401);
-      return json({ username: v.username, rooms: v.rooms });
+      return json({ username: v.username, rooms: v.rooms, avatarV: v.avatarV ?? 0, id: v.id });
+    }
+    // ---- Ảnh đại diện
+    if (path === '/api/me/avatar' && (req.method === 'PUT' || req.method === 'DELETE')) {
+      const v = await verifyToken(env, bearer(req));
+      if (!v) return json({ error: 'Phiên đăng nhập hết hạn' }, 401);
+      if (req.method === 'DELETE')
+        return accountStub(env, v.id).fetch('https://acc/clearAvatar', { method: 'POST', body: '{}' });
+      let data = '';
+      try {
+        data = String(((await req.json()) as { data?: unknown }).data ?? '');
+      } catch {
+        /* bỏ qua */
+      }
+      if (!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(data) || data.length > AVATAR_MAX)
+        return json({ error: 'Ảnh không hợp lệ hoặc quá lớn' }, 400);
+      return accountStub(env, v.id).fetch('https://acc/setAvatar', {
+        method: 'POST',
+        body: JSON.stringify({ data }),
+      });
+    }
+    const av = path.match(/^\/api\/avatar\/([^/]+)$/);
+    if (av && req.method === 'GET') {
+      let key: string;
+      try {
+        key = decodeURIComponent(av[1]!);
+      } catch {
+        return new Response('Not found', { status: 404 });
+      }
+      return accountStub(env, key).fetch('https://acc/avatar');
     }
 
     if (path.startsWith('/api/rooms') || path.startsWith('/ws/')) {
@@ -339,6 +375,7 @@ export default {
         const fwd = new Request('https://room/ws', req);
         fwd.headers.set('x-account-id', encodeURIComponent(v.id));
         fwd.headers.set('x-account-name', encodeURIComponent(v.username));
+        fwd.headers.set('x-account-avatar', String(v.avatarV ?? 0));
         return env.ROOMS.get(env.ROOMS.idFromName(code)).fetch(fwd);
       }
     }

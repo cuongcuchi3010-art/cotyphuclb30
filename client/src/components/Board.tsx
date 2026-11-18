@@ -15,7 +15,7 @@ import {
 } from '@cotyphu/shared';
 import { useStore } from '../store';
 import { useVoice } from '../voice';
-import { cellOf, centerPct, cx, playerColor, sideOf, useGame } from '../lib';
+import { cellOf, centerPct, cx, playerColor, sideOf, useGame, photoOf } from '../lib';
 import { BrandLogo } from './BrandLogo';
 import { Avatar } from './Avatar';
 import { CenterInfo } from './CenterInfo';
@@ -164,6 +164,7 @@ function PlayerCorners() {
                     color={color}
                     size="7.5cqw"
                     speaking={speaking.includes(p.id)}
+                    photo={photoOf(room, p.id)}
                   />
                   <span
                     className={cx(
@@ -513,7 +514,13 @@ function Tokens() {
             style={{ translateX: '-50%', translateY: '-50%' }}
           >
             <div className={cx('upright rounded-full shadow-md', isCur && 'animate-pulse-soft')}>
-              <Avatar token={p.token} color={color} size="4.6cqw" ring={isCur} />
+              <Avatar
+                token={p.token}
+                color={color}
+                size="4.6cqw"
+                ring={isCur}
+                photo={photoOf(room, p.id)}
+              />
             </div>
           </motion.div>
         );

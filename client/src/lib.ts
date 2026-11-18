@@ -59,6 +59,11 @@ export function useGame(): {
   return { room, game: room?.game ?? null, me };
 }
 
+/** URL ảnh đại diện của người chơi (null = dùng quân cờ) */
+export function photoOf(room: RoomView | null, id: string | null | undefined): string | null {
+  return room?.players.find((p) => p.id === id)?.avatar ?? null;
+}
+
 export function nameOf(room: RoomView | null, id: string | null | undefined): string {
   if (id === 'bank') return 'Ngân hàng';
   return room?.players.find((p) => p.id === id)?.name ?? '?';

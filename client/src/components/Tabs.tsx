@@ -22,7 +22,7 @@ import {
 } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore, type TradeDraft } from '../store';
-import { cx, nameOf, playerColor, useGame } from '../lib';
+import { cx, nameOf, playerColor, useGame, photoOf } from '../lib';
 import { Avatar } from './Avatar';
 import { LoanActions, SideView, TradeActions } from './Prompts';
 import { Btn } from './ui';
@@ -100,7 +100,12 @@ function PlayerPicker({ value, onPick }: { value: string | null; onPick: (id: st
               : 'border-transparent bg-black/5 dark:bg-white/5',
           )}
         >
-          <Avatar token={o.token} color={playerColor(room, o.id)} size={30} />
+          <Avatar
+            token={o.token}
+            color={playerColor(room, o.id)}
+            size={30}
+            photo={photoOf(room, o.id)}
+          />
           <span className="leading-tight">
             <span className="block text-sm font-bold">{o.name}</span>
             <span className="block text-xs text-son dark:text-nghe">{formatMoney(o.cash)}</span>
@@ -373,7 +378,12 @@ function TradeEditor({
     <div className="space-y-2 rounded-2xl border-2 border-nghe p-2">
       <div className="rounded-xl bg-black/5 p-2 dark:bg-white/5">
         <div className="mb-1 flex items-center gap-2 text-sm font-bold">
-          <Avatar token={other.token} color={playerColor(room, other.id)} size={22} />
+          <Avatar
+            token={other.token}
+            color={playerColor(room, other.id)}
+            size={22}
+            photo={photoOf(room, other.id)}
+          />
           {S.trade.theirAssets(other.name)} — {S.trade.youGet}
         </div>
         <AssetPicker
@@ -387,7 +397,12 @@ function TradeEditor({
       </div>
       <div className="rounded-xl bg-black/5 p-2 dark:bg-white/5">
         <div className="mb-1 flex items-center gap-2 text-sm font-bold">
-          <Avatar token={meP.token} color={playerColor(room, meP.id)} size={22} />
+          <Avatar
+            token={meP.token}
+            color={playerColor(room, meP.id)}
+            size={22}
+            photo={photoOf(room, meP.id)}
+          />
           {S.trade.youGive}
         </div>
         <AssetPicker

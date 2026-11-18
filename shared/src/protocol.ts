@@ -113,6 +113,8 @@ export interface AuthResponse {
 }
 
 export interface Profile {
+  id?: string;
+  avatarV?: number;
   username: string;
   rooms: { code: string; at: number }[];
 }
@@ -167,6 +169,8 @@ export interface RoomPlayer {
   awaitingHostDecision: boolean;
   /** Đang tham gia voice chat */
   voice: boolean;
+  /** URL ảnh đại diện (null = dùng quân cờ) */
+  avatar: string | null;
 }
 
 export interface ChatMessage {

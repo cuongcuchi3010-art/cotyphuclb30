@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 import { formatMoney, square } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
-import { cx, fmtClock, nameOf, playerColor, useGame, useNow } from '../lib';
+import { cx, fmtClock, nameOf, playerColor, useGame, useNow, photoOf } from '../lib';
 import { ActionBar } from './ActionBar';
 import { Avatar } from './Avatar';
 
@@ -58,7 +58,12 @@ export function CenterInfo() {
         </div>
         {ph.kind !== 'gameOver' && (
           <div className="flex min-w-0 items-center gap-[1cqw] rounded-full bg-white/85 px-[1.4cqw] py-[0.6cqw] shadow-sm dark:bg-black/40">
-            <Avatar token={actor.token} color={playerColor(room, actorId)} size="4cqw" />
+            <Avatar
+              token={actor.token}
+              color={playerColor(room, actorId)}
+              size="4cqw"
+              photo={photoOf(room, actorId)}
+            />
             <div className="min-w-0 leading-tight">
               <div className="truncate font-bold" style={{ fontSize: '1.7cqw' }}>
                 {ph.kind === 'drawOrder'

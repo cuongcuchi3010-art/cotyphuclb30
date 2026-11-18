@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { formatMoney, netWorth, ranking, square } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
-import { playerColor, useGame } from '../lib';
+import { playerColor, useGame, photoOf } from '../lib';
 import { TokenIcon } from './TokenIcon';
 import { Avatar } from './Avatar';
 import { Btn } from './ui';
@@ -50,7 +50,12 @@ export function GameOver() {
                   className="flex items-center gap-2 rounded-xl bg-white/70 px-3 py-1.5 dark:bg-white/5"
                 >
                   <span className="w-5 font-bold">{k + 1}.</span>
-                  <Avatar token={p.token} color={playerColor(room, id)} size={28} />
+                  <Avatar
+                    token={p.token}
+                    color={playerColor(room, id)}
+                    size={28}
+                    photo={photoOf(room, id)}
+                  />
                   <span className="flex-1 font-semibold">{p.name}</span>
                   <span className="text-sm text-gray-500">
                     {p.bankrupt

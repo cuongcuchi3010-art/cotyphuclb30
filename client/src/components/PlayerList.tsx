@@ -1,7 +1,7 @@
 import { OWNABLE_INDICES, formatMoney, standings } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
-import { cx, playerColor, useGame } from '../lib';
+import { cx, playerColor, useGame, photoOf } from '../lib';
 import { useVoice } from '../voice';
 import { Avatar } from './Avatar';
 
@@ -70,6 +70,7 @@ export function PlayerList({ compact, cols }: { compact?: boolean; cols?: 1 | 2 
                 color={color}
                 size={compact ? 30 : 38}
                 speaking={speaking.includes(p.id)}
+                photo={photoOf(room, p.id)}
               />
               <span
                 className={cx(

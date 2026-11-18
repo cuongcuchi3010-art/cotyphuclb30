@@ -22,6 +22,8 @@ export interface AccountRecord {
   rooms: { code: string; at: number }[];
   fails: number;
   lockedUntil: number;
+  /** Phiên bản ảnh đại diện (0 = dùng quân cờ) */
+  avatarV?: number;
 }
 
 function hex(buf: ArrayBuffer | Uint8Array): string {
@@ -122,7 +124,7 @@ export class Account extends DurableObject {
       case '/verify': {
         if (!a || !a.sessions.some((x) => safeEqual(x.token, body.token ?? '')))
           return json({ error: 'Phiên đăng nhập hết hạn' }, 401);
-        return json({ id: a.key, username: a.username, rooms: a.rooms });
+        return json({ id: a.key, username: a.username, rooms: a.rooms, avatarV: a.avatarV ?? 0 });
       }
       case '/logout': {
         if (a) {
@@ -139,6 +141,33 @@ export class Account extends DurableObject {
         ].slice(0, MAX_ROOMS);
         await this.save(a);
         return json({ ok: true });
+      }
+      case '/setAvatar': {
+        if (!a) return json({ error: 'Không tìm thấy tài khoản' }, 404);
+        await this.ctx.storage.put('avatar', body.data);
+        a.avatarV = Date.now();
+        await this.save(a);
+        return json({ avatarV: a.avatarV });
+      }
+      case '/clearAvatar': {
+        if (!a) return json({ ok: false });
+        await this.ctx.storage.delete('avatar');
+        a.avatarV = 0;
+        await this.save(a);
+        return json({ avatarV: 0 });
+      }
+      case '/avatar': {
+        const data = await this.ctx.storage.get<string>('avatar');
+        const m = data?.match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/);
+        if (!m) return new Response('Not found', { status: 404 });
+        const bytes = Uint8Array.from(atob(m[2]!), (ch) => ch.charCodeAt(0));
+        return new Response(bytes, {
+          headers: {
+            'content-type': m[1]!,
+            // URL có kèm ?v=<phiên bản> nên cache lâu được
+            'cache-control': 'public, max-age=31536000, immutable',
+          },
+        });
       }
       default:
         return json({ error: 'Not found' }, 404);

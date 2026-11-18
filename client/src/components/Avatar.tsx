@@ -13,6 +13,7 @@ export function Avatar({
   ring,
   speaking,
   className,
+  photo,
 }: {
   token: TokenId;
   color: string;
@@ -21,6 +22,8 @@ export function Avatar({
   ring?: boolean;
   speaking?: boolean;
   className?: string;
+  /** Ảnh đại diện của người chơi (nếu có): hiện ảnh, kèm huy hiệu quân cờ nhỏ */
+  photo?: string | null;
 }) {
   const id = `pat-${color.replace('#', '')}`;
   return (
@@ -61,12 +64,29 @@ export function Avatar({
         <circle cx="20" cy="20" r="20" fill={`url(#${id})`} />
         <circle cx="20" cy="20" r="13" fill={`url(#${id}-g)`} />
       </svg>
-      <span className="relative flex h-full w-full items-center justify-center">
-        <TokenIcon
-          token={token}
-          size={typeof size === 'number' ? Math.round(size * 0.68) : '68%'}
-        />
-      </span>
+      {photo ? (
+        <>
+          <img
+            src={photo}
+            alt=""
+            draggable={false}
+            className="relative h-full w-full rounded-full object-cover"
+          />
+          <span
+            className="absolute -bottom-[8%] -right-[8%] flex items-center justify-center rounded-full bg-white shadow"
+            style={{ width: '46%', height: '46%', boxShadow: `0 0 0 1.5px ${color}` }}
+          >
+            <TokenIcon token={token} size="80%" />
+          </span>
+        </>
+      ) : (
+        <span className="relative flex h-full w-full items-center justify-center">
+          <TokenIcon
+            token={token}
+            size={typeof size === 'number' ? Math.round(size * 0.68) : '68%'}
+          />
+        </span>
+      )}
     </span>
   );
 }

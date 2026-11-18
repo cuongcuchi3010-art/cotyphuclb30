@@ -184,3 +184,11 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 | Q1  | **Bàn hình thoi** (vẫn 2D): bàn xoay 45°, hình minh hoạ / tên ô / quân cờ / khu giữa bàn được xoay ngược để luôn đứng thẳng; dải giá chạy theo cạnh. Người chơi hiển thị ở **4 góc** (avatar, tên, tiền, trạng thái, huy chương nếu bật thứ hạng); bấm vào để giao dịch. |
 | Q2  | Nút **◆/■** chuyển bàn thoi ↔ bàn vuông, nhớ theo máy. Mặc định: màn hẹp < 520px (điện thoại dọc) dùng bàn vuông vì bàn thoi làm ô nhỏ đi ~30%; màn hình khác dùng bàn thoi.                                                                                             |
 | Q3  | Chỗ ngồi theo **chiều kim đồng hồ đúng thứ tự lượt đi** sau bốc thăm: trên-trái → trên-phải → dưới-phải → dưới-trái; 5–6 người thêm ở góc phải (người 3) và góc trái (người 6).                                                                                          |
+
+## Cập nhật lần 17: ảnh đại diện
+
+| #   | Quyết định                                                                                                                                                                                                                                             |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A1  | Trang chủ có mục **Ảnh đại diện**: tải ảnh của mình (trình duyệt tự cắt vuông giữa, thu còn 160×160, nén JPEG ~10–20 KB rồi mới gửi) hoặc chọn 1 trong 16 biểu tượng có sẵn (vẽ thành ảnh PNG nền màu). "Dùng quân cờ" để bỏ ảnh.                      |
+| A2  | Ảnh lưu trong Durable Object **Account** (theo tài khoản, đổi máy vẫn giữ), phục vụ qua `GET /api/avatar/<tài khoản>?v=<phiên bản>` với cache lâu (đổi ảnh thì đổi phiên bản). Không gửi ảnh qua WebSocket để giữ tin nhắn phòng nhẹ. Giới hạn ~90 KB. |
+| A3  | Ảnh hiển thị ở góc người chơi / danh sách / sảnh / quân cờ trên bàn / thông báo, kèm **huy hiệu quân cờ** nhỏ để vẫn nhận ra quân. Ảnh mới áp dụng từ lần vào phòng (hoặc vào lại) tiếp theo.                                                          |

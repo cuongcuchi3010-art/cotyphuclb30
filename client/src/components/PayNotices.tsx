@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { formatMoney, square } from '@cotyphu/shared';
 import { useStore } from '../store';
-import { nameOf, playerColor, useGame } from '../lib';
+import { nameOf, playerColor, useGame, photoOf } from '../lib';
 import { Avatar } from './Avatar';
 
 const REASON: Record<string, string> = {
@@ -39,7 +39,12 @@ export function PayNotices() {
               }}
             >
               <div className="flex shrink-0 items-center gap-1">
-                <Avatar token={from.token} color={playerColor(room, from.id)} size={34} />
+                <Avatar
+                  token={from.token}
+                  color={playerColor(room, from.id)}
+                  size={34}
+                  photo={photoOf(room, from.id)}
+                />
                 <motion.span
                   className="text-lg"
                   initial={{ x: -6 }}
@@ -48,7 +53,12 @@ export function PayNotices() {
                 >
                   💸
                 </motion.span>
-                <Avatar token={to.token} color={playerColor(room, to.id)} size={34} />
+                <Avatar
+                  token={to.token}
+                  color={playerColor(room, to.id)}
+                  size={34}
+                  photo={photoOf(room, to.id)}
+                />
               </div>
               <div className="min-w-0 leading-tight">
                 <div className="text-sm font-semibold">

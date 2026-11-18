@@ -60,7 +60,7 @@ export function Lobby() {
               key={p.id}
               className="flex items-center gap-2 rounded-xl bg-black/5 px-3 py-2 dark:bg-white/5"
             >
-              <Avatar token={p.token} color={PLAYER_COLORS[i]!} size={36} />
+              <Avatar token={p.token} color={PLAYER_COLORS[i]!} size={36} photo={p.avatar} />
               <span className="flex-1 font-semibold">
                 {p.name}{' '}
                 {p.id === me && <span className="text-xs text-gray-400">({S.lobby.you})</span>}

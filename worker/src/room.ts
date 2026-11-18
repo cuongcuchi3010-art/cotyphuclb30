@@ -43,7 +43,7 @@ export interface Conn {
   playerId: string | null;
   spectator: boolean;
   /** Tài khoản đã đăng nhập của kết nối này */
-  account: { id: string; name: string } | null;
+  account: { id: string; name: string; avatarV?: number } | null;
   /** Đang bật voice chat */
   voice: boolean;
   send(msg: ServerMessage): void;
@@ -74,6 +74,8 @@ export interface SeatRecord {
   token: TokenId;
   /** Tài khoản sở hữu ghế */
   accountId: string;
+  /** Phiên bản ảnh đại diện của tài khoản (0 = dùng quân cờ) */
+  avatarV?: number;
   isBot: boolean;
   offlineSince: number | null;
   awaitingHostDecision: boolean;
@@ -259,6 +261,7 @@ export class RoomCore {
           name: conn.account.name,
           token: m.token,
           accountId: conn.account.id,
+          avatarV: conn.account.avatarV ?? 0,
           isBot: false,
           offlineSince: null,
           awaitingHostDecision: false,
@@ -433,6 +436,7 @@ export class RoomCore {
 
   private resumeSeat(conn: Conn, seat: SeatRecord): void {
     this.bindConn(conn, seat.id);
+    if (conn.account) seat.avatarV = conn.account.avatarV ?? 0;
     seat.offlineSince = null;
     seat.awaitingHostDecision = false;
     if (seat.isBot && this.snap.status === 'playing') {
@@ -676,6 +680,9 @@ export class RoomCore {
         offlineSince: s.offlineSince,
         awaitingHostDecision: s.awaitingHostDecision,
         voice: this.host.conns().some((c) => c.playerId === s.id && c.voice),
+        avatar: s.avatarV
+          ? `/api/avatar/${encodeURIComponent(s.accountId)}?v=${s.avatarV}`
+          : null,
       })),
       spectators: this.host.conns().filter((c) => c.spectator).length,
       rules: snap.rules,
