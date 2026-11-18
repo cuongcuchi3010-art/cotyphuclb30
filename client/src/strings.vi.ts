@@ -106,6 +106,8 @@ export const S = {
     hotelStock: 'Số khách sạn tối đa (cả ván)',
     showStandings: 'Hiện tổng tài sản & thứ hạng trong ván',
     standard: 'chuẩn',
+    festivalSquare:
+      'Thay ô Cà Phê bằng ô Lễ Hội (ai dừng được chọn ô đất của mình tổ chức lễ hội, thuê ×2)',
     buildRule: 'Chế độ xây nhà',
     buildRules: {
       combined: 'Trăm điều khó (trọn màu + bước vào ô)',
@@ -181,6 +183,8 @@ export const S = {
     other: (name: string) => `${name} đang gom tiền trả nợ…`,
     openAssets: 'Mở Tài sản',
   },
+
+  festivalSquare: { name: 'Lễ Hội', sub: 'Chọn ô thuê ×2' },
 
   tabs: { assets: 'Tài sản', trade: 'Giao dịch', loan: 'Vay', chat: 'Chat' },
 

@@ -150,6 +150,7 @@ export function runSimulation(from: number, count: number): { finished: number; 
         houseStock: [32, 12, 64][g % 3]!,
         hotelStock: [12, 3, 24][g % 3]!,
         buildRule: (['combined', 'color', 'landing'] as const)[g % 3]!,
+        festivalSquare: g % 2 === 1,
       },
       rng,
     );

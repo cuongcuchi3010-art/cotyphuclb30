@@ -782,7 +782,14 @@ function landOn(c: Ctx, p: PlayerState, ctx: RentContext): void {
       sendToJail(c, p, 'square');
       return;
     case 'parking':
-      if (s.rules.jackpot && s.jackpot > 0 && pos === PARKING_INDEX) {
+      if (s.rules.festivalSquare && pos === PARKING_INDEX) {
+        // Ô Lễ Hội: chọn 1 ô đất của mình để tổ chức (thuê ×2)
+        if (festivalTargets(s, p.id).length === 0) return;
+        s.phase = { kind: 'cardChoice', choice: 'festival' };
+        c.ev.push({ t: 'choosing', playerId: p.id, choice: 'festival' });
+        return;
+      }
+      if (jackpotOn(s) && s.jackpot > 0 && pos === PARKING_INDEX) {
         p.cash += s.jackpot;
         c.ev.push({ t: 'collect', playerId: p.id, amount: s.jackpot, reason: 'jackpot' });
         s.jackpot = 0;
@@ -1099,9 +1106,14 @@ function loseOneLevel(s: GameState, pos: number): void {
 
 const JACKPOT_REASONS = new Set(['tax', 'card', 'jailFine']);
 
+/** Hũ tiền chỉ chạy khi ô 20 vẫn là Cà Phê (không bật ô Lễ Hội) */
+export function jackpotOn(s: GameState): boolean {
+  return s.rules.jackpot && !s.rules.festivalSquare;
+}
+
 function payToBank(c: Ctx, p: PlayerState, amount: number, reason: Debt['reason']): void {
   p.cash -= amount;
-  if (c.s.rules.jackpot && JACKPOT_REASONS.has(reason)) {
+  if (jackpotOn(c.s) && JACKPOT_REASONS.has(reason)) {
     c.s.jackpot += amount;
     c.ev.push({ t: 'pay', from: p.id, to: 'jackpot', amount, reason });
   } else {

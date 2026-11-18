@@ -110,10 +110,19 @@ export function Lobby() {
             </select>
           </label>
           <Toggle
-            checked={rules.jackpot}
-            onChange={(v) => setRules({ jackpot: v })}
-            label={S.lobby.jackpot}
+            checked={!!rules.festivalSquare}
+            onChange={(v) =>
+              setRules(v ? { festivalSquare: true, jackpot: false } : { festivalSquare: false })
+            }
+            label={S.lobby.festivalSquare}
           />
+          {!rules.festivalSquare && (
+            <Toggle
+              checked={rules.jackpot}
+              onChange={(v) => setRules({ jackpot: v })}
+              label={S.lobby.jackpot}
+            />
+          )}
           <Toggle
             checked={rules.doubleGo}
             onChange={(v) => setRules({ doubleGo: v })}

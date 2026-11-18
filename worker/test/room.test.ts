@@ -159,6 +159,7 @@ describe('Phòng chơi', () => {
         hotelStock: 16,
         showStandings: true,
         buildRule: 'landing',
+        festivalSquare: true,
       },
     });
     a.msg({ type: 'start' });

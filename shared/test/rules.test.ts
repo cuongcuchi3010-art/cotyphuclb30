@@ -1012,3 +1012,26 @@ describe('Thẻ Lễ hội', () => {
     expect(r.state.festival).toEqual({ pos: 39, owner: 'p1' });
   });
 });
+
+describe('Ô Lễ Hội thay Cà Phê', () => {
+  it('dừng ô 20 được chọn ô đất của mình tổ chức lễ hội', () => {
+    let s = mkGame(2, { festivalSquare: true, jackpot: true });
+    own(s, 'p1', 39);
+    pl(s, 'p1').position = 13;
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4])); // 13 → 20
+    expect(s.phase).toEqual({ kind: 'cardChoice', choice: 'festival' });
+    ({ state: s } = act(s, 'p1', { type: 'chooseFestival', pos: 39 }));
+    expect(s.festival).toEqual({ pos: 39, owner: 'p1' });
+  });
+
+  it('chưa có ô nào thì không phải chọn; hũ tiền tắt khi bật ô Lễ Hội', () => {
+    let s = mkGame(2, { festivalSquare: true, jackpot: true });
+    pl(s, 'p1').position = 13;
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
+    expect(s.phase.kind).not.toBe('cardChoice');
+    let t = mkGame(2, { festivalSquare: true, jackpot: true });
+    pl(t, 'p1').position = 1;
+    ({ state: t } = act(t, 'p1', { type: 'roll' }, [1, 2])); // → 4 Thuế
+    expect(t.jackpot).toBe(0);
+  });
+});

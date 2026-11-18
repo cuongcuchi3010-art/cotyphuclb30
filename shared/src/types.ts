@@ -39,6 +39,8 @@ export interface Rules {
    * - landing: bước vào lại ô của mình là xây được (không cần trọn màu)
    */
   buildRule: BuildRule;
+  /** Thay ô Cà Phê Vỉa Hè (20) bằng ô Lễ Hội: ai dừng ở đó được chọn 1 ô đất của mình, thuê ×2 */
+  festivalSquare: boolean;
 }
 
 export type BuildRule = 'combined' | 'color' | 'landing';
@@ -54,6 +56,7 @@ export const DEFAULT_RULES: Rules = {
   hotelStock: 12,
   showStandings: false,
   buildRule: 'combined',
+  festivalSquare: false,
 };
 
 export interface PlayerStats {

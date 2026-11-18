@@ -177,15 +177,7 @@ export const BOARD: readonly Square[] = [
     brandColor: '#E0245E',
   },
   { index: 36, kind: 'chance', name: 'Cơ Hội' },
-  street(
-    37,
-    'Hà Nội – Hồ Hoàn Kiếm',
-    'darkBlue',
-    350,
-    [35, 175, 500, 1100, 1300, 1500],
-    200,
-    'Hồ Gươm',
-  ),
+  street(37, 'Hà Nội – Hồ Gươm', 'darkBlue', 350, [35, 175, 500, 1100, 1300, 1500], 200, 'Hồ Gươm'),
   { index: 38, kind: 'tax', name: 'Thuế Tiêu Thụ Đặc Biệt', short: 'Thuế TTĐB', amount: 100 },
   street(
     39,

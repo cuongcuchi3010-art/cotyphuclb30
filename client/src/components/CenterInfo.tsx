@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect, useRef } from 'react';
-import { formatMoney, square } from '@cotyphu/shared';
+import { formatMoney, jackpotOn, square } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
 import { cx, fmtClock, nameOf, playerColor, useGame, useNow, photoOf } from '../lib';
@@ -104,7 +104,7 @@ export function CenterInfo() {
           🏠 {game.bank.houses}/{game.rules.houseStock ?? 32} · 🏨 {game.bank.hotels}/
           {game.rules.hotelStock ?? 12}
         </span>
-        {game.rules.jackpot && (
+        {jackpotOn(game) && (
           <span>
             ☕ {S.game.jackpot}: <b>{formatMoney(game.jackpot)}</b>
           </span>

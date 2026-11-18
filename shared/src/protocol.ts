@@ -83,6 +83,7 @@ export const rulesSchema = z.object({
   hotelStock: z.number().int().min(1).max(100).default(12),
   showStandings: z.boolean().default(false),
   buildRule: z.enum(['combined', 'color', 'landing']).default('combined'),
+  festivalSquare: z.boolean().default(false),
 });
 
 /** Biệt danh = tên đăng nhập: chữ (có dấu), số, khoảng trắng, . _ - */
