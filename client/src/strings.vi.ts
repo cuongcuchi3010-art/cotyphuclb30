@@ -79,15 +79,12 @@ export const S = {
     off: 'Tắt',
     minutes: (n: number) => `${n} phút`,
     turnTimer: 'Đồng hồ lượt',
-    buildRule: 'Cách xây nhà',
     houseStock: 'Số nhà tối đa (cả ván)',
     hotelStock: 'Số khách sạn tối đa (cả ván)',
     showStandings: 'Hiện tổng tài sản & thứ hạng trong ván',
     standard: 'chuẩn',
-    buildMonopoly: 'Sở hữu trọn nhóm màu (chuẩn)',
-    buildLanding: 'Dừng lại ô của mình',
-    buildLandingHint:
-      'Dừng lại ô đất của mình thì được xây tuỳ ý tới 4 nhà ở ô đó (không cần trọn nhóm). Ô đã có sẵn 4 nhà khi bước vào thì được xây khách sạn.',
+    buildInfo:
+      'Luật xây nhà: sở hữu trọn nhóm màu, rồi bước vào lại ô đó mới được xây (mỗi lần tuỳ ý tới 4 nhà). Ô đã có sẵn 4 nhà khi bước vào thì được xây khách sạn.',
     seconds: (n: number) => `${n} giây`,
     password: 'Mật khẩu phòng (để trống = không có)',
     savePassword: 'Lưu',
@@ -251,6 +248,17 @@ export const S = {
     unmute: 'Bật mic',
     connecting: 'Đang mở micro…',
     hint: 'Voice chat: nói chuyện trực tiếp với những người đang bật voice',
+  },
+
+  choice: {
+    demolishTitle: '🔨 Tranh chấp đất đai',
+    demolishHint: 'Chọn 1 căn nhà của người khác để đập (mất 1 nhà).',
+    giftTitle: '🎁 Làm từ thiện bắt buộc',
+    giftHint: 'Chọn 1 ô đất của bạn (nhóm chưa có nhà) và người nhận.',
+    to: 'Tặng cho',
+    confirmGift: 'Tặng',
+    waiting: (n: string) => `${n} đang chọn theo thẻ bài…`,
+    houses: (h: number) => (h === 5 ? 'khách sạn' : `${h} nhà`),
   },
 
   loan: {

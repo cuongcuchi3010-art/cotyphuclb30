@@ -149,7 +149,6 @@ describe('Phòng chơi', () => {
         auctions: true,
         timeLimitMinutes: 0,
         turnTimerSec: 60,
-        buildRule: 'landing',
         houseStock: 48,
         hotelStock: 16,
         showStandings: true,
@@ -158,7 +157,6 @@ describe('Phòng chơi', () => {
     a.msg({ type: 'start' });
     expect(b.room.status).toBe('playing');
     expect(b.room.game!.players[0]!.cash).toBe(2000);
-    expect(b.room.game!.rules.buildRule).toBe('landing');
     expect(b.room.game!.bank).toEqual({ houses: 48, hotels: 16 });
   });
 

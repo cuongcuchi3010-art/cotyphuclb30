@@ -233,7 +233,7 @@ export const JAIL_INDEX = 10;
 export const PARKING_INDEX = 20;
 export const GO_TO_JAIL_INDEX = 30;
 
-/** Tiền thuê vận tải theo số công ty sở hữu (1..4) */
+/** Tiền thuê công ty truyền thông theo số công ty sở hữu (1..4) */
 export const TRANSPORT_RENT = [0, 25, 50, 100, 200] as const;
 /** Hệ số tiền thuê tiện ích theo số công ty sở hữu (1..2) */
 export const UTILITY_MULTIPLIER = [0, 4, 10] as const;

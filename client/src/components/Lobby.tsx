@@ -173,20 +173,9 @@ export function Lobby() {
               ))}
             </select>
           </label>
-          <label className="flex items-center justify-between gap-2">
-            {S.lobby.buildRule}
-            <select
-              value={rules.buildRule ?? 'monopoly'}
-              onChange={(e) => setRules({ buildRule: e.target.value as Rules['buildRule'] })}
-              className="rounded-lg border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-black/30"
-            >
-              <option value="monopoly">{S.lobby.buildMonopoly}</option>
-              <option value="landing">{S.lobby.buildLanding}</option>
-            </select>
-          </label>
-          {rules.buildRule === 'landing' && (
-            <div className="text-xs text-gray-500">{S.lobby.buildLandingHint}</div>
-          )}
+          <div className="rounded-lg bg-nghe-50 px-2 py-1.5 text-xs text-gray-700 dark:bg-white/10 dark:text-gray-200">
+            🏠 {S.lobby.buildInfo}
+          </div>
           <label className="flex items-center justify-between gap-2">
             {S.lobby.turnTimer}
             <select

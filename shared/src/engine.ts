@@ -219,17 +219,19 @@ export function groupHasNoBuildings(s: GameState, pos: number): boolean {
   return groupOf(pos).every((i) => (s.properties[i]?.houses ?? 0) === 0);
 }
 
-export function isLandingBuild(s: GameState): boolean {
-  return s.rules.buildRule === 'landing';
+/** Điều kiện "không có nhà" để thế chấp / giao dịch / tặng: cả nhóm màu không có nhà */
+export function blockHasNoBuildings(s: GameState, pos: number): boolean {
+  return groupHasNoBuildings(s, pos);
 }
 
-/**
- * Điều kiện "không có nhà" để thế chấp / giao dịch:
- * luật chuẩn xét cả nhóm màu; luật 'landing' chỉ xét chính ô đó.
- */
-export function blockHasNoBuildings(s: GameState, pos: number): boolean {
-  if (isLandingBuild(s)) return (s.properties[pos]?.houses ?? 0) === 0;
-  return groupHasNoBuildings(s, pos);
+/** Trọn nhóm màu và không ô nào trong nhóm đang thế chấp */
+function canBuildGroup(s: GameState, owner: PlayerId, pos: number): boolean {
+  const sq = square(pos);
+  if (sq.kind !== 'street') return false;
+  return (
+    ownsWholeGroup(s, owner, pos) &&
+    GROUP_MEMBERS[sq.group].every((i) => !s.properties[i]!.mortgaged)
+  );
 }
 
 export function countOwned(s: GameState, owner: PlayerId, indices: readonly number[]): number {
@@ -386,6 +388,9 @@ function applySystem(c: Ctx, a: Action): void {
     case 'timeUp':
       endGame(c, 'timeUp');
       return;
+    case 'autoChoose':
+      autoChoose(c);
+      return;
     default:
       fail('Hành động hệ thống không hợp lệ');
   }
@@ -498,6 +503,21 @@ function applyPlayer(c: Ctx, p: PlayerState, a: PlayerAction): void {
     }
     case 'resign':
       forceBankrupt(c, p);
+      return;
+    case 'chooseDemolish':
+      requireCurrent(c, p);
+      if (s.phase.kind !== 'cardChoice' || s.phase.choice !== 'demolish')
+        fail('Không có gì để chọn');
+      doDemolish(c, p, a.pos);
+      setNeutral(s);
+      proceed(c);
+      return;
+    case 'chooseGift':
+      requireCurrent(c, p);
+      if (s.phase.kind !== 'cardChoice' || s.phase.choice !== 'gift') fail('Không có gì để chọn');
+      doGift(c, p, a.pos, a.to);
+      setNeutral(s);
+      proceed(c);
       return;
     case 'bankLoan':
       takeBankLoan(c, p, a.amount);
@@ -670,7 +690,7 @@ function landOn(c: Ctx, p: PlayerState, ctx: RentContext): void {
       c.ev.push({ t: 'offer', playerId: p.id, pos });
       return;
     }
-    if (st.owner === p.id && isLandingBuild(s) && sq.kind === 'street' && !st.mortgaged) {
+    if (st.owner === p.id && sq.kind === 'street' && canBuildGroup(s, p.id, pos)) {
       s.buildPass = pos;
       s.buildPassLevel = st.houses;
       c.ev.push({ t: 'buildChance', playerId: p.id, pos });
@@ -811,50 +831,44 @@ function applyCard(c: Ctx, p: PlayerState, e: CardEffect): void {
           s.debts.push({ from: o.id, to: p.id, amount: e.amount, reason: 'collectEach' });
       }
       return;
-    case 'fire':
-    case 'demolishNeighbor': {
-      const victims =
-        e.type === 'fire'
-          ? [p.id]
-          : alivePlayers(s)
-              .filter((o) => o.id !== p.id)
-              .map((o) => o.id);
+    case 'fire': {
       const targets = OWNABLE_INDICES.filter((i) => {
         const st = s.properties[i]!;
-        return st.owner !== null && victims.includes(st.owner) && st.houses > 0;
+        return st.owner === p.id && st.houses > 0;
       });
       if (targets.length === 0) {
         c.ev.push({ t: 'cardNoEffect', playerId: p.id });
         return;
       }
       const pos = targets[c.rng.int(0, targets.length - 1)]!;
-      const st = s.properties[pos]!;
       loseOneLevel(s, pos);
       c.ev.push({
         t: 'houseLost',
-        playerId: st.owner!,
+        playerId: p.id,
         pos,
-        level: st.houses,
-        reason: e.type === 'fire' ? 'fire' : 'demolish',
-        by: e.type === 'fire' ? undefined : p.id,
+        level: s.properties[pos]!.houses,
+        reason: 'fire',
       });
       return;
     }
-    case 'giftProperty': {
-      const mine = OWNABLE_INDICES.filter(
-        (i) => s.properties[i]!.owner === p.id && blockHasNoBuildings(s, i),
-      );
-      const others = alivePlayers(s).filter((o) => o.id !== p.id);
-      if (mine.length === 0 || others.length === 0) {
+    case 'demolishNeighbor': {
+      // Người rút thẻ tự chọn căn nhà của người khác để đập
+      if (demolishTargets(s, p.id).length === 0) {
         c.ev.push({ t: 'cardNoEffect', playerId: p.id });
         return;
       }
-      const pos = mine[c.rng.int(0, mine.length - 1)]!;
-      const to = others[c.rng.int(0, others.length - 1)]!;
-      s.properties[pos]!.owner = to.id;
-      s.mortgageChoices = s.mortgageChoices.filter((m) => m.pos !== pos);
-      if (s.buildPass === pos) s.buildPass = null;
-      c.ev.push({ t: 'propertyGifted', from: p.id, to: to.id, pos });
+      s.phase = { kind: 'cardChoice', choice: 'demolish' };
+      c.ev.push({ t: 'choosing', playerId: p.id, choice: 'demolish' });
+      return;
+    }
+    case 'giftProperty': {
+      // Người rút thẻ tự chọn ô đất của mình và người nhận
+      if (giftTargets(s, p.id).length === 0 || alivePlayers(s).length < 2) {
+        c.ev.push({ t: 'cardNoEffect', playerId: p.id });
+        return;
+      }
+      s.phase = { kind: 'cardChoice', choice: 'gift' };
+      c.ev.push({ t: 'choosing', playerId: p.id, choice: 'gift' });
       return;
     }
     case 'freeProperty': {
@@ -873,6 +887,67 @@ function applyCard(c: Ctx, p: PlayerState, e: CardEffect): void {
 
 function diceTotal(s: GameState): number {
   return s.lastDice ? s.lastDice[0] + s.lastDice[1] : 7;
+}
+
+/** Ô có nhà của người khác (để đập) */
+export function demolishTargets(s: GameState, pid: PlayerId): number[] {
+  return OWNABLE_INDICES.filter((i) => {
+    const st = s.properties[i]!;
+    if (!st.owner || st.owner === pid || st.houses === 0) return false;
+    return !getPlayer(s, st.owner).bankrupt;
+  });
+}
+
+/** Ô của mình có thể tặng (cả nhóm không có nhà) */
+export function giftTargets(s: GameState, pid: PlayerId): number[] {
+  return OWNABLE_INDICES.filter((i) => s.properties[i]!.owner === pid && blockHasNoBuildings(s, i));
+}
+
+function doDemolish(c: Ctx, p: PlayerState, pos: number): void {
+  const { s } = c;
+  if (!demolishTargets(s, p.id).includes(pos)) fail('Hãy chọn một căn nhà của người khác');
+  const st = s.properties[pos]!;
+  loseOneLevel(s, pos);
+  c.ev.push({
+    t: 'houseLost',
+    playerId: st.owner!,
+    pos,
+    level: st.houses,
+    reason: 'demolish',
+    by: p.id,
+  });
+}
+
+function doGift(c: Ctx, p: PlayerState, pos: number, to: PlayerId): void {
+  const { s } = c;
+  if (!giftTargets(s, p.id).includes(pos)) fail('Hãy chọn một ô đất (nhóm chưa có nhà) của bạn');
+  const rcv = s.players.find((x) => x.id === to);
+  if (!rcv || rcv.bankrupt || rcv.id === p.id) fail('Hãy chọn người nhận');
+  s.properties[pos]!.owner = rcv.id;
+  s.mortgageChoices = s.mortgageChoices.filter((m) => m.pos !== pos);
+  if (s.buildPass === pos) s.buildPass = null;
+  c.ev.push({ t: 'propertyGifted', from: p.id, to: rcv.id, pos });
+}
+
+/** Lựa chọn ngẫu nhiên khi hết giờ / mất kết nối / bot */
+function autoChoose(c: Ctx): void {
+  const { s } = c;
+  const p = currentPlayer(s);
+  const ph = s.phase;
+  if (ph.kind !== 'cardChoice') fail('Không có gì để chọn');
+  setNeutral(s);
+  if (ph.choice === 'demolish') {
+    const t = demolishTargets(s, p.id);
+    if (t.length) doDemolish(c, p, t[c.rng.int(0, t.length - 1)]!);
+    else c.ev.push({ t: 'cardNoEffect', playerId: p.id });
+  } else {
+    const t = giftTargets(s, p.id);
+    const others = alivePlayers(s).filter((o) => o.id !== p.id);
+    if (t.length && others.length)
+      doGift(c, p, t[c.rng.int(0, t.length - 1)]!, others[c.rng.int(0, others.length - 1)]!.id);
+    else c.ev.push({ t: 'cardNoEffect', playerId: p.id });
+  }
+  proceed(c);
 }
 
 /** Mất 1 cấp nhà (cháy / bị đập): nhà về kho; khách sạn xuống mức nhà kho đáp ứng được */
@@ -964,7 +1039,8 @@ function proceed(c: Ctx): void {
       endGame(c, 'lastStanding');
       return;
     }
-    if (s.phase.kind === 'awaitBuy' || s.phase.kind === 'auction') return;
+    if (s.phase.kind === 'awaitBuy' || s.phase.kind === 'auction' || s.phase.kind === 'cardChoice')
+      return;
     if (!settle(c)) return;
 
     const cur = currentPlayer(s);
@@ -1123,29 +1199,22 @@ function requireOwnedStreet(s: GameState, p: PlayerState, pos: number): StreetSq
   return sq;
 }
 
+/**
+ * Luật xây nhà: phải trọn nhóm màu (không ô nào thế chấp), rồi BƯỚC VÀO LẠI ô đó mới được xây.
+ * Mỗi lần dừng xây tuỳ ý tới 4 nhà; khách sạn chỉ khi lúc bước vào ô đã có sẵn 4 nhà.
+ */
 export function canBuild(s: GameState, p: PlayerState, pos: number): string | null {
   const sq = square(pos);
   if (sq.kind !== 'street') return 'Chỉ xây nhà trên ô đất';
   const st = s.properties[pos]!;
   if (st.owner !== p.id) return 'Ô này không phải của bạn';
-  if (isLandingBuild(s)) {
-    if (st.mortgaged) return 'Ô đang thế chấp';
-    if (s.buildPass !== pos) return 'Chỉ được xây khi vừa dừng lại ô này';
-    if (st.houses >= HOTEL_LEVEL) return 'Ô đã có khách sạn';
-    if (st.houses === 4 && s.buildPassLevel !== 4)
-      return 'Khách sạn chỉ xây được khi bước vào ô đã có sẵn 4 nhà';
-    if (st.houses === 4) {
-      if (s.bank.hotels < 1) return 'Ngân hàng đã hết khách sạn';
-    } else if (s.bank.houses < 1) return 'Ngân hàng đã hết nhà';
-    if (p.cash < sq.houseCost) return 'Không đủ tiền';
-    return null;
-  }
   if (!ownsWholeGroup(s, p.id, pos)) return 'Cần sở hữu trọn nhóm màu';
-  const members = GROUP_MEMBERS[sq.group];
-  if (members.some((i) => s.properties[i]!.mortgaged)) return 'Có ô trong nhóm đang thế chấp';
+  if (GROUP_MEMBERS[sq.group].some((i) => s.properties[i]!.mortgaged))
+    return 'Có ô trong nhóm đang thế chấp';
+  if (s.buildPass !== pos) return 'Chỉ được xây khi bước vào lại ô này';
   if (st.houses >= HOTEL_LEVEL) return 'Ô đã có khách sạn';
-  const min = Math.min(...members.map((i) => s.properties[i]!.houses));
-  if (st.houses !== min) return 'Phải xây đều các ô trong nhóm';
+  if (st.houses === 4 && s.buildPassLevel !== 4)
+    return 'Khách sạn chỉ xây được khi bước vào ô đã có sẵn 4 nhà';
   if (st.houses === 4) {
     if (s.bank.hotels < 1) return 'Ngân hàng đã hết khách sạn';
   } else if (s.bank.houses < 1) return 'Ngân hàng đã hết nhà';
@@ -1176,9 +1245,6 @@ export function canSell(s: GameState, p: PlayerState, pos: number): string | nul
   const st = s.properties[pos]!;
   if (st.owner !== p.id) return 'Ô này không phải của bạn';
   if (st.houses === 0) return 'Ô này không có nhà';
-  if (isLandingBuild(s)) return null;
-  const max = Math.max(...GROUP_MEMBERS[sq.group].map((i) => s.properties[i]!.houses));
-  if (st.houses !== max) return 'Phải bán đều các ô trong nhóm';
   return null;
 }
 
@@ -1211,12 +1277,7 @@ function mortgage(c: Ctx, p: PlayerState, pos: number): void {
   const st = getProp(s, pos);
   if (st.owner !== p.id) fail('Ô này không phải của bạn');
   if (st.mortgaged) fail('Ô đã thế chấp');
-  if (!blockHasNoBuildings(s, pos))
-    fail(
-      isLandingBuild(s)
-        ? 'Phải bán hết nhà trên ô trước khi thế chấp'
-        : 'Phải bán hết nhà trong nhóm trước khi thế chấp',
-    );
+  if (!blockHasNoBuildings(s, pos)) fail('Phải bán hết nhà trong nhóm trước khi thế chấp');
   const amount = mortgageValue(pos);
   st.mortgaged = true;
   p.cash += amount;
@@ -1338,7 +1399,7 @@ function forceBankrupt(c: Ctx, p: PlayerState): void {
       a.seq++;
     }
   }
-  if (s.phase.kind === 'awaitBuy' && wasCurrent) setNeutral(s);
+  if ((s.phase.kind === 'awaitBuy' || s.phase.kind === 'cardChoice') && wasCurrent) setNeutral(s);
   bankrupt(c, p, 'bank');
   if (s.phase.kind === 'auction') {
     if (alivePlayers(s).length <= 1) endGame(c, 'lastStanding');
@@ -1396,10 +1457,7 @@ function validateSide(s: GameState, owner: PlayerState, side: TradeSide): string
     const st = s.properties[pos];
     if (!st) return 'Ô không hợp lệ';
     if (st.owner !== owner.id) return `${square(pos).name} không còn thuộc ${owner.name}`;
-    if (!blockHasNoBuildings(s, pos))
-      return isLandingBuild(s)
-        ? `${square(pos).name} đang có nhà`
-        : `Nhóm của ${square(pos).name} đang có nhà`;
+    if (!blockHasNoBuildings(s, pos)) return `Nhóm của ${square(pos).name} đang có nhà`;
   }
   return null;
 }
@@ -1646,6 +1704,8 @@ export function timeoutAction(s: GameState): TimeoutPlan | null {
       return { by: 'system', action: { type: 'autoLiquidate' } };
     case 'auction':
       return { by: 'system', action: { type: 'auctionClose' } };
+    case 'cardChoice':
+      return { by: 'system', action: { type: 'autoChoose' } };
     default:
       return null;
   }

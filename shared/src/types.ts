@@ -26,8 +26,6 @@ export interface Rules {
   timeLimitMinutes: 0 | 30 | 60 | 90;
   /** 0 = tắt đồng hồ lượt */
   turnTimerSec: number;
-  /** Cách xây nhà: 'monopoly' = trọn nhóm màu (chuẩn); 'landing' = dừng lại ô của mình */
-  buildRule: 'monopoly' | 'landing';
   /** Số nhà tối đa trong kho ngân hàng (chuẩn 32) */
   houseStock: number;
   /** Số khách sạn tối đa trong kho ngân hàng (chuẩn 12) */
@@ -43,7 +41,6 @@ export const DEFAULT_RULES: Rules = {
   auctions: true,
   timeLimitMinutes: 0,
   turnTimerSec: 90,
-  buildRule: 'monopoly',
   houseStock: 32,
   hotelStock: 12,
   showStandings: false,
@@ -162,6 +159,8 @@ export type Phase =
   | { kind: 'awaitBuy'; pos: number }
   | { kind: 'auction' }
   | { kind: 'awaitEnd' }
+  /** Thẻ cho người rút tự chọn: đập nhà người khác / tặng ô đất */
+  | { kind: 'cardChoice'; choice: 'demolish' | 'gift' }
   | { kind: 'raiseFunds'; debtor: PlayerId }
   | { kind: 'gameOver' };
 

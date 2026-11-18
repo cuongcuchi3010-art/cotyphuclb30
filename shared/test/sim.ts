@@ -138,7 +138,6 @@ export function runSimulation(from: number, count: number): { finished: number; 
         jackpot: g % 3 === 0,
         doubleGo: g % 4 === 0,
         auctions: g % 7 !== 0,
-        buildRule: g % 2 === 0 ? 'landing' : 'monopoly',
         houseStock: [32, 12, 64][g % 3]!,
         hotelStock: [12, 3, 24][g % 3]!,
       },

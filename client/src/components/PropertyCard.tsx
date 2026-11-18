@@ -46,7 +46,7 @@ export function PropertyCard({ pos, onClose }: { pos: number; onClose: () => voi
           {sq.kind === 'street'
             ? `Nhóm ${GROUPS[sq.group].name}`
             : sq.kind === 'transport'
-              ? 'Công ty vận tải'
+              ? 'Công ty truyền thông'
               : 'Công ty tiện ích'}
         </div>
         <div className="text-xl font-bold drop-shadow">{sq.name}</div>

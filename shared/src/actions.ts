@@ -27,6 +27,8 @@ export type PlayerAction =
   | { type: 'rejectTrade'; id: string }
   | { type: 'cancelTrade'; id: string }
   | { type: 'resign' }
+  | { type: 'chooseDemolish'; pos: number }
+  | { type: 'chooseGift'; pos: number; to: PlayerId }
   | { type: 'bankLoan'; amount: number }
   | { type: 'repayLoan'; id: string }
   | {
@@ -46,7 +48,8 @@ export type SystemAction =
   | { type: 'auctionClose' }
   | { type: 'autoLiquidate' }
   | { type: 'forceBankrupt'; playerId: PlayerId }
-  | { type: 'timeUp' };
+  | { type: 'timeUp' }
+  | { type: 'autoChoose' };
 
 export type Action = PlayerAction | SystemAction;
 export type Actor = PlayerId | 'system';
@@ -108,6 +111,7 @@ export type GameEvent =
   | { t: 'propertyGifted'; from: PlayerId; to: PlayerId; pos: number }
   | { t: 'propertyWon'; playerId: PlayerId; pos: number }
   | { t: 'cardNoEffect'; playerId: PlayerId }
+  | { t: 'choosing'; playerId: PlayerId; choice: 'demolish' | 'gift' }
   | { t: 'build'; playerId: PlayerId; pos: number; level: number; cost: number }
   | { t: 'sell'; playerId: PlayerId; pos: number; level: number; refund: number }
   | { t: 'mortgage'; playerId: PlayerId; pos: number; amount: number }

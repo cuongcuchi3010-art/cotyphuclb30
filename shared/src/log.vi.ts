@@ -83,6 +83,10 @@ export function describeEvent(ev: GameEvent, s: Pick<GameState, 'players'>): str
       return `🎁 ${name(ev.from)} buộc phải tặng ${sq(ev.pos)} cho ${name(ev.to)}`;
     case 'propertyWon':
       return `🍀 ${name(ev.playerId)} trúng thưởng ô ${sq(ev.pos)}`;
+    case 'choosing':
+      return ev.choice === 'demolish'
+        ? `${name(ev.playerId)} đang chọn nhà để đập…`
+        : `${name(ev.playerId)} đang chọn ô đất để tặng…`;
     case 'cardNoEffect':
       return `Thẻ không có tác dụng với ${name(ev.playerId)}`;
     case 'buildChance':

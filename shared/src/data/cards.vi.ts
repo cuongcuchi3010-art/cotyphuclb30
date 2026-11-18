@@ -6,7 +6,7 @@
 export type CardEffect =
   /** Đi tới ô (luôn đi tiến). Đi qua Khởi Hành thì nhận lương. */
   | { type: 'moveTo'; to: number }
-  /** Đi tới công ty vận tải gần nhất phía trước; có chủ thì trả gấp đôi */
+  /** Đi tới công ty truyền thông gần nhất phía trước; có chủ thì trả gấp đôi */
   | { type: 'nearestTransport' }
   /** Đi tới tiện ích gần nhất phía trước; có chủ thì tung xúc xắc trả 10× */
   | { type: 'nearestUtility' }
@@ -146,13 +146,13 @@ export const CHANCE_CARDS: readonly Card[] = [
   {
     id: 'ch18',
     deck: 'chance',
-    text: 'Tranh chấp đất đai: bạn đập 1 căn nhà bất kỳ của hàng xóm.',
+    text: 'Tranh chấp đất đai: bạn được chọn 1 căn nhà của người khác để đập.',
     effect: { type: 'demolishNeighbor' },
   },
   {
     id: 'ch19',
     deck: 'chance',
-    text: 'Làm từ thiện bắt buộc: tặng 1 ô đất (chưa xây nhà) của bạn cho một người chơi khác.',
+    text: 'Làm từ thiện bắt buộc: chọn 1 ô đất (chưa xây nhà) của bạn để tặng cho một người chơi khác.',
     effect: { type: 'giftProperty' },
   },
 ];

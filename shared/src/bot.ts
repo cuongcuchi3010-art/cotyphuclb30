@@ -4,6 +4,8 @@ import {
   applyAction,
   canBuild,
   currentPlayer,
+  demolishTargets,
+  giftTargets,
   getPlayer,
   liquidationValue,
   totalOwed,
@@ -36,6 +38,9 @@ export function botDecision(s: GameState, botId: PlayerId): Plan | null {
   if (choice && ph.kind !== 'auction')
     return { by: botId, action: { type: 'mortgageChoice', pos: choice.pos, redeem: false } };
 
+  if (ph.kind === 'cardChoice') {
+    return currentPlayer(s).id === botId ? { by: 'system', action: { type: 'autoChoose' } } : null;
+  }
   if (ph.kind === 'raiseFunds') {
     if (ph.debtor !== botId) return null;
     if (liquidationValue(s, botId) < totalOwed(s, botId))
@@ -92,6 +97,12 @@ export function candidateActions(s: GameState, id: PlayerId, rng: Rng): PlayerAc
     { type: 'payDebt' },
     { type: 'declareBankruptcy' },
   ];
+  if (s.phase.kind === 'cardChoice') {
+    for (const pos of demolishTargets(s, id).slice(0, 4)) out.push({ type: 'chooseDemolish', pos });
+    const others = s.players.filter((p) => !p.bankrupt && p.id !== id);
+    for (const pos of giftTargets(s, id).slice(0, 4))
+      for (const o of others.slice(0, 2)) out.push({ type: 'chooseGift', pos, to: o.id });
+  }
   if (s.auction) {
     const h = s.auction.highBid;
     out.push({ type: 'bid', amount: Math.max(10, h + 10) });

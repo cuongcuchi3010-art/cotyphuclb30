@@ -257,38 +257,80 @@ describe('Tung đôi & tạm giữ', () => {
   });
 });
 
-describe('Xây & bán nhà', () => {
+describe('Xây & bán nhà (trọn nhóm màu + bước vào lại ô)', () => {
   function brown(): GameState {
     const s = mkGame();
     own(s, 'p1', 1, 3);
     return s;
   }
+  /** Giả lập vừa bước vào ô `pos` */
+  function pass(s: GameState, pos: number) {
+    s.buildPass = pos;
+    s.buildPassLevel = s.properties[pos]!.houses;
+  }
 
   it('cần trọn nhóm và không ô nào thế chấp', () => {
     const s = mkGame();
     own(s, 'p1', 1);
+    pass(s, 1);
     expect(() => act(s, 'p1', { type: 'build', pos: 1 })).toThrow('trọn nhóm');
     own(s, 'p1', 3);
     s.properties[3]!.mortgaged = true;
     expect(() => act(s, 'p1', { type: 'build', pos: 1 })).toThrow('thế chấp');
   });
 
-  it('xây đều', () => {
-    let s = brown();
-    ({ state: s } = act(s, 'p1', { type: 'build', pos: 1 }));
-    expect(() => act(s, 'p1', { type: 'build', pos: 1 })).toThrow('xây đều');
-    ({ state: s } = act(s, 'p1', { type: 'build', pos: 3 }));
-    ({ state: s } = act(s, 'p1', { type: 'build', pos: 1 }));
-    expect(s.properties[1]!.houses).toBe(2);
-    expect(pl(s, 'p1').cash).toBe(1500 - 150);
-    expect(s.bank.houses).toBe(29);
+  it('trọn nhóm nhưng chưa bước vào lại ô thì chưa được xây', () => {
+    const s = brown();
+    expect(() => act(s, 'p1', { type: 'build', pos: 1 })).toThrow('bước vào lại');
   });
 
-  it('bán đều, nhận 50%', () => {
+  it('bước vào lại ô của nhóm đã trọn: được xây tuỳ ý tới 4 nhà, không cần xây đều', () => {
+    let s = brown();
+    pl(s, 'p1').position = 39;
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 1])); // 39 → 1 (qua Khởi Hành)
+    expect(s.buildPass).toBe(1);
+    for (let k = 0; k < 4; k++) ({ state: s } = act(s, 'p1', { type: 'build', pos: 1 }));
+    expect(s.properties[1]!.houses).toBe(4);
+    expect(s.properties[3]!.houses).toBe(0);
+    expect(s.bank.houses).toBe(28);
+    // Vừa đủ 4 nhà trong lần này: chưa được lên khách sạn
+    expect(() => act(s, 'p1', { type: 'build', pos: 1 })).toThrow('sẵn 4 nhà');
+    // Ô khác trong nhóm: phải bước vào ô đó mới xây được
+    expect(() => act(s, 'p1', { type: 'build', pos: 3 })).toThrow('bước vào lại');
+  });
+
+  it('nhóm chưa trọn thì bước vào ô của mình cũng không được xây', () => {
+    let s = mkGame();
+    own(s, 'p1', 6);
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [2, 4]));
+    expect(s.buildPass ?? null).toBeNull();
+  });
+
+  it('bước vào ô đã có sẵn 4 nhà thì được xây khách sạn, trả 4 nhà về kho', () => {
+    let s = brown();
+    s.properties[1]!.houses = 4;
+    s.bank.houses = 28;
+    pl(s, 'p1').position = 39;
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 1]));
+    ({ state: s } = act(s, 'p1', { type: 'build', pos: 1 }));
+    expect(s.properties[1]!.houses).toBe(5);
+    expect(s.bank.hotels).toBe(11);
+    expect(s.bank.houses).toBe(32);
+    expect(() => act(s, 'p1', { type: 'build', pos: 1 })).toThrow('khách sạn');
+  });
+
+  it('hết lượt thì mất quyền xây', () => {
+    let s = brown();
+    pl(s, 'p1').position = 39;
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 2])); // → 2 Khí Vận, không phải ô 1
+    expect(s.buildPass ?? null).toBeNull();
+  });
+
+  it('bán nhà nhận 50%, không cần bán đều', () => {
     let s = brown();
     s.properties[1]!.houses = 2;
-    s.properties[3]!.houses = 1;
-    expect(() => act(s, 'p1', { type: 'sell', pos: 3 })).toThrow('bán đều');
+    s.properties[3]!.houses = 0;
+    s.bank.houses = 30;
     ({ state: s } = act(s, 'p1', { type: 'sell', pos: 1 }));
     expect(s.properties[1]!.houses).toBe(1);
     expect(pl(s, 'p1').cash).toBe(1525);
@@ -297,28 +339,17 @@ describe('Xây & bán nhà', () => {
   it('chỉ xây trong lượt của mình', () => {
     const s = mkGame();
     own(s, 'p2', 1, 3);
+    pass(s, 1);
     expect(() => act(s, 'p2', { type: 'build', pos: 1 })).toThrow('lượt');
   });
 
-  it('khách sạn: cần 4 nhà mọi ô, trả 4 nhà về kho', () => {
+  it('giới hạn kho nhà / khách sạn', () => {
     let s = brown();
-    s.properties[1]!.houses = 4;
-    s.properties[3]!.houses = 3;
-    s.bank.houses = 32 - 7;
-    expect(() => act(s, 'p1', { type: 'build', pos: 1 })).toThrow('xây đều');
-    ({ state: s } = act(s, 'p1', { type: 'build', pos: 3 }));
-    ({ state: s } = act(s, 'p1', { type: 'build', pos: 1 }));
-    expect(s.properties[1]!.houses).toBe(5);
-    expect(s.bank.hotels).toBe(11);
-    expect(s.bank.houses).toBe(32 - 4);
-  });
-
-  it('giới hạn kho 32 nhà / 12 khách sạn', () => {
-    let s = brown();
+    pass(s, 1);
     s.bank.houses = 0;
     expect(() => act(s, 'p1', { type: 'build', pos: 1 })).toThrow('hết nhà');
     s.properties[1]!.houses = 4;
-    s.properties[3]!.houses = 4;
+    pass(s, 1);
     s.bank.hotels = 0;
     expect(() => act(s, 'p1', { type: 'build', pos: 1 })).toThrow('hết khách sạn');
     s.bank.hotels = 1;
@@ -726,66 +757,6 @@ describe('Vay tiền', () => {
   });
 });
 
-describe('Luật xây nhà khi dừng lại ô của mình', () => {
-  it('dừng lại ô của mình: xây tuỳ ý tới 4 nhà, không cần trọn nhóm', () => {
-    let s = mkGame(2, { buildRule: 'landing' });
-    own(s, 'p1', 6); // Sa Pa, không trọn nhóm
-    expect(() => act(s, 'p1', { type: 'build', pos: 6 })).toThrow('vừa dừng');
-    ({ state: s } = act(s, 'p1', { type: 'roll' }, [2, 4])); // dừng ở Sa Pa
-    expect(s.buildPass).toBe(6);
-    for (let k = 0; k < 4; k++) ({ state: s } = act(s, 'p1', { type: 'build', pos: 6 }));
-    expect(s.properties[6]!.houses).toBe(4);
-    expect(pl(s, 'p1').cash).toBe(1500 - 200);
-    // Vừa đủ 4 nhà trong lần này: chưa được lên khách sạn
-    expect(() => act(s, 'p1', { type: 'build', pos: 6 })).toThrow('sẵn 4 nhà');
-    expect(rentFor(s, 6, { diceTotal: 7 })).toBe(400);
-    // Hết lượt thì mất quyền xây
-    ({ state: s } = act(s, 'p1', { type: 'endTurn' }));
-    expect(s.buildPass).toBeNull();
-  });
-
-  it('bước vào ô đã có sẵn 4 nhà thì được xây khách sạn', () => {
-    let s = mkGame(2, { buildRule: 'landing' });
-    own(s, 'p1', 6);
-    s.properties[6]!.houses = 4;
-    s.bank.houses = 28;
-    ({ state: s } = act(s, 'p1', { type: 'roll' }, [2, 4]));
-    ({ state: s } = act(s, 'p1', { type: 'build', pos: 6 }));
-    expect(s.properties[6]!.houses).toBe(5);
-    expect(s.bank.hotels).toBe(11);
-    expect(s.bank.houses).toBe(32);
-    expect(() => act(s, 'p1', { type: 'build', pos: 6 })).toThrow('khách sạn');
-  });
-
-  it('không xây trên ô đang thế chấp; thế chấp/giao dịch chỉ xét chính ô đó', () => {
-    let s = mkGame(2, { buildRule: 'landing' });
-    own(s, 'p1', 6, 8);
-    s.properties[6]!.houses = 2;
-    s.bank.houses = 30;
-    // Ô 8 cùng nhóm vẫn thế chấp được dù ô 6 có nhà
-    ({ state: s } = act(s, 'p1', { type: 'mortgage', pos: 8 }));
-    expect(s.properties[8]!.mortgaged).toBe(true);
-    expect(() => act(s, 'p1', { type: 'mortgage', pos: 6 })).toThrow('trên ô');
-    // Bán nhà không cần bán đều
-    ({ state: s } = act(s, 'p1', { type: 'sell', pos: 6 }));
-    expect(s.properties[6]!.houses).toBe(1);
-    // Dừng ở ô đang thế chấp: không được xây
-    pl(s, 'p1').position = 4;
-    s.phase = { kind: 'awaitRoll' };
-    s.rolled = false;
-    ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 3])); // → 8
-    expect(s.buildPass ?? null).toBeNull();
-  });
-
-  it('luật chuẩn vẫn như cũ', () => {
-    let s = mkGame(2);
-    own(s, 'p1', 6);
-    ({ state: s } = act(s, 'p1', { type: 'roll' }, [2, 4]));
-    expect(s.buildPass ?? null).toBeNull();
-    expect(() => act(s, 'p1', { type: 'build', pos: 6 })).toThrow('trọn nhóm');
-  });
-});
-
 describe('Thẻ mới: cháy nhà, đập nhà, tặng đất, sinh nhật, trúng đất', () => {
   const idx = (deck: 'chance' | 'chest', id: string) => DECKS[deck].findIndex((c) => c.id === id);
 
@@ -812,17 +783,36 @@ describe('Thẻ mới: cháy nhà, đập nhà, tặng đất, sinh nhật, trú
     expect(s.bank.houses).toBe(28);
   });
 
-  it('đập nhà hàng xóm: người khác mất 1 nhà', () => {
-    const s = mkGame();
+  it('đập nhà hàng xóm: người rút thẻ tự chọn căn nhà', () => {
+    let s = mkGame(3);
     own(s, 'p2', 6, 8, 9);
+    s.properties[6]!.houses = 1;
     s.properties[9]!.houses = 3;
-    s.bank.houses = 29;
+    s.bank.houses = 28;
     topCard(s, 'chance', idx('chance', 'ch18'));
-    const r = act(s, 'p1', { type: 'roll' }, [3, 4]);
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
+    expect(s.phase).toEqual({ kind: 'cardChoice', choice: 'demolish' });
+    expect(() => act(s, 'p1', { type: 'endTurn' })).toThrow();
+    expect(() => act(s, 'p2', { type: 'chooseDemolish', pos: 9 })).toThrow('lượt');
+    expect(() => act(s, 'p1', { type: 'chooseDemolish', pos: 8 })).toThrow('căn nhà');
+    const r = act(s, 'p1', { type: 'chooseDemolish', pos: 9 });
     expect(r.state.properties[9]!.houses).toBe(2);
+    expect(r.state.properties[6]!.houses).toBe(1);
+    expect(r.state.phase.kind).toBe('awaitEnd');
     expect(r.events).toContainEqual(
       expect.objectContaining({ t: 'houseLost', reason: 'demolish', by: 'p1' }),
     );
+  });
+
+  it('hết giờ khi đang chọn: máy chọn ngẫu nhiên', () => {
+    let s = mkGame();
+    own(s, 'p2', 9);
+    s.properties[9]!.houses = 2;
+    topCard(s, 'chance', idx('chance', 'ch18'));
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
+    ({ state: s } = act(s, 'system', { type: 'autoChoose' }));
+    expect(s.properties[9]!.houses).toBe(1);
+    expect(s.phase.kind).toBe('awaitEnd');
   });
 
   it('không có nhà để cháy thì thẻ không có tác dụng', () => {
@@ -832,16 +822,21 @@ describe('Thẻ mới: cháy nhà, đập nhà, tặng đất, sinh nhật, trú
     expect(r.events).toContainEqual(expect.objectContaining({ t: 'cardNoEffect' }));
   });
 
-  it('buộc tặng đất: 1 ô chưa xây nhà chuyển sang người khác', () => {
-    let s = mkGame();
+  it('buộc tặng đất: người rút thẻ chọn ô (nhóm chưa có nhà) và người nhận', () => {
+    let s = mkGame(3);
     own(s, 'p1', 1, 3);
     s.properties[1]!.houses = 1; // nhóm nâu có nhà → không tặng được
     s.bank.houses = 31;
-    own(s, 'p1', 16);
+    own(s, 'p1', 16, 18);
     topCard(s, 'chance', idx('chance', 'ch19'));
     ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
-    expect(s.properties[16]!.owner).toBe('p2');
-    expect(s.properties[1]!.owner).toBe('p1');
+    expect(s.phase).toEqual({ kind: 'cardChoice', choice: 'gift' });
+    expect(() => act(s, 'p1', { type: 'chooseGift', pos: 3, to: 'p3' })).toThrow('ô đất');
+    expect(() => act(s, 'p1', { type: 'chooseGift', pos: 18, to: 'p1' })).toThrow('người nhận');
+    ({ state: s } = act(s, 'p1', { type: 'chooseGift', pos: 18, to: 'p3' }));
+    expect(s.properties[18]!.owner).toBe('p3');
+    expect(s.properties[16]!.owner).toBe('p1');
+    expect(s.phase.kind).toBe('awaitEnd');
   });
 
   it('sinh nhật: mỗi người tặng 20 tr', () => {
@@ -870,8 +865,10 @@ describe('Số nhà / khách sạn tối đa tuỳ chỉnh', () => {
   it('hết kho thì không xây được', () => {
     let s = mkGame(2, { houseStock: 1, hotelStock: 1 });
     own(s, 'p1', 1, 3);
+    s.buildPass = 1;
+    s.buildPassLevel = 0;
     ({ state: s } = act(s, 'p1', { type: 'build', pos: 1 }));
-    expect(() => act(s, 'p1', { type: 'build', pos: 3 })).toThrow('hết nhà');
+    expect(() => act(s, 'p1', { type: 'build', pos: 1 })).toThrow('hết nhà');
   });
 });
 

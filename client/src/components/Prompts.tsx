@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
+  demolishTargets,
+  giftTargets,
   GROUPS,
   formatMoney,
   liquidationValue,
@@ -26,6 +28,7 @@ export function Prompts() {
       <IncomingTrade />
       <MortgageChoice />
       <IncomingLoan />
+      <CardChoicePrompt />
       <HostDisconnect />
     </>
   );
@@ -451,6 +454,109 @@ function IncomingLoan() {
         <div className="mt-1 text-xs text-gray-500">{S.loan.rentHint}</div>
       </div>
       <LoanActions o={o} onDone={close} />
+    </Modal>
+  );
+}
+
+/** Thẻ cho người rút tự chọn: đập nhà người khác / tặng ô đất */
+function CardChoicePrompt() {
+  const { room, game, me } = useGame();
+  const act = useStore((s) => s.act);
+  const [pick, setPick] = useState<number | null>(null);
+  const [to, setTo] = useState<string | null>(null);
+  const ph = game?.phase;
+  const mine = !!game && ph?.kind === 'cardChoice' && game.players[game.current]!.id === me;
+  const seq = game?.seq;
+  useEffect(() => {
+    setPick(null);
+    setTo(null);
+  }, [seq]);
+  if (!room || !game || !me || !mine || ph?.kind !== 'cardChoice') return null;
+  const row = (pos: number, right: ReactNode, active: boolean, onClick: () => void) => {
+    const sq = ownable(pos);
+    const color = sq.kind === 'street' ? GROUPS[sq.group].color : sq.brandColor;
+    return (
+      <button
+        key={pos}
+        type="button"
+        onClick={onClick}
+        className={cx(
+          'flex w-full items-center gap-2 rounded-xl border-2 px-3 py-2 text-left',
+          active
+            ? 'border-son bg-son-50 dark:bg-son-700/30'
+            : 'border-transparent bg-black/5 dark:bg-white/5',
+        )}
+      >
+        <span className="h-7 w-1.5 shrink-0 rounded" style={{ background: color }} />
+        <span className="min-w-0 flex-1 truncate font-semibold">
+          {sq.kind === 'street' ? `${sq.icon ?? ''} ` : ''}
+          {sq.name}
+        </span>
+        <span className="shrink-0 text-xs text-gray-500">{right}</span>
+      </button>
+    );
+  };
+  if (ph.choice === 'demolish') {
+    const targets = demolishTargets(game, me);
+    return (
+      <Modal open>
+        <div className="text-center text-lg font-bold">{S.choice.demolishTitle}</div>
+        <div className="mb-3 text-center text-sm text-gray-500">{S.choice.demolishHint}</div>
+        <div className="max-h-[50vh] space-y-1.5 overflow-y-auto">
+          {targets.map((pos) =>
+            row(
+              pos,
+              <>
+                {nameOf(room, game.properties[pos]!.owner)} ·{' '}
+                {S.choice.houses(game.properties[pos]!.houses)}
+              </>,
+              false,
+              () => act({ type: 'chooseDemolish', pos }),
+            ),
+          )}
+        </div>
+      </Modal>
+    );
+  }
+  const targets = giftTargets(game, me);
+  const others = game.players.filter((p) => !p.bankrupt && p.id !== me);
+  return (
+    <Modal open>
+      <div className="text-center text-lg font-bold">{S.choice.giftTitle}</div>
+      <div className="mb-3 text-center text-sm text-gray-500">{S.choice.giftHint}</div>
+      <div className="max-h-[36vh] space-y-1.5 overflow-y-auto">
+        {targets.map((pos) =>
+          row(pos, formatMoney(ownable(pos).price), pick === pos, () => setPick(pos)),
+        )}
+      </div>
+      <div className="mt-3 text-sm font-semibold">{S.choice.to}</div>
+      <div className="mt-1 flex flex-wrap gap-2">
+        {others.map((o) => (
+          <button
+            key={o.id}
+            type="button"
+            onClick={() => setTo(o.id)}
+            className={cx(
+              'rounded-xl border-2 px-3 py-1.5 text-sm font-semibold',
+              to === o.id
+                ? 'border-son bg-son-50 dark:bg-son-700/30'
+                : 'border-transparent bg-black/5 dark:bg-white/5',
+            )}
+          >
+            {o.name}
+          </button>
+        ))}
+      </div>
+      <Btn
+        big
+        className="mt-4 w-full"
+        disabled={pick === null || !to}
+        onClick={() => {
+          if (pick !== null && to) act({ type: 'chooseGift', pos: pick, to });
+        }}
+      >
+        🎁 {S.choice.confirmGift}
+      </Btn>
     </Modal>
   );
 }

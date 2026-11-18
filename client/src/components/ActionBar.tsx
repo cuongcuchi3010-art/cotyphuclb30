@@ -20,6 +20,15 @@ export function ActionBar() {
 
   if (spectator || !meP) return <div className={note}>👀 {S.game.spectating}</div>;
   if (meP.bankrupt) return <div className={note}>{S.game.bankrupt}</div>;
+  if (ph.kind === 'cardChoice') {
+    return (
+      <div className={note}>
+        {myTurn
+          ? `👆 ${ph.choice === 'demolish' ? S.choice.demolishHint : S.choice.giftHint}`
+          : S.choice.waiting(cur.name)}
+      </div>
+    );
+  }
   if (!myTurn) {
     return (
       <div className={note}>
