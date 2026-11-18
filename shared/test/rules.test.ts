@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   DECKS,
+  TOKENS,
+  createGame,
+  seededRng,
   standings,
   formatMoney,
   liquidationValue,
@@ -880,5 +883,44 @@ describe('Thứ hạng theo tổng tài sản', () => {
     const st = standings(s);
     expect(st.map((x) => x.id)).toEqual(['p3', 'p1', 'p2']);
     expect(st[0]).toMatchObject({ rank: 1, worth: 1900 });
+  });
+});
+
+describe('Bốc thăm thứ tự xuất phát', () => {
+  function fresh(n = 3) {
+    return createGame(
+      Array.from({ length: n }, (_, i) => ({ id: `p${i + 1}`, name: `P${i + 1}`, token: TOKENS[i]! })),
+      {},
+      seededRng(7),
+    ).state;
+  }
+
+  it('ván mới bắt đầu bằng pha bốc thăm, chưa ai được tung', () => {
+    const s = fresh();
+    expect(s.phase.kind).toBe('drawOrder');
+    expect(() => act(s, 'p1', { type: 'roll' })).toThrow();
+  });
+
+  it('mỗi người bốc 1 lá; số 1 đi đầu; bốc xong mới vào ván', () => {
+    let s = fresh();
+    ({ state: s } = act(s, 'p2', { type: 'drawLot', card: 0 }, [2])); // rút số thứ 3 trong [1,2,3] → 3
+    expect(s.lots!.picks.p2).toEqual({ card: 0, number: 3 });
+    expect(() => act(s, 'p2', { type: 'drawLot', card: 1 })).toThrow('đã bốc');
+    expect(() => act(s, 'p1', { type: 'drawLot', card: 0 })).toThrow('đã có người');
+    ({ state: s } = act(s, 'p1', { type: 'drawLot', card: 2 }, [1])); // [1,2] → 2
+    expect(s.phase.kind).toBe('drawOrder');
+    ({ state: s } = act(s, 'p3', { type: 'drawLot', card: 1 }, [0])); // → 1
+    expect(s.phase.kind).toBe('awaitRoll');
+    expect(s.players.map((p) => p.id)).toEqual(['p3', 'p1', 'p2']);
+    expect(s.players[s.current]!.id).toBe('p3');
+  });
+
+  it('hết giờ: máy bốc hộ người chưa bốc', () => {
+    let s = fresh();
+    ({ state: s } = act(s, 'p1', { type: 'drawLot', card: 1 }));
+    ({ state: s } = act(s, 'system', { type: 'autoDraw' }));
+    expect(s.phase.kind).toBe('awaitRoll');
+    expect(new Set(Object.values(s.lots!.picks).map((x) => x.number))).toEqual(new Set([1, 2, 3]));
+    expect(new Set(Object.values(s.lots!.picks).map((x) => x.card)).size).toBe(3);
   });
 });

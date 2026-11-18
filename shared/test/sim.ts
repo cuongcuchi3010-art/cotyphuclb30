@@ -69,6 +69,14 @@ function checkInvariants(s: GameState): void {
 
 function step(s: GameState, rng: Rng): GameState {
   const ph = s.phase;
+  if (ph.kind === 'drawOrder') {
+    // Người chưa bốc lần lượt bốc một lá còn trống; thỉnh thoảng hết giờ → máy bốc hộ
+    if (rng.int(0, 4) === 0) return applyAction(s, 'system', { type: 'autoDraw' }, rng).state;
+    const p = s.players.find((x) => !s.lots!.picks[x.id])!;
+    const taken = new Set(Object.values(s.lots!.picks).map((x) => x.card));
+    const free = s.players.map((_, k) => k).filter((k) => !taken.has(k));
+    return applyAction(s, p.id, { type: 'drawLot', card: free[rng.int(0, free.length - 1)]! }, rng).state;
+  }
   if (ph.kind === 'auction') {
     if (rng.int(0, 2) > 0) {
       const alive = s.players.filter((p) => !p.bankrupt);

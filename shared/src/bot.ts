@@ -97,6 +97,8 @@ export function candidateActions(s: GameState, id: PlayerId, rng: Rng): PlayerAc
     { type: 'payDebt' },
     { type: 'declareBankruptcy' },
   ];
+  if (s.phase.kind === 'drawOrder')
+    for (let k = 0; k < s.players.length; k++) out.push({ type: 'drawLot', card: k });
   if (s.phase.kind === 'cardChoice') {
     for (const pos of demolishTargets(s, id).slice(0, 4)) out.push({ type: 'chooseDemolish', pos });
     const others = s.players.filter((p) => !p.bankrupt && p.id !== id);

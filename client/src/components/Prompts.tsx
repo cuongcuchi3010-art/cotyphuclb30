@@ -15,8 +15,10 @@ import {
 } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
-import { cx, fmtClock, nameOf, useGame, useNow } from '../lib';
+import { cx, fmtClock, nameOf, playerColor, useGame, useNow } from '../lib';
 import { Btn, Modal } from './ui';
+import { Avatar } from './Avatar';
+import { motion } from 'framer-motion';
 
 /** Các popup quan trọng: mua ô, đấu giá, gom tiền, giao dịch đến, chuộc ô, host xử lý mất kết nối */
 export function Prompts() {
@@ -29,6 +31,7 @@ export function Prompts() {
       <MortgageChoice />
       <IncomingLoan />
       <CardChoicePrompt />
+      <DrawOrderPrompt />
       <HostDisconnect />
     </>
   );
@@ -557,6 +560,91 @@ function CardChoicePrompt() {
       >
         🎁 {S.choice.confirmGift}
       </Btn>
+    </Modal>
+  );
+}
+
+/** Bốc thăm thứ tự xuất phát: mỗi người lật một lá, số 1 đi đầu */
+function DrawOrderPrompt() {
+  const { room, game, me } = useGame();
+  const act = useStore((s) => s.act);
+  const now = useNow(250);
+  if (!room || !game || game.phase.kind !== 'drawOrder' || !game.lots) return null;
+  const n = game.players.length;
+  const picks = game.lots.picks;
+  const byCard = new Map(
+    Object.entries(picks).map(([pid, x]) => [x.card, { pid, number: x.number }]),
+  );
+  const myPick = me ? picks[me] : undefined;
+  const isPlayer = !!me && game.players.some((p) => p.id === me);
+  const left = room.deadline ? room.deadline - now : null;
+  return (
+    <Modal open>
+      <div className="text-center text-lg font-bold">{S.draw.title}</div>
+      <div className="mb-3 text-center text-sm text-gray-500">
+        {!isPlayer ? S.draw.spectate : myPick ? S.draw.yours(myPick.number) : S.draw.hint}
+        {left !== null && (
+          <span className="ml-2 font-bold tabular-nums text-son">⏱ {fmtClock(left)}</span>
+        )}
+      </div>
+      <div
+        className={cx(
+          'grid gap-2.5',
+          n <= 3 ? 'grid-cols-3' : n === 4 ? 'grid-cols-4' : 'grid-cols-3',
+        )}
+      >
+        {Array.from({ length: n }, (_, k) => {
+          const got = byCard.get(k);
+          const canPick = isPlayer && !myPick && !got;
+          const p = got ? game.players.find((x) => x.id === got.pid) : undefined;
+          return (
+            <button
+              key={k}
+              type="button"
+              disabled={!canPick}
+              onClick={() => act({ type: 'drawLot', card: k })}
+              className="aspect-[3/4] [perspective:600px]"
+            >
+              <motion.div
+                className="relative h-full w-full [transform-style:preserve-3d]"
+                animate={{ rotateY: got ? 180 : 0 }}
+                transition={{ type: 'spring', stiffness: 160, damping: 16 }}
+              >
+                {/* Mặt sau: lá thăm úp */}
+                <div
+                  className={cx(
+                    'absolute inset-0 flex flex-col items-center justify-center rounded-2xl border-4 border-nghe bg-gradient-to-br from-son to-son-700 text-white shadow-card [backface-visibility:hidden]',
+                    canPick && 'animate-glow hover:-translate-y-1',
+                  )}
+                >
+                  <span className="text-3xl">🪷</span>
+                  <span className="mt-1 text-xs font-extrabold tracking-widest text-nghe">
+                    CLB30
+                  </span>
+                </div>
+                {/* Mặt trước: số đã bốc */}
+                <div
+                  className="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-2xl border-4 bg-white shadow-card [backface-visibility:hidden] [transform:rotateY(180deg)] dark:bg-gray-900"
+                  style={{ borderColor: p ? playerColor(room, p.id) : '#ddd' }}
+                >
+                  <span className="text-4xl font-black text-son dark:text-nghe">{got?.number}</span>
+                  {p && (
+                    <>
+                      <Avatar token={p.token} color={playerColor(room, p.id)} size={28} />
+                      <span className="max-w-full truncate px-1 text-xs font-semibold">
+                        {p.id === me ? 'Bạn' : p.name}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </motion.div>
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-3 text-center text-xs text-gray-500">
+        {isPlayer && myPick ? S.draw.waiting : S.draw.auto}
+      </div>
     </Modal>
   );
 }

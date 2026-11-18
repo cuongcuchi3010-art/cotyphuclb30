@@ -162,3 +162,11 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 | X2  | Vì mỗi lần chỉ xây trên một ô, **bỏ quy tắc xây đều / bán đều**. Thế chấp, giao dịch, tặng ô vẫn yêu cầu **cả nhóm** không có nhà.                                                                                                                                                                                                      |
 | X3  | Thẻ **Tranh chấp đất đai** và **Làm từ thiện bắt buộc**: người rút thẻ **tự chọn** (căn nhà của người khác để đập / ô đất của mình + người nhận để tặng). Ván dừng ở pha chọn; hết giờ lượt, người chơi mất kết nối hoặc bot thì máy **chọn ngẫu nhiên**. Thay thế C2 cho hai thẻ này; "Cháy nhà" và "Trúng thưởng đất" vẫn ngẫu nhiên. |
 | X4  | Nhãn "Công ty vận tải" đổi thành **"Công ty truyền thông"** (METUB, MMusic, MonoX, Melive).                                                                                                                                                                                                                                             |
+
+## Cập nhật lần 14: bốc thăm thứ tự xuất phát
+
+| #   | Quyết định                                                                                                                                       |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| O9  | Bấm Bắt đầu → pha **bốc thăm**: N lá úp (N = số người chơi), mỗi người tự chọn 1 lá; số 1 đi đầu. Thay cho tung xúc xắc chọn thứ tự (L19).       |
+| O10 | Con số được rút ngẫu nhiên **lúc lật lá** (RNG server), không định trước, nên dù toàn bộ trạng thái ván gửi tới mọi máy cũng không ai đoán được. |
+| O11 | Pha bốc thăm luôn giới hạn **30 giây** (kể cả khi tắt đồng hồ lượt); hết giờ hoặc ai mất kết nối thì máy bốc hộ.                                 |

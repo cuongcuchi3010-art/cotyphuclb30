@@ -23,6 +23,12 @@ export function describeEvent(ev: GameEvent, s: Pick<GameState, 'players'>): str
   switch (ev.t) {
     case 'orderRolls':
       return `Thứ tự đi: ${ev.order.map(name).join(' → ')}`;
+    case 'drawStart':
+      return `🎴 Bốc thăm thứ tự xuất phát (${ev.count} lá)`;
+    case 'lotDrawn':
+      return `${name(ev.playerId)} bốc được số ${ev.number}`;
+    case 'orderDrawn':
+      return `Thứ tự đi: ${ev.order.map(name).join(' → ')}`;
     case 'turnStart':
       return `— Lượt ${ev.turn}: ${name(ev.playerId)} —`;
     case 'roll':

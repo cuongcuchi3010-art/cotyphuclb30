@@ -20,6 +20,7 @@ export function ActionBar() {
 
   if (spectator || !meP) return <div className={note}>👀 {S.game.spectating}</div>;
   if (meP.bankrupt) return <div className={note}>{S.game.bankrupt}</div>;
+  if (ph.kind === 'drawOrder') return <div className={note}>{S.draw.spectate}</div>;
   if (ph.kind === 'cardChoice') {
     return (
       <div className={note}>

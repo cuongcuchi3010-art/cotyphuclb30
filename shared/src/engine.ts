@@ -83,18 +83,31 @@ function rollDice(rng: Rng): [number, number] {
   return [rng.int(1, 6), rng.int(1, 6)];
 }
 
-export function createGame(players: NewPlayer[], rulesIn: Partial<Rules>, rng: Rng): ApplyResult {
+export interface CreateOptions {
+  /** true (mặc định): bốc thăm thứ tự trước khi vào ván; false: tung xúc xắc chọn thứ tự ngay */
+  drawOrder?: boolean;
+}
+
+export function createGame(
+  players: NewPlayer[],
+  rulesIn: Partial<Rules>,
+  rng: Rng,
+  opts: CreateOptions = {},
+): ApplyResult {
+  const draw = opts.drawOrder ?? true;
   if (players.length < 2 || players.length > 6) fail('Cần từ 2 đến 6 người chơi');
   const rules: Rules = { ...DEFAULT_RULES, ...rulesIn };
   const events: GameEvent[] = [];
 
   // Tung xúc xắc chọn thứ tự: cao đi trước, hoà thì tung lại giữa những người hoà
   const rolls: { playerId: PlayerId; dice: [number, number] }[] = [];
-  const order = decideOrder(
-    players.map((p) => p.id),
-    rng,
-    rolls,
-  );
+  const order = draw
+    ? players.map((p) => p.id)
+    : decideOrder(
+        players.map((p) => p.id),
+        rng,
+        rolls,
+      );
 
   const byId = new Map(players.map((p) => [p.id, p]));
   const ps: PlayerState[] = order.map((id) => {
@@ -133,7 +146,7 @@ export function createGame(players: NewPlayer[], rulesIn: Partial<Rules>, rng: R
       ),
     },
     jackpot: 0,
-    phase: { kind: 'awaitRoll' },
+    phase: draw ? { kind: 'drawOrder' } : { kind: 'awaitRoll' },
     doublesCount: 0,
     extraRoll: false,
     lastDice: null,
@@ -153,9 +166,14 @@ export function createGame(players: NewPlayer[], rulesIn: Partial<Rules>, rng: R
     loans: [],
     loanOffers: [],
     nextLoanId: 1,
+    lots: draw ? { picks: {}, remaining: ps.map((_, i) => i + 1) } : undefined,
   };
-  events.push({ t: 'orderRolls', rolls, order });
-  events.push({ t: 'turnStart', playerId: ps[0]!.id, turn: 1 });
+  if (draw) {
+    events.push({ t: 'drawStart', count: ps.length });
+  } else {
+    events.push({ t: 'orderRolls', rolls, order });
+    events.push({ t: 'turnStart', playerId: ps[0]!.id, turn: 1 });
+  }
   return { state, events };
 }
 
@@ -391,6 +409,19 @@ function applySystem(c: Ctx, a: Action): void {
     case 'autoChoose':
       autoChoose(c);
       return;
+    case 'autoDraw': {
+      if (s.phase.kind !== 'drawOrder' || !s.lots) fail('Không ở pha bốc thăm');
+      const n = s.players.length;
+      for (const p of s.players) {
+        if (s.lots.picks[p.id]) continue;
+        const taken = new Set(Object.values(s.lots.picks).map((x) => x.card));
+        let card = 0;
+        while (taken.has(card) && card < n) card++;
+        pickLot(c, p, card);
+      }
+      finishDraw(c);
+      return;
+    }
     default:
       fail('Hành động hệ thống không hợp lệ');
   }
@@ -503,6 +534,9 @@ function applyPlayer(c: Ctx, p: PlayerState, a: PlayerAction): void {
     }
     case 'resign':
       forceBankrupt(c, p);
+      return;
+    case 'drawLot':
+      drawLot(c, p, a.card);
       return;
     case 'chooseDemolish':
       requireCurrent(c, p);
@@ -887,6 +921,40 @@ function applyCard(c: Ctx, p: PlayerState, e: CardEffect): void {
 
 function diceTotal(s: GameState): number {
   return s.lastDice ? s.lastDice[0] + s.lastDice[1] : 7;
+}
+
+// ---------------------------------------------------------------------------
+// Bốc thăm thứ tự xuất phát
+// ---------------------------------------------------------------------------
+
+/** Số được rút ngẫu nhiên ĐÚNG LÚC lật lá thăm → không ai biết trước */
+function pickLot(c: Ctx, p: PlayerState, card: number): void {
+  const lots = c.s.lots!;
+  const i = c.rng.int(0, lots.remaining.length - 1);
+  const number = lots.remaining.splice(i, 1)[0]!;
+  lots.picks[p.id] = { card, number };
+  c.ev.push({ t: 'lotDrawn', playerId: p.id, card, number });
+}
+
+function drawLot(c: Ctx, p: PlayerState, card: number): void {
+  const { s } = c;
+  if (s.phase.kind !== 'drawOrder' || !s.lots) fail('Không ở pha bốc thăm');
+  if (s.lots.picks[p.id]) fail('Bạn đã bốc thăm rồi');
+  if (!Number.isInteger(card) || card < 0 || card >= s.players.length) fail('Lá thăm không hợp lệ');
+  if (Object.values(s.lots.picks).some((x) => x.card === card)) fail('Lá này đã có người bốc');
+  pickLot(c, p, card);
+  if (s.players.every((x) => s.lots!.picks[x.id])) finishDraw(c);
+}
+
+function finishDraw(c: Ctx): void {
+  const { s } = c;
+  const picks = s.lots!.picks;
+  s.players.sort((a, b) => picks[a.id]!.number - picks[b.id]!.number);
+  s.current = 0;
+  s.turn = 1;
+  s.phase = { kind: 'awaitRoll' };
+  c.ev.push({ t: 'orderDrawn', order: s.players.map((p) => p.id) });
+  c.ev.push({ t: 'turnStart', playerId: s.players[0]!.id, turn: 1 });
 }
 
 /** Ô có nhà của người khác (để đập) */
@@ -1706,6 +1774,8 @@ export function timeoutAction(s: GameState): TimeoutPlan | null {
       return { by: 'system', action: { type: 'auctionClose' } };
     case 'cardChoice':
       return { by: 'system', action: { type: 'autoChoose' } };
+    case 'drawOrder':
+      return { by: 'system', action: { type: 'autoDraw' } };
     default:
       return null;
   }
@@ -1715,6 +1785,6 @@ export function timeoutAction(s: GameState): TimeoutPlan | null {
 export function actingPlayer(s: GameState): PlayerId | null {
   if (s.phase.kind === 'gameOver') return null;
   if (s.phase.kind === 'raiseFunds') return s.phase.debtor;
-  if (s.phase.kind === 'auction') return null;
+  if (s.phase.kind === 'auction' || s.phase.kind === 'drawOrder') return null;
   return currentPlayer(s).id;
 }

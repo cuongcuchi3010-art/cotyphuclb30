@@ -159,6 +159,8 @@ export type Phase =
   | { kind: 'awaitBuy'; pos: number }
   | { kind: 'auction' }
   | { kind: 'awaitEnd' }
+  /** Bốc thăm thứ tự xuất phát (đầu ván) */
+  | { kind: 'drawOrder' }
   /** Thẻ cho người rút tự chọn: đập nhà người khác / tặng ô đất */
   | { kind: 'cardChoice'; choice: 'demolish' | 'gift' }
   | { kind: 'raiseFunds'; debtor: PlayerId }
@@ -205,6 +207,8 @@ export interface GameState {
   buildPass?: number | null;
   /** Số nhà trên ô lúc vừa dừng lại (4 = được xây khách sạn) */
   buildPassLevel?: number;
+  /** Bốc thăm thứ tự: lá đã bốc (vị trí lá + số) và các số còn lại */
+  lots?: { picks: Record<PlayerId, { card: number; number: number }>; remaining: number[] };
   endReason?: 'lastStanding' | 'timeUp';
 }
 

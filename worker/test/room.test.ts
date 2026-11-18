@@ -96,6 +96,13 @@ class FakeEnv implements RoomHost {
   }
 }
 
+/** Mọi người chơi bốc thăm thứ tự (mỗi người một lá khác nhau) */
+function drawAll(env: FakeEnv) {
+  env.clients
+    .filter((c) => c.open && c.playerId)
+    .forEach((c, k) => c.msg({ type: 'action', action: { type: 'drawLot', card: k } }));
+}
+
 function setup3() {
   const env = new FakeEnv();
   const a = env.connect('Lan');
@@ -175,6 +182,7 @@ describe('Phòng chơi', () => {
   it('chơi vài lượt, không đúng lượt thì bị từ chối', () => {
     const { env, a, b, c } = setup3();
     a.msg({ type: 'start' });
+    drawAll(env);
     const byId = new Map([a, b, c].map((x) => [x.playerId!, x]));
     for (let k = 0; k < 6; k++) {
       const g = a.room.game!;
@@ -201,16 +209,19 @@ describe('Phòng chơi', () => {
   it('hết giờ lượt: server tự tung / tự kết thúc', () => {
     const { env, a } = setup3();
     a.msg({ type: 'start' });
+    drawAll(env);
     const turn0 = a.room.game!.turn;
     env.advance(91_000); // tự tung
     expect(a.room.game!.lastDice).not.toBeNull();
-    env.advance(5 * 91_000);
+    // Đủ lâu để qua hết lượt kể cả khi người đầu tung đôi nhiều lần
+    env.advance(15 * 91_000);
     expect(a.room.game!.turn).toBeGreaterThan(turn0);
   });
 
   it('mất kết nối: tự chơi thay, đăng nhập thiết bị khác vào lại đúng ghế', () => {
     const { env, a, b, c } = setup3();
     a.msg({ type: 'start' });
+    drawAll(env);
     const g = a.room.game!;
     const cur = [a, b, c].find((x) => x.playerId === g.players[g.current]!.id)!;
     const watcher = [a, b, c].find((x) => x !== cur)!;
@@ -235,6 +246,7 @@ describe('Phòng chơi', () => {
   it('mất kết nối quá 3 phút: host chọn thay bằng bot hoặc cho phá sản', () => {
     const { env, a, b, c } = setup3();
     a.msg({ type: 'start' });
+    drawAll(env);
     c.close();
     env.advance(OFFLINE_GRACE_MS + 5_000);
     const seat = a.room.players.find((p) => p.id === c.playerId)!;
@@ -248,6 +260,7 @@ describe('Phòng chơi', () => {
   it('bot thay người chơi tự đi', () => {
     const { env, a, c } = setup3();
     a.msg({ type: 'start' });
+    drawAll(env);
     c.close();
     env.advance(OFFLINE_GRACE_MS + 5_000);
     a.msg({ type: 'disconnectChoice', playerId: c.playerId!, choice: 'bot' });
@@ -260,6 +273,7 @@ describe('Phòng chơi', () => {
   it('restart server không mất ván', () => {
     const { env, a } = setup3();
     a.msg({ type: 'start' });
+    drawAll(env);
     env.advance(91_000);
     const before = env.saved!.game!;
     env.restart();
@@ -286,6 +300,7 @@ describe('Phòng chơi', () => {
   it('khán giả xem được, không thao tác được', () => {
     const { env, a } = setup3();
     a.msg({ type: 'start' });
+    drawAll(env);
     const s = env.connect('Tú');
     s.msg({ type: 'join', token: 'hoa-sen' });
     expect(s.lastError).toMatch('vào xem');
@@ -297,11 +312,12 @@ describe('Phòng chơi', () => {
   });
 
   it('kick ở sảnh; chơi lại sau khi kết thúc', () => {
-    const { a, b, c } = setup3();
+    const { env, a, b, c } = setup3();
     a.msg({ type: 'kick', playerId: c.playerId! });
     expect(a.room.players).toHaveLength(2);
     expect(c.inbox.some((m) => m.type === 'kicked')).toBe(true);
     a.msg({ type: 'start' });
+    drawAll(env);
     b.msg({ type: 'action', action: { type: 'resign' } });
     expect(a.room.status).toBe('ended');
     a.msg({ type: 'playAgain' });
@@ -329,5 +345,20 @@ describe('Phòng chơi', () => {
     // Tín hiệu rtc không bị giới hạn tốc độ
     for (let i = 0; i < 60; i++) a.msg({ type: 'rtc', to: b.playerId!, data: { candidate: i } });
     expect(b.inbox.filter((m) => m.type === 'rtc').length).toBe(61);
+  });
+
+  it('bốc thăm thứ tự: mọi người bốc xong mới vào ván; hết 30 giây máy bốc hộ', () => {
+    const { env, a, b } = setup3();
+    a.msg({ type: 'start' });
+    expect(a.room.game!.phase.kind).toBe('drawOrder');
+    a.msg({ type: 'action', action: { type: 'drawLot', card: 0 } });
+    b.msg({ type: 'action', action: { type: 'drawLot', card: 0 } });
+    expect(b.lastError).toMatch('đã có người');
+    expect(a.room.game!.phase.kind).toBe('drawOrder');
+    env.advance(31_000);
+    const g = a.room.game!;
+    expect(g.phase.kind).toBe('awaitRoll');
+    expect(Object.keys(g.lots!.picks)).toHaveLength(3);
+    expect(a.room.log.some((l) => l.text.startsWith('Thứ tự đi'))).toBe(true);
   });
 });

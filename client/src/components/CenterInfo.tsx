@@ -61,11 +61,13 @@ export function CenterInfo() {
             <Avatar token={actor.token} color={playerColor(room, actorId)} size="4cqw" />
             <div className="min-w-0 leading-tight">
               <div className="truncate font-bold" style={{ fontSize: '1.7cqw' }}>
-                {ph.kind === 'auction'
-                  ? `${S.auction.title}: ${square(game.auction!.pos).short ?? square(game.auction!.pos).name}`
-                  : ph.kind === 'raiseFunds'
-                    ? S.raise.other(nameOf(room, ph.debtor))
-                    : S.game.turnOf(cur.name)}
+                {ph.kind === 'drawOrder'
+                  ? S.draw.spectate
+                  : ph.kind === 'auction'
+                    ? `${S.auction.title}: ${square(game.auction!.pos).short ?? square(game.auction!.pos).name}`
+                    : ph.kind === 'raiseFunds'
+                      ? S.raise.other(nameOf(room, ph.debtor))
+                      : S.game.turnOf(cur.name)}
               </div>
               {left !== null && (
                 <div

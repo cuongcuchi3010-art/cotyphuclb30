@@ -29,6 +29,7 @@ export const OFFLINE_GRACE_MS = 3 * 60_000;
 export const OFFLINE_AUTOPLAY_MS = 3_000;
 export const BOT_DELAY_MS = 1_200;
 export const AUCTION_MS = 10_000;
+export const DRAW_MS = 30_000;
 export const RAISE_FUNDS_MS = 120_000;
 export const INACTIVE_MS = 2 * 60 * 60_000;
 const LOG_KEEP = 200;
@@ -525,6 +526,10 @@ export class RoomCore {
         break;
       case 'raiseFunds':
         snap.deadline = turnMs > 0 ? now + RAISE_FUNDS_MS : null;
+        break;
+      case 'drawOrder':
+        // Bốc thăm: luôn giới hạn 30 giây, hết giờ máy bốc hộ
+        snap.deadline = now + DRAW_MS;
         break;
       default:
         snap.deadline = turnMs > 0 ? now + turnMs : null;

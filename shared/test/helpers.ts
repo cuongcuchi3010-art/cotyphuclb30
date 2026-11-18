@@ -21,6 +21,7 @@ export function mkGame(n = 2, rules: Partial<Rules> = {}): GameState {
     })),
     rules,
     seededRng(42),
+    { drawOrder: false },
   );
   state.players.sort((a, b) => a.id.localeCompare(b.id));
   state.current = 0;

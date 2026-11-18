@@ -250,6 +250,15 @@ export const S = {
     hint: 'Voice chat: nói chuyện trực tiếp với những người đang bật voice',
   },
 
+  draw: {
+    title: '🎴 Bốc thăm thứ tự xuất phát',
+    hint: 'Chọn một lá thăm. Số 1 đi đầu tiên!',
+    yours: (n: number) => `Bạn bốc được số ${n}`,
+    waiting: 'Đang chờ mọi người bốc…',
+    spectate: 'Mọi người đang bốc thăm…',
+    auto: 'Hết giờ máy sẽ bốc hộ',
+  },
+
   choice: {
     demolishTitle: '🔨 Tranh chấp đất đai',
     demolishHint: 'Chọn 1 căn nhà của người khác để đập (mất 1 nhà).',

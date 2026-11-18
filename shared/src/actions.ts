@@ -27,6 +27,7 @@ export type PlayerAction =
   | { type: 'rejectTrade'; id: string }
   | { type: 'cancelTrade'; id: string }
   | { type: 'resign' }
+  | { type: 'drawLot'; card: number }
   | { type: 'chooseDemolish'; pos: number }
   | { type: 'chooseGift'; pos: number; to: PlayerId }
   | { type: 'bankLoan'; amount: number }
@@ -49,7 +50,8 @@ export type SystemAction =
   | { type: 'autoLiquidate' }
   | { type: 'forceBankrupt'; playerId: PlayerId }
   | { type: 'timeUp' }
-  | { type: 'autoChoose' };
+  | { type: 'autoChoose' }
+  | { type: 'autoDraw' };
 
 export type Action = PlayerAction | SystemAction;
 export type Actor = PlayerId | 'system';
@@ -61,6 +63,9 @@ export type GameEvent =
       order: PlayerId[];
     }
   | { t: 'turnStart'; playerId: PlayerId; turn: number }
+  | { t: 'drawStart'; count: number }
+  | { t: 'lotDrawn'; playerId: PlayerId; card: number; number: number }
+  | { t: 'orderDrawn'; order: PlayerId[] }
   | {
       t: 'roll';
       playerId: PlayerId;
