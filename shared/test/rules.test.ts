@@ -889,7 +889,11 @@ describe('Thứ hạng theo tổng tài sản', () => {
 describe('Bốc thăm thứ tự xuất phát', () => {
   function fresh(n = 3) {
     return createGame(
-      Array.from({ length: n }, (_, i) => ({ id: `p${i + 1}`, name: `P${i + 1}`, token: TOKENS[i]! })),
+      Array.from({ length: n }, (_, i) => ({
+        id: `p${i + 1}`,
+        name: `P${i + 1}`,
+        token: TOKENS[i]!,
+      })),
       {},
       seededRng(7),
     ).state;

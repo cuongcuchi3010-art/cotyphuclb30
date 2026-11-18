@@ -338,7 +338,9 @@ export default {
     }
     // ---- Discord widget (cache 60 giây)
     if (path === '/api/discord' && req.method === 'GET') {
-      const guild = /^\d{5,25}$/.test(env.DISCORD_GUILD_ID ?? '') ? env.DISCORD_GUILD_ID! : DEFAULT_DISCORD_GUILD;
+      const guild = /^\d{5,25}$/.test(env.DISCORD_GUILD_ID ?? '')
+        ? env.DISCORD_GUILD_ID!
+        : DEFAULT_DISCORD_GUILD;
       return json(await fetchDiscord(guild));
     }
     // ---- Ảnh đại diện
@@ -346,14 +348,20 @@ export default {
       const v = await verifyToken(env, bearer(req));
       if (!v) return json({ error: 'Phiên đăng nhập hết hạn' }, 401);
       if (req.method === 'DELETE')
-        return accountStub(env, v.id).fetch('https://acc/clearAvatar', { method: 'POST', body: '{}' });
+        return accountStub(env, v.id).fetch('https://acc/clearAvatar', {
+          method: 'POST',
+          body: '{}',
+        });
       let data = '';
       try {
         data = String(((await req.json()) as { data?: unknown }).data ?? '');
       } catch {
         /* bỏ qua */
       }
-      if (!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(data) || data.length > AVATAR_MAX)
+      if (
+        !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(data) ||
+        data.length > AVATAR_MAX
+      )
         return json({ error: 'Ảnh không hợp lệ hoặc quá lớn' }, 400);
       return accountStub(env, v.id).fetch('https://acc/setAvatar', {
         method: 'POST',

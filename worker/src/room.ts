@@ -680,9 +680,7 @@ export class RoomCore {
         offlineSince: s.offlineSince,
         awaitingHostDecision: s.awaitingHostDecision,
         voice: this.host.conns().some((c) => c.playerId === s.id && c.voice),
-        avatar: s.avatarV
-          ? `/api/avatar/${encodeURIComponent(s.accountId)}?v=${s.avatarV}`
-          : null,
+        avatar: s.avatarV ? `/api/avatar/${encodeURIComponent(s.accountId)}?v=${s.avatarV}` : null,
       })),
       spectators: this.host.conns().filter((c) => c.spectator).length,
       rules: snap.rules,

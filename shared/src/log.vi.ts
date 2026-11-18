@@ -95,8 +95,8 @@ export function describeEvent(ev: GameEvent, s: Pick<GameState, 'players'>): str
       return ev.choice === 'festival'
         ? `${name(ev.playerId)} đang chọn ô tổ chức lễ hội…`
         : ev.choice === 'demolish'
-        ? `${name(ev.playerId)} đang chọn nhà để đập…`
-        : `${name(ev.playerId)} đang chọn ô đất để tặng…`;
+          ? `${name(ev.playerId)} đang chọn nhà để đập…`
+          : `${name(ev.playerId)} đang chọn ô đất để tặng…`;
     case 'cardNoEffect':
       return `Thẻ không có tác dụng với ${name(ev.playerId)}`;
     case 'buildChance':

@@ -1,17 +1,9 @@
 import { useEffect, useState } from 'react';
+import { discordWidgetUrl, summarizeWidget, type DiscordSummary } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { api } from '../store';
 import { cx } from '../lib';
 import { Btn, Modal } from './ui';
-
-interface DiscordSummary {
-  ok: boolean;
-  name: string;
-  invite: string | null;
-  online: number;
-  members: { name: string; avatar: string | null; status: string; game: string | null }[];
-  error?: string;
-}
 
 const STATUS_COLOR: Record<string, string> = {
   online: 'bg-green-500',
@@ -34,10 +26,23 @@ export function DiscordButton({ className, full }: { className?: string; full?: 
   const [open, setOpen] = useState(false);
   useEffect(() => {
     let alive = true;
-    const load = () =>
-      void api<DiscordSummary>('/api/discord').then((r) => {
-        if (alive && r.ok) setData(r.data);
-      });
+    const load = async () => {
+      // 1) Trình duyệt gọi thẳng Discord (mỗi người một IP, không bị giới hạn chung)
+      try {
+        const res = await fetch(discordWidgetUrl(), { headers: { accept: 'application/json' } });
+        const d = summarizeWidget(await res.json());
+        if (d.ok || d.error?.includes('Widget')) {
+          if (alive) setData(d);
+          return;
+        }
+      } catch {
+        /* bị chặn → dùng máy chủ game làm dự phòng */
+      }
+      // 2) Dự phòng qua máy chủ game (có cache)
+      const r = await api<DiscordSummary>('/api/discord');
+      if (alive && r.ok) setData(r.data);
+    };
+    void load();
     load();
     const t = setInterval(load, 60_000);
     return () => {

@@ -75,7 +75,8 @@ function step(s: GameState, rng: Rng): GameState {
     const p = s.players.find((x) => !s.lots!.picks[x.id])!;
     const taken = new Set(Object.values(s.lots!.picks).map((x) => x.card));
     const free = s.players.map((_, k) => k).filter((k) => !taken.has(k));
-    return applyAction(s, p.id, { type: 'drawLot', card: free[rng.int(0, free.length - 1)]! }, rng).state;
+    return applyAction(s, p.id, { type: 'drawLot', card: free[rng.int(0, free.length - 1)]! }, rng)
+      .state;
   }
   if (ph.kind === 'auction') {
     if (rng.int(0, 2) > 0) {

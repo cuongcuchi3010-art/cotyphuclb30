@@ -206,3 +206,5 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | F1  | Giữ ô Cà Phê Vỉa Hè; thêm thẻ **Tổ chức Lễ hội** vào mỗi bộ (Cơ Hội `ch20`, Khí Vận `kv20`; mỗi bộ 20 thẻ). Người rút **tự chọn** 1 ô đất (không thế chấp) của mình: tiền thuê ô đó **×2**.                                 |
 | F2  | Cả bàn chỉ có **1 lễ hội**: lễ hội mới thay lễ hội cũ. Ô đổi chủ (giao dịch, tặng, phá sản) thì lễ hội kết thúc. Hết giờ / mất kết nối / bot: máy chọn ô có giá cao nhất. Ô có lễ hội hiện 🎉, dải tiền thuê hiện số đã ×2. |
+
+| DC3 | Sửa lỗi "rate limited": Cache API không hoạt động trên `*.workers.dev` và Discord hay giới hạn IP dùng chung của Cloudflare. Nay **trình duyệt gọi thẳng** `widget.json` (mỗi người một IP); Worker chỉ là dự phòng với cache trong RAM (thành công 2 phút, lỗi 20 giây, lỗi thì dùng lại dữ liệu tốt gần nhất ≤ 10 phút). Thông báo lỗi Discord hiển thị bằng tiếng Việt. |

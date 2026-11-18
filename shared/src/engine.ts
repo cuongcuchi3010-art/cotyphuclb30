@@ -559,7 +559,8 @@ function applyPlayer(c: Ctx, p: PlayerState, a: PlayerAction): void {
       return;
     case 'chooseFestival':
       requireCurrent(c, p);
-      if (s.phase.kind !== 'cardChoice' || s.phase.choice !== 'festival') fail('Không có gì để chọn');
+      if (s.phase.kind !== 'cardChoice' || s.phase.choice !== 'festival')
+        fail('Không có gì để chọn');
       doFestival(c, p, a.pos);
       setNeutral(s);
       proceed(c);
@@ -995,7 +996,9 @@ export function demolishTargets(s: GameState, pid: PlayerId): number[] {
 
 /** Ô của mình có thể tổ chức lễ hội (không thế chấp) */
 export function festivalTargets(s: GameState, pid: PlayerId): number[] {
-  return OWNABLE_INDICES.filter((i) => s.properties[i]!.owner === pid && !s.properties[i]!.mortgaged);
+  return OWNABLE_INDICES.filter(
+    (i) => s.properties[i]!.owner === pid && !s.properties[i]!.mortgaged,
+  );
 }
 
 function doFestival(c: Ctx, p: PlayerState, pos: number): void {
