@@ -15,7 +15,6 @@ import {
   type Square as Sq,
 } from '@cotyphu/shared';
 import { useStore } from '../store';
-import { useVoice } from '../voice';
 import { cellOf, centerPct, cx, playerColor, sideOf, useGame, photoOf } from '../lib';
 import { BrandLogo } from './BrandLogo';
 import { Avatar } from './Avatar';
@@ -97,7 +96,6 @@ function PlayerCorners() {
   const setDraft = useStore((s) => s.setTradeDraft);
   const setTab = useStore((s) => s.setTab);
   const setSheet = useStore((s) => s.setSheet);
-  const speaking = useVoice((s) => s.speaking);
   if (!room || !game) return null;
   const ranks = game.rules.showStandings ? new Map(standings(game).map((x) => [x.id, x])) : null;
   const medal = (r: number) => (r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : `#${r}`);
@@ -160,13 +158,7 @@ function PlayerCorners() {
                 }}
               >
                 <span className="relative shrink-0">
-                  <Avatar
-                    token={p.token}
-                    color={color}
-                    size="7.5cqw"
-                    speaking={speaking.includes(p.id)}
-                    photo={photoOf(room, p.id)}
-                  />
+                  <Avatar token={p.token} color={color} size="7.5cqw" photo={photoOf(room, p.id)} />
                   <span
                     className={cx(
                       'absolute bottom-0 right-0 h-[1.8cqw] w-[1.8cqw] rounded-full border border-white',
@@ -196,7 +188,6 @@ function PlayerCorners() {
                     {rk && <span>TS {formatMoney(rk.worth)}</span>}
                     {p.inJail && <span>🚓</span>}
                     {p.jailCards.length > 0 && <span>🎫{p.jailCards.length}</span>}
-                    {seat?.voice && <span>🎙️</span>}
                     {seat?.isBot && <span>🤖</span>}
                     {p.bankrupt && <span>Phá sản</span>}
                   </span>

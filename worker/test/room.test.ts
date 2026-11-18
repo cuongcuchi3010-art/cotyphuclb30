@@ -12,7 +12,6 @@ import {
 class FakeClient implements Conn {
   playerId: string | null = null;
   spectator = false;
-  voice = false;
   account: { id: string; name: string } | null;
   inbox: ServerMessage[] = [];
   open = true;
@@ -329,22 +328,6 @@ describe('Phòng chơi', () => {
     const { env } = setup3();
     env.advance(2 * 60 * 60_000 + 1000);
     expect(env.destroyed).toBe(true);
-  });
-
-  it('voice chat: chuyển tín hiệu WebRTC giữa người đang bật voice', () => {
-    const { a, b, c } = setup3();
-    a.msg({ type: 'voice', on: true });
-    b.msg({ type: 'voice', on: true });
-    expect(c.room.players.filter((p) => p.voice)).toHaveLength(2);
-    a.msg({ type: 'rtc', to: b.playerId!, data: { sdp: 'offer' } });
-    const got = b.inbox.find((m) => m.type === 'rtc');
-    expect(got && got.type === 'rtc' && got.from).toBe(a.playerId);
-    // c chưa bật voice: không nhận
-    a.msg({ type: 'rtc', to: c.playerId!, data: { sdp: 'offer' } });
-    expect(c.inbox.some((m) => m.type === 'rtc')).toBe(false);
-    // Tín hiệu rtc không bị giới hạn tốc độ
-    for (let i = 0; i < 60; i++) a.msg({ type: 'rtc', to: b.playerId!, data: { candidate: i } });
-    expect(b.inbox.filter((m) => m.type === 'rtc').length).toBe(61);
   });
 
   it('bốc thăm thứ tự: mọi người bốc xong mới vào ván; hết 30 giây máy bốc hộ', () => {

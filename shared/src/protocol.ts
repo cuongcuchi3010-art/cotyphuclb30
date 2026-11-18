@@ -148,12 +148,6 @@ export const clientMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('playAgain') }),
   z.object({ type: z.literal('leave') }),
   z.object({ type: z.literal('ping') }),
-  z.object({ type: z.literal('voice'), on: z.boolean() }),
-  z.object({
-    type: z.literal('rtc'),
-    to: z.string().max(40),
-    data: z.record(z.unknown()),
-  }),
 ]);
 
 export type ClientMessage = z.infer<typeof clientMessageSchema>;
@@ -168,8 +162,6 @@ export interface RoomPlayer {
   offlineSince: number | null;
   /** Đã quá 3 phút mất kết nối, chờ host quyết định */
   awaitingHostDecision: boolean;
-  /** Đang tham gia voice chat */
-  voice: boolean;
   /** URL ảnh đại diện (null = dùng quân cờ) */
   avatar: string | null;
 }
@@ -207,7 +199,6 @@ export interface RoomView {
 
 export type ServerMessage =
   | { type: 'welcome'; playerId: PlayerId | null; spectator: boolean }
-  | { type: 'rtc'; from: PlayerId; data: Record<string, unknown> }
   | { type: 'room'; room: RoomView; events?: GameEvent[] }
   | { type: 'chat'; message: ChatMessage }
   | { type: 'error'; message: string; fatal?: boolean }

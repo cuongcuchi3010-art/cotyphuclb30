@@ -7,7 +7,7 @@ Chạy hoàn toàn trên **Cloudflare (gói miễn phí)**: không phải thuê 
 - Đủ luật chính thức: mua, đấu giá realtime, xây nhà/khách sạn đều, thế chấp, giao dịch, tạm giữ, gom tiền, phá sản.
 - Luật tuỳ chọn: hũ tiền Cà Phê Vỉa Hè, Khởi Hành ×2, tắt đấu giá, giới hạn thời gian ván, đồng hồ lượt.
 - Có **tài khoản** (biệt danh + mật khẩu): đăng nhập ở thiết bị nào cũng chơi tiếp được đúng ghế.
-- **Voice chat** trong phòng, **vay ngân hàng / vay người chơi**.
+- **Vay ngân hàng / vay người chơi**; tab Chat có cả **chat phòng** và **sảnh Discord** nhúng sẵn.
 - Mất mạng hoặc reload trang thì tự vào lại đúng ghế. Người rời đi quá 3 phút, chủ phòng có thể thay bằng bot.
 - Giao diện tiếng Việt, hỗ trợ điện thoại dọc và dark mode.
 
@@ -116,6 +116,11 @@ cd .. && pnpm run deploy
 ---
 
 ## Tuỳ biến
+
+### Discord
+
+- Nút **Discord** và mục **Chat → Discord** dùng widget của server (ID ở `shared/src/discord.ts` → `DISCORD_GUILD_ID`). Server cần bật **Cài đặt máy chủ → Tiện ích → Bật tiện ích máy chủ** (và chọn kênh lời mời).
+- Muốn **đọc & gửi tin nhắn kênh Discord ngay trong game**: mời WidgetBot (https://widgetbot.io) vào server, lấy ID kênh chat (bật Chế độ nhà phát triển → chuột phải kênh → Sao chép ID), điền vào `WIDGETBOT_CHANNEL_ID` trong `shared/src/discord.ts`, rồi push.
 
 ### Mật khẩu BÁO DANH (chặn bot)
 

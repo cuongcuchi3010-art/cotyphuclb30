@@ -44,8 +44,6 @@ export interface Conn {
   spectator: boolean;
   /** Tài khoản đã đăng nhập của kết nối này */
   account: { id: string; name: string; avatarV?: number } | null;
-  /** Đang bật voice chat */
-  voice: boolean;
   send(msg: ServerMessage): void;
   close(code?: number, reason?: string): void;
 }
@@ -175,14 +173,12 @@ export class RoomCore {
       conn.send({ type: 'error', message: 'Tin nhắn không hợp lệ' });
       return;
     }
-    const isRtc = (data as { type?: unknown } | null)?.type === 'rtc';
-    if (!isRtc && !this.rateOk(conn)) {
+    if (!this.rateOk(conn)) {
       conn.send({ type: 'error', message: 'Bạn thao tác quá nhanh, chậm lại chút nhé' });
       return;
     }
     const parsed = clientMessageSchema.safeParse(data);
     if (!parsed.success) {
-      if (isRtc) return;
       conn.send({
         type: 'error',
         message: parsed.error.issues[0]?.message ?? 'Tin nhắn không hợp lệ',
@@ -284,21 +280,6 @@ export class RoomCore {
           return;
         }
         this.resumeSeat(conn, seat);
-        return;
-      }
-      case 'voice': {
-        this.requireSeat(conn);
-        conn.voice = m.on;
-        this.host.attach(conn);
-        this.broadcast();
-        return;
-      }
-      case 'rtc': {
-        if (!conn.playerId || !conn.voice) return;
-        for (const c of this.host.conns()) {
-          if (c.playerId === m.to && c.voice)
-            c.send({ type: 'rtc', from: conn.playerId, data: m.data });
-        }
         return;
       }
       case 'spectate': {
@@ -679,7 +660,6 @@ export class RoomCore {
         isBot: s.isBot,
         offlineSince: s.offlineSince,
         awaitingHostDecision: s.awaitingHostDecision,
-        voice: this.host.conns().some((c) => c.playerId === s.id && c.voice),
         avatar: s.avatarV ? `/api/avatar/${encodeURIComponent(s.accountId)}?v=${s.avatarV}` : null,
       })),
       spectators: this.host.conns().filter((c) => c.spectator).length,

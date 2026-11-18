@@ -17,6 +17,10 @@ export const S = {
   },
 
   discord: {
+    roomChat: 'Trong phòng',
+    lobby: 'Discord',
+    chatHint:
+      'Muốn đọc & gửi tin nhắn kênh Discord ngay tại đây: thêm WidgetBot vào server rồi gửi ID kênh để gắn vào (xem README).',
     title: 'Discord CLB30',
     loading: 'Đang tải…',
     error: 'Không đọc được Discord',
@@ -259,15 +263,12 @@ export const S = {
 
   sound: { on: 'Bật tiếng', off: 'Tắt tiếng' },
   music: { on: 'Bật nhạc nền', off: 'Tắt nhạc nền' },
-  shape: { toSquare: 'Chuyển sang bàn vuông', toDiamond: 'Chuyển sang bàn thoi' },
-
-  voice: {
-    join: 'Voice',
-    leave: 'Rời voice',
-    mute: 'Tắt mic',
-    unmute: 'Bật mic',
-    connecting: 'Đang mở micro…',
-    hint: 'Voice chat: nói chuyện trực tiếp với những người đang bật voice',
+  shape: {
+    toSquare: 'Chuyển sang bàn vuông',
+    toDiamond: 'Chuyển sang bàn thoi',
+    label: 'Kiểu bàn cờ',
+    diamond: 'Thoi',
+    square: 'Vuông',
   },
 
   draw: {

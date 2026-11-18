@@ -5,7 +5,6 @@ import { useStore } from '../store';
 import { computeLayout, cx, useGame, useMeasuredHeight, useViewport } from '../lib';
 import { isMuted, setMuted } from '../sound';
 import { setMusicOn, startMusic, stopMusic, useMusic } from '../music';
-import { VoiceControls } from './VoiceControls';
 import { DiscordButton } from './DiscordButton';
 import { Board } from './Board';
 import { GameOver } from './GameOver';
@@ -40,7 +39,7 @@ export function GameScreen() {
   }, []);
   if (!room || !game) return null;
   // Dọc: chừa đúng phần dưới bàn cờ đo được + khoảng cách (8 trên + 8 giữa + 8 dưới)
-  // Hàng nút (mã phòng, voice, nhạc, loa, bỏ cuộc) cao ~TOPBAR px khi nằm dưới bàn cờ
+  // Hàng nút (mã phòng, nhạc, loa, bỏ cuộc) cao ~TOPBAR px khi nằm dưới bàn cờ
   const measured = belowH && barH ? belowH + barH + 24 : 0;
   const base = measured ? measured - (railsRef.current ? 0 : TOPBAR) : 226 - TOPBAR;
   const withRails = computeLayout(w, h, base, RAIL * 2 + 16);
@@ -172,19 +171,35 @@ function RoomCode({ vertical }: { vertical?: boolean }) {
   );
 }
 
-function ShapeButton({ className }: { className?: string }) {
+function ShapeButton({ className, vertical }: { className?: string; vertical?: boolean }) {
   const shape = useStore((s) => s.boardShape);
   const setShape = useStore((s) => s.setBoardShape);
   return (
-    <Btn
-      variant="ghost"
-      className={className}
-      title={shape === 'diamond' ? S.shape.toSquare : S.shape.toDiamond}
-      aria-label={shape === 'diamond' ? S.shape.toSquare : S.shape.toDiamond}
-      onClick={() => setShape(shape === 'diamond' ? 'square' : 'diamond')}
+    <div
+      className={cx(
+        'flex rounded-xl bg-black/5 p-0.5 dark:bg-white/10',
+        vertical && 'flex-col',
+        className,
+      )}
+      role="group"
+      aria-label={S.shape.label}
     >
-      {shape === 'diamond' ? '■' : '◆'}
-    </Btn>
+      {(['diamond', 'square'] as const).map((v) => (
+        <button
+          key={v}
+          type="button"
+          onClick={() => setShape(v)}
+          className={cx(
+            'flex-1 whitespace-nowrap rounded-lg px-2 py-1.5 text-xs font-bold',
+            shape === v
+              ? 'bg-white text-son shadow dark:bg-gray-800 dark:text-nghe'
+              : 'text-gray-500',
+          )}
+        >
+          {v === 'diamond' ? `◆ ${S.shape.diamond}` : `■ ${S.shape.square}`}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -244,7 +259,6 @@ function TopBar() {
     <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
       <RoomCode />
       <div className="flex gap-1">
-        <VoiceControls />
         <DiscordButton />
         <ShapeButton />
         <MusicButton />
@@ -260,7 +274,6 @@ function RailLeft({ width }: { width: number }) {
   return (
     <div className="flex shrink-0 flex-col items-stretch gap-2 text-sm" style={{ width }}>
       <RoomCode vertical />
-      <VoiceControls />
     </div>
   );
 }
@@ -268,7 +281,7 @@ function RailRight({ width }: { width: number }) {
   return (
     <div className="flex shrink-0 flex-col items-stretch gap-2 text-sm" style={{ width }}>
       <DiscordButton />
-      <ShapeButton />
+      <ShapeButton vertical />
       <MusicButton />
       <SoundButton />
       <ResignButton />

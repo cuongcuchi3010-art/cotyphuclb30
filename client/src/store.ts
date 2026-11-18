@@ -168,7 +168,7 @@ export const useStore = create<Store>((set, get) => ({
       /* bỏ qua */
     }
     // Mặc định: điện thoại cầm dọc (màn hẹp) dùng bàn vuông cho ô to; còn lại bàn thoi
-    return window.innerWidth < 520 ? 'square' : 'diamond';
+    return typeof window !== 'undefined' && window.innerWidth < 520 ? 'square' : 'diamond';
   })(),
   setBoardShape(boardShape) {
     try {
@@ -315,9 +315,6 @@ function handle(code: string, m: ServerMessage) {
       joinIntent = null;
       useStore.setState({ me: m.playerId, spectator: m.spectator, resumeChecked: true });
       return;
-    case 'rtc':
-      rtcHandler?.(m.from, m.data);
-      return;
     case 'room': {
       const events = m.events ?? [];
       useStore.setState({
@@ -330,7 +327,6 @@ function handle(code: string, m: ServerMessage) {
       pushPayNotices(events);
       // Mình không còn trong phòng (bị xoá ở sảnh)
       if (st.me && !m.room.players.some((p) => p.id === st.me)) useStore.setState({ me: null });
-      rtcRoomHandler?.(m.room);
       return;
     }
     case 'chat': {
@@ -351,14 +347,6 @@ function handle(code: string, m: ServerMessage) {
     case 'pong':
       return;
   }
-}
-
-/** Bộ xử lý tín hiệu voice chat (voice.ts đăng ký) */
-let rtcHandler: ((from: string, data: Record<string, unknown>) => void) | null = null;
-let rtcRoomHandler: ((room: RoomView) => void) | null = null;
-export function setRtcHandlers(onSignal: typeof rtcHandler, onRoom: typeof rtcRoomHandler) {
-  rtcHandler = onSignal;
-  rtcRoomHandler = onRoom;
 }
 
 /** Giờ server hiện tại (ước lượng) */

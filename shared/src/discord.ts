@@ -6,6 +6,14 @@
 /** ID server Discord CLB30 — đổi ở đây nếu dùng server khác */
 export const DISCORD_GUILD_ID = '1572067055161835542';
 
+/**
+ * ID kênh chat Discord để nhúng qua WidgetBot (đọc & gửi tin nhắn ngay trong game).
+ * Để trống = nhúng widget chính thức (chỉ thành viên online & kênh voice).
+ * Cách lấy: mời WidgetBot vào server (https://widgetbot.io), bật Chế độ nhà phát triển trong Discord,
+ * chuột phải kênh chat → Sao chép ID kênh.
+ */
+export const WIDGETBOT_CHANNEL_ID = '';
+
 export interface DiscordWidgetRaw {
   id?: string;
   name?: string;

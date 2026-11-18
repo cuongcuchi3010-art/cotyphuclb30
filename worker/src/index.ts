@@ -30,7 +30,6 @@ interface Attachment {
   playerId: string | null;
   spectator: boolean;
   account: { id: string; name: string; avatarV?: number } | null;
-  voice: boolean;
 }
 
 function accountStub(env: Env, key: string) {
@@ -116,14 +115,12 @@ export class Room extends DurableObject<Env> {
       playerId: null,
       spectator: false,
       account: null,
-      voice: false,
     };
     const conn: Conn = {
       id: att.id,
       playerId: att.playerId,
       spectator: att.spectator,
       account: att.account ?? null,
-      voice: att.voice ?? false,
       send(msg: ServerMessage) {
         try {
           ws.send(JSON.stringify(msg));
@@ -168,7 +165,6 @@ export class Room extends DurableObject<Env> {
           playerId: conn.playerId,
           spectator: conn.spectator,
           account: conn.account,
-          voice: conn.voice,
         };
         if (ws) ws.serializeAttachment(att);
         else {
@@ -224,7 +220,6 @@ export class Room extends DurableObject<Env> {
                 avatarV: Number(req.headers.get('x-account-avatar') ?? 0) || 0,
               }
             : null,
-        voice: false,
       } satisfies Attachment);
       return new Response(null, { status: 101, webSocket: client });
     }

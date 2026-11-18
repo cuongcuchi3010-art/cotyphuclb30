@@ -2,13 +2,11 @@ import { OWNABLE_INDICES, formatMoney, standings } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
 import { cx, playerColor, useGame, photoOf } from '../lib';
-import { useVoice } from '../voice';
 import { Avatar } from './Avatar';
 
 /** Danh sách người chơi; bấm vào người khác để mở giao dịch với họ */
 export function PlayerList({ compact, cols }: { compact?: boolean; cols?: 1 | 2 | 3 }) {
   const { room, game, me } = useGame();
-  const speaking = useVoice((s) => s.speaking);
   const setDraft = useStore((s) => s.setTradeDraft);
   const setTab = useStore((s) => s.setTab);
   const setSheet = useStore((s) => s.setSheet);
@@ -69,7 +67,6 @@ export function PlayerList({ compact, cols }: { compact?: boolean; cols?: 1 | 2 
                 token={p.token}
                 color={color}
                 size={compact ? 30 : 38}
-                speaking={speaking.includes(p.id)}
                 photo={photoOf(room, p.id)}
               />
               <span
@@ -89,7 +86,6 @@ export function PlayerList({ compact, cols }: { compact?: boolean; cols?: 1 | 2 
                 <span className="truncate">{p.name}</span>
                 {p.id === me && <span className="text-xs text-gray-400">({S.lobby.you})</span>}
                 {room.hostId === p.id && <span title={S.lobby.host}>👑</span>}
-                {seat?.voice && <span title="Voice">🎙️</span>}
               </div>
               <div className="flex flex-wrap gap-x-2 text-xs text-gray-600 dark:text-gray-300">
                 <b className="text-son dark:text-nghe">{formatMoney(p.cash)}</b>

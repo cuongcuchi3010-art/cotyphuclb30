@@ -19,6 +19,8 @@ import {
   validateTrade,
   type GameState,
   type PlayerState,
+  DISCORD_GUILD_ID,
+  WIDGETBOT_CHANNEL_ID,
 } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore, type TradeDraft } from '../store';
@@ -642,7 +644,7 @@ function LoanTab() {
 
 // ---------------------------------------------------------------------------
 
-function ChatTab() {
+function RoomChat() {
   const { room } = useGame();
   const chat = useStore((s) => s.chat);
   const send = useStore((s) => s.send);
@@ -682,6 +684,60 @@ function ChatTab() {
         />
         <Btn type="submit">{S.chat.send}</Btn>
       </form>
+    </div>
+  );
+}
+
+/** Tab Chat: chat trong phòng + sảnh Discord nhúng */
+function ChatTab() {
+  const [sub, setSub] = useState<'room' | 'discord'>('room');
+  return (
+    <div className="flex h-full flex-col">
+      <div className="mb-2 flex gap-1 rounded-lg bg-black/5 p-0.5 dark:bg-white/10">
+        {(['room', 'discord'] as const).map((k) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setSub(k)}
+            className={cx(
+              'flex-1 rounded-md py-1 text-xs font-bold',
+              sub === k
+                ? k === 'discord'
+                  ? 'bg-[#5865F2] text-white shadow'
+                  : 'bg-white shadow dark:bg-gray-800'
+                : 'text-gray-500',
+            )}
+          >
+            {k === 'room' ? `💬 ${S.discord.roomChat}` : `🎮 ${S.discord.lobby}`}
+          </button>
+        ))}
+      </div>
+      <div className="min-h-0 flex-1">{sub === 'room' ? <RoomChat /> : <DiscordEmbed />}</div>
+    </div>
+  );
+}
+
+/**
+ * Nhúng Discord: nếu có kênh WidgetBot (WIDGETBOT_CHANNEL_ID trong shared/src/discord.ts) thì nhúng kênh chat đọc/gửi được;
+ * không thì nhúng widget chính thức của Discord (thành viên online, kênh voice, nút tham gia).
+ */
+function DiscordEmbed() {
+  const dark =
+    typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+  const channel = WIDGETBOT_CHANNEL_ID;
+  const src = channel
+    ? `https://e.widgetbot.io/channels/${DISCORD_GUILD_ID}/${channel}`
+    : `https://discord.com/widget?id=${DISCORD_GUILD_ID}&theme=${dark ? 'dark' : 'light'}`;
+  return (
+    <div className="flex h-full flex-col">
+      <iframe
+        title="Discord CLB30"
+        src={src}
+        className="min-h-[320px] w-full flex-1 rounded-xl border-0"
+        sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-forms"
+        allow="clipboard-write; fullscreen"
+      />
+      {!channel && <div className="mt-1 text-[11px] text-gray-500">{S.discord.chatHint}</div>}
     </div>
   );
 }

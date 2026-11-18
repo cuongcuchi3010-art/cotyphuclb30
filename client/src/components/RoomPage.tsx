@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { TOKENS, type ClientMessage, type TokenId } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { api, loadPref, savePref, setJoinIntent, useStore } from '../store';
-import { leaveVoice } from '../voice';
 import { navigate } from '../router';
 import { GameScreen } from './GameScreen';
 import { Lobby, TokenPicker } from './Lobby';
@@ -30,7 +29,6 @@ export function RoomPage({ code }: { code: string }) {
   useEffect(() => {
     connect(code);
     return () => {
-      leaveVoice();
       disconnect();
     };
   }, [code, connect, disconnect]);
