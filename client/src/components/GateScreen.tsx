@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
 import { TokenIcon } from './TokenIcon';
-import { LegalNotice } from './LegalNotice';
 
 /** Màn hình "BÁO DANH": nhập mật khẩu chung mới được vào (chặn bot) */
 export function GateScreen() {
@@ -127,8 +126,6 @@ export function GateScreen() {
             </div>
           </div>
         </div>
-
-        <LegalNotice className="mt-3" />
 
         {/* Con dấu đỏ */}
         <motion.div

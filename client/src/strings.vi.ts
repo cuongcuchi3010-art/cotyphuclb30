@@ -6,9 +6,9 @@ export const S = {
   tagline: 'Chơi online cùng bạn bè — không cần tài khoản',
 
   gate: {
-    club: 'Cờ Tỷ Phú · CLB30',
+    club: 'CLB30',
     title: 'BÁO DANH',
-    subtitle: 'Xin trình mật khẩu của hội để vào sân chơi.',
+    subtitle: 'Xin trình mật khẩu để vào CLB.',
     label: 'Mật khẩu báo danh',
     submit: 'Báo danh',
     wrong: 'Sai mật khẩu báo danh. Hỏi lại chủ phòng nhé!',
