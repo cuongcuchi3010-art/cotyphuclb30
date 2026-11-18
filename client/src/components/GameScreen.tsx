@@ -11,6 +11,7 @@ import { GameOver } from './GameOver';
 import { PlayerList } from './PlayerList';
 import { PropertyCardModal } from './PropertyCard';
 import { Prompts } from './Prompts';
+import { PayNotices } from './PayNotices';
 import { TabBar, TabContent } from './Tabs';
 import { Btn } from './ui';
 
@@ -51,6 +52,7 @@ export function GameScreen() {
   const overlays = (
     <>
       <Prompts />
+      <PayNotices />
       <PropertyCardModal />
       {game.phase.kind === 'gameOver' && <GameOver />}
       {me === null && <div className="sr-only">{S.game.spectating}</div>}

@@ -170,3 +170,9 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 | O9  | Bấm Bắt đầu → pha **bốc thăm**: N lá úp (N = số người chơi), mỗi người tự chọn 1 lá; số 1 đi đầu. Thay cho tung xúc xắc chọn thứ tự (L19).       |
 | O10 | Con số được rút ngẫu nhiên **lúc lật lá** (RNG server), không định trước, nên dù toàn bộ trạng thái ván gửi tới mọi máy cũng không ai đoán được. |
 | O11 | Pha bốc thăm luôn giới hạn **30 giây** (kể cả khi tắt đồng hồ lượt); hết giờ hoặc ai mất kết nối thì máy bốc hộ.                                 |
+
+## Cập nhật lần 15: thông báo trả tiền
+
+| #   | Quyết định                                                                                                                                                                                                                                                                                                                                                                                    |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P1  | Mỗi khoản **trả tiền giữa người chơi** (tiền thuê, Chủ tịch HĐQT, lì xì/sinh nhật, trả nợ vay đến hạn) hiện **thông báo nổi** ở đầu màn hình cho **cả phòng**: avatar người trả → người nhận, số tiền, lý do và tên ô. Tự ẩn sau ~4 giây, tối đa 3 thông báo cùng lúc. Viền xanh = mình nhận, đỏ = mình trả, vàng = người khác. Khoản trả cho ngân hàng (thuế, phạt) không hiện để tránh rối. |

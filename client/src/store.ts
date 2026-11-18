@@ -75,6 +75,16 @@ export function loadPref(key: string): string | null {
   }
 }
 
+/** Thông báo trả tiền giữa người chơi (cả phòng cùng thấy) */
+export interface PayNotice {
+  id: number;
+  from: string;
+  to: string;
+  amount: number;
+  reason: string;
+  pos?: number;
+}
+
 export interface Toast {
   id: number;
   text: string;
@@ -94,6 +104,7 @@ interface Store {
   events: { id: number; list: GameEvent[] };
   chat: ChatMessage[];
   toasts: Toast[];
+  notices: PayNotice[];
   fatal: string | null;
   kicked: boolean;
   /** Chênh lệch đồng hồ server - client */
@@ -156,6 +167,7 @@ export const useStore = create<Store>((set, get) => ({
   events: { id: 0, list: [] },
   chat: [],
   toasts: [],
+  notices: [],
   fatal: null,
   kicked: false,
   clockOffset: 0,
@@ -294,6 +306,7 @@ function handle(code: string, m: ServerMessage) {
         events: events.length ? { id: ++evSeq, list: events } : st.events,
       });
       if (events.length) playForEvents(events, st.me);
+      pushPayNotices(events);
       // Mình không còn trong phòng (bị xoá ở sảnh)
       if (st.me && !m.room.players.some((p) => p.id === st.me)) useStore.setState({ me: null });
       rtcRoomHandler?.(m.room);
@@ -340,5 +353,26 @@ export async function checkGate() {
     useStore.setState({ gate: !!d.ok });
   } catch {
     useStore.setState({ gate: false });
+  }
+}
+
+let noticeSeq = 0;
+/** Tạo thông báo cho các khoản trả tiền giữa người chơi (tiền thuê, lì xì, trả nợ…) */
+function pushPayNotices(events: GameEvent[]) {
+  for (const e of events) {
+    if (e.t !== 'pay' || e.to === 'bank' || e.to === 'jackpot') continue;
+    const n: PayNotice = {
+      id: ++noticeSeq,
+      from: e.from,
+      to: e.to,
+      amount: e.amount,
+      reason: e.reason,
+      pos: e.pos,
+    };
+    useStore.setState((s) => ({ notices: [...s.notices.slice(-2), n] }));
+    setTimeout(
+      () => useStore.setState((s) => ({ notices: s.notices.filter((x) => x.id !== n.id) })),
+      4200,
+    );
   }
 }
