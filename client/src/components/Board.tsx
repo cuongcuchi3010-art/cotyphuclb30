@@ -8,11 +8,13 @@ import {
   UTILITY_INDICES,
   formatMoney,
   rentFor,
+  standings,
   type GameEvent,
   type GameState,
   type Square as Sq,
 } from '@cotyphu/shared';
 import { useStore } from '../store';
+import { useVoice } from '../voice';
 import { cellOf, centerPct, cx, playerColor, sideOf, useGame } from '../lib';
 import { BrandLogo } from './BrandLogo';
 import { Avatar } from './Avatar';
@@ -29,9 +31,29 @@ const SPECIAL_ICON: Partial<Record<Sq['kind'], string>> = {
 };
 
 export function Board() {
+  const shape = useStore((s) => s.boardShape);
+  if (shape !== 'diamond') return <BoardGrid diamond={false} />;
+  // Bàn hình thoi: xoay 45° (vẫn 2D); người chơi ở 4 góc
+  return (
+    <div className="relative aspect-square w-full select-none [container-type:inline-size]">
+      <div
+        className="absolute left-1/2 top-1/2 w-[70.71%]"
+        style={{ transform: 'translate(-50%, -50%) rotate(45deg)' }}
+      >
+        <BoardGrid diamond />
+      </div>
+      <PlayerCorners />
+    </div>
+  );
+}
+
+function BoardGrid({ diamond }: { diamond: boolean }) {
   return (
     <div
-      className="board relative aspect-square w-full select-none rounded-2xl bg-[#DCE3EA] p-[0.7%] shadow-card [container-type:inline-size] dark:bg-[#0d1117]"
+      className={cx(
+        'board relative aspect-square w-full select-none rounded-2xl bg-[#DCE3EA] p-[0.7%] shadow-card [container-type:inline-size] dark:bg-[#0d1117]',
+        diamond && 'diamond',
+      )}
       style={{
         display: 'grid',
         gridTemplateColumns: '1.6fr repeat(9, 1fr) 1.6fr',
@@ -47,11 +69,142 @@ export function Board() {
         style={{ gridRow: '2 / 11', gridColumn: '2 / 11' }}
       >
         <CenterDecor />
-        <CenterInfo />
-        <CardReveal />
+        {diamond ? (
+          // Giữa bàn thoi: khung đứng thẳng nội tiếp
+          <div
+            className="absolute left-1/2 top-1/2 h-[70.71%] w-[70.71%]"
+            style={{ transform: 'translate(-50%, -50%) rotate(-45deg)' }}
+          >
+            <CenterInfo />
+            <CardReveal />
+          </div>
+        ) : (
+          <>
+            <CenterInfo />
+            <CardReveal />
+          </>
+        )}
       </div>
       <Tokens />
     </div>
+  );
+}
+
+/** Người chơi ở 4 góc màn hình quanh bàn thoi */
+function PlayerCorners() {
+  const { room, game, me } = useGame();
+  const setDraft = useStore((s) => s.setTradeDraft);
+  const setTab = useStore((s) => s.setTab);
+  const setSheet = useStore((s) => s.setSheet);
+  const speaking = useVoice((s) => s.speaking);
+  if (!room || !game) return null;
+  const ranks = game.rules.showStandings ? new Map(standings(game).map((x) => [x.id, x])) : null;
+  const medal = (r: number) => (r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : `#${r}`);
+  const meP = game.players.find((p) => p.id === me);
+  // Chỗ ngồi theo CHIỀU KIM ĐỒNG HỒ đúng thứ tự lượt đi (sau bốc thăm):
+  // góc 0 trên-trái → 1 trên-phải → 2 dưới-phải → 3 dưới-trái.
+  // 5–6 người: thêm người thứ 3 vào góc phải (dưới người 2), người thứ 6 vào góc trái (trên người 5).
+  const n = game.players.length;
+  const layout: number[][] =
+    n <= 4 ? [[0], [1], [2], [3]] : n === 5 ? [[0], [1, 2], [3], [4]] : [[0], [1, 2], [3], [4, 5]];
+  const slots = layout.map((idx) =>
+    idx.map((i) => game.players[i]).filter((p): p is (typeof game.players)[number] => !!p),
+  );
+  const pos = [
+    'left-0 top-0 items-start',
+    'right-0 top-0 items-end',
+    'right-0 bottom-0 items-end flex-col-reverse',
+    'left-0 bottom-0 items-start flex-col-reverse',
+  ];
+  const cur = game.phase.kind !== 'gameOver' ? game.players[game.current]?.id : null;
+  return (
+    <>
+      {slots.map((list, k) => (
+        <div
+          key={k}
+          className={cx('pointer-events-none absolute flex flex-col gap-[1cqw]', pos[k])}
+        >
+          {list.map((p) => {
+            const seat = room.players.find((s) => s.id === p.id);
+            const color = playerColor(room, p.id);
+            const isCur = p.id === cur;
+            const canTrade = !!meP && !meP.bankrupt && p.id !== me && !p.bankrupt;
+            const rk = ranks?.get(p.id);
+            return (
+              <button
+                key={p.id}
+                type="button"
+                disabled={!canTrade}
+                onClick={() => {
+                  setDraft({
+                    to: p.id,
+                    giveCash: 0,
+                    giveProps: [],
+                    giveCards: 0,
+                    takeCash: 0,
+                    takeProps: [],
+                    takeCards: 0,
+                  });
+                  setTab('trade');
+                  setSheet(true);
+                }}
+                className={cx(
+                  'pointer-events-auto flex w-[27cqw] items-center gap-[1.2cqw] rounded-[2cqw] border-[0.5cqw] bg-white/95 px-[1.2cqw] py-[0.9cqw] text-left shadow-card dark:bg-[#211d16]/95',
+                  p.bankrupt && 'opacity-40 grayscale',
+                  isCur && 'animate-glow',
+                )}
+                style={{
+                  borderColor: isCur ? color : 'transparent',
+                  background: `linear-gradient(135deg, ${color}2a, transparent 70%), var(--sq-bg)`,
+                }}
+              >
+                <span className="relative shrink-0">
+                  <Avatar
+                    token={p.token}
+                    color={color}
+                    size="7.5cqw"
+                    speaking={speaking.includes(p.id)}
+                  />
+                  <span
+                    className={cx(
+                      'absolute bottom-0 right-0 h-[1.8cqw] w-[1.8cqw] rounded-full border border-white',
+                      seat?.online || seat?.isBot ? 'bg-green-500' : 'bg-gray-400',
+                    )}
+                  />
+                </span>
+                <span className="min-w-0 flex-1 leading-tight">
+                  <span
+                    className="flex items-center gap-[0.6cqw] font-bold"
+                    style={{ fontSize: 'max(10px, 2.3cqw)' }}
+                  >
+                    {rk && <span>{medal(rk.rank)}</span>}
+                    <span className="truncate">{p.id === me ? `${p.name} (bạn)` : p.name}</span>
+                    {room.hostId === p.id && <span>👑</span>}
+                  </span>
+                  <span
+                    className="block font-extrabold text-son dark:text-nghe"
+                    style={{ fontSize: 'max(11px, 2.6cqw)' }}
+                  >
+                    {formatMoney(p.cash)}
+                  </span>
+                  <span
+                    className="flex flex-wrap gap-x-[0.8cqw] text-gray-500"
+                    style={{ fontSize: 'max(9px, 1.7cqw)' }}
+                  >
+                    {rk && <span>TS {formatMoney(rk.worth)}</span>}
+                    {p.inJail && <span>🚓</span>}
+                    {p.jailCards.length > 0 && <span>🎫{p.jailCards.length}</span>}
+                    {seat?.voice && <span>🎙️</span>}
+                    {seat?.isBot && <span>🤖</span>}
+                    {p.bankrupt && <span>Phá sản</span>}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ))}
+    </>
   );
 }
 
@@ -147,11 +300,11 @@ function SquareCell({ sq }: { sq: Sq }) {
         }}
         title={sq.name}
       >
-        <span className="leading-none drop-shadow-sm" style={{ fontSize: '5.4cqw' }}>
+        <span className="upright leading-none drop-shadow-sm" style={{ fontSize: '5.4cqw' }}>
           {SPECIAL_ICON[sq.kind]}
         </span>
         <span
-          className="font-extrabold uppercase leading-tight"
+          className="upright font-extrabold uppercase leading-tight"
           style={{ color: c.fg, fontSize: '1.55cqw' }}
         >
           {sq.short ?? sq.name}
@@ -192,7 +345,7 @@ function SquareCell({ sq }: { sq: Sq }) {
       {/* Hình minh hoạ lớn */}
       <span
         className={cx(
-          'flex shrink-0 items-center justify-center leading-none',
+          'upright flex shrink-0 items-center justify-center leading-none',
           st?.mortgaged && 'opacity-35 grayscale',
         )}
         style={{ fontSize: '3.5cqw' }}
@@ -207,7 +360,10 @@ function SquareCell({ sq }: { sq: Sq }) {
       </span>
       {/* Tên ô */}
       <span
-        className={cx('flex min-w-0 flex-col', vertical ? 'items-start text-left' : 'items-center')}
+        className={cx(
+          'upright flex min-w-0 flex-col',
+          vertical ? 'items-start text-left' : 'items-center',
+        )}
       >
         <span className="line-clamp-2 font-bold" style={{ fontSize: '1.22cqw' }}>
           {sq.short ?? sq.name}
@@ -356,7 +512,7 @@ function Tokens() {
             transition={{ duration: Math.max(0.2, (xs.length - 1) * STEP_S), ease: 'linear' }}
             style={{ translateX: '-50%', translateY: '-50%' }}
           >
-            <div className={cx('rounded-full shadow-md', isCur && 'animate-pulse-soft')}>
+            <div className={cx('upright rounded-full shadow-md', isCur && 'animate-pulse-soft')}>
               <Avatar token={p.token} color={color} size="4.6cqw" ring={isCur} />
             </div>
           </motion.div>

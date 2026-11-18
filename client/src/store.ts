@@ -92,6 +92,9 @@ export interface Toast {
 }
 
 interface Store {
+  /** Hình bàn cờ: thoi (người chơi ở 4 góc) hoặc vuông */
+  boardShape: 'diamond' | 'square';
+  setBoardShape(v: 'diamond' | 'square'): void;
   /** Đã báo danh (null = đang kiểm tra) */
   gate: boolean | null;
   auth: Auth | null;
@@ -157,6 +160,24 @@ export function setJoinIntent(m: ClientMessage | null) {
 }
 
 export const useStore = create<Store>((set, get) => ({
+  boardShape: (() => {
+    try {
+      const v = localStorage.getItem('cotyphu:shape');
+      if (v === 'square' || v === 'diamond') return v;
+    } catch {
+      /* bỏ qua */
+    }
+    // Mặc định: điện thoại cầm dọc (màn hẹp) dùng bàn vuông cho ô to; còn lại bàn thoi
+    return window.innerWidth < 520 ? 'square' : 'diamond';
+  })(),
+  setBoardShape(boardShape) {
+    try {
+      localStorage.setItem('cotyphu:shape', boardShape);
+    } catch {
+      /* bỏ qua */
+    }
+    set({ boardShape });
+  },
   gate: null,
   auth: loadAuth(),
   code: null,

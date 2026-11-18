@@ -85,3 +85,8 @@ body {
     animation: none;
   }
 }
+
+/* Bàn hình thoi (xoay 45°, vẫn 2D): giữ hình, chữ, quân cờ đứng thẳng */
+.diamond .upright {
+  transform: rotate(-45deg);
+}

@@ -23,6 +23,7 @@ export function GameScreen() {
   const sheetOpen = useStore((s) => s.sheetOpen);
   const setSheet = useStore((s) => s.setSheet);
   const { w, h } = useViewport();
+  const diamond = useStore((s) => s.boardShape) === 'diamond';
   const [belowRef, belowH] = useMeasuredHeight<HTMLDivElement>();
   const [barRef, barH] = useMeasuredHeight<HTMLDivElement>();
   const railsRef = useRef(false);
@@ -71,9 +72,11 @@ export function GameScreen() {
         </div>
         <aside className="flex min-w-0 flex-col gap-2" style={{ width: L.panel }}>
           <TopBar />
-          <div className={L.compact ? 'max-h-[34%] shrink-0 overflow-y-auto' : 'shrink-0'}>
-            <PlayerList compact={L.compact} cols={L.compact ? 2 : 1} />
-          </div>
+          {!diamond && (
+            <div className={L.compact ? 'max-h-[34%] shrink-0 overflow-y-auto' : 'shrink-0'}>
+              <PlayerList compact={L.compact} cols={L.compact ? 2 : 1} />
+            </div>
+          )}
           <div className="flex min-h-0 flex-1 flex-col rounded-2xl bg-white/90 p-2 shadow-card dark:bg-[#211d16]">
             <TabBar />
             <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
@@ -105,7 +108,7 @@ export function GameScreen() {
             <TopBar />
           </div>
         )}
-        <PlayerList compact cols={w >= 600 ? 3 : 2} />
+        {!diamond && <PlayerList compact cols={w >= 600 ? 3 : 2} />}
       </div>
       <div
         ref={barRef}
@@ -168,6 +171,22 @@ function RoomCode({ vertical }: { vertical?: boolean }) {
   );
 }
 
+function ShapeButton({ className }: { className?: string }) {
+  const shape = useStore((s) => s.boardShape);
+  const setShape = useStore((s) => s.setBoardShape);
+  return (
+    <Btn
+      variant="ghost"
+      className={className}
+      title={shape === 'diamond' ? S.shape.toSquare : S.shape.toDiamond}
+      aria-label={shape === 'diamond' ? S.shape.toSquare : S.shape.toDiamond}
+      onClick={() => setShape(shape === 'diamond' ? 'square' : 'diamond')}
+    >
+      {shape === 'diamond' ? '■' : '◆'}
+    </Btn>
+  );
+}
+
 function SoundButton({ className }: { className?: string }) {
   const [muted, setM] = useState(isMuted());
   return (
@@ -225,6 +244,7 @@ function TopBar() {
       <RoomCode />
       <div className="flex gap-1">
         <VoiceControls />
+        <ShapeButton />
         <MusicButton />
         <SoundButton />
         <ResignButton />
@@ -245,6 +265,7 @@ function RailLeft({ width }: { width: number }) {
 function RailRight({ width }: { width: number }) {
   return (
     <div className="flex shrink-0 flex-col items-stretch gap-2 text-sm" style={{ width }}>
+      <ShapeButton />
       <MusicButton />
       <SoundButton />
       <ResignButton />
