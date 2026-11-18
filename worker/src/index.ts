@@ -10,6 +10,7 @@ import {
 } from '@cotyphu/shared';
 import { Account } from './accounts.js';
 import { checkGatePassword, gateCookieHeader, hasGateCookie } from './gate.js';
+import { DEFAULT_DISCORD_GUILD, fetchDiscord } from './discord.js';
 import { RoomCore, newSnapshot, type Conn, type RoomHost, type RoomSnapshot } from './room.js';
 
 export { Account };
@@ -20,6 +21,8 @@ export interface Env {
   ASSETS: Fetcher;
   /** Mật khẩu BÁO DANH (tuỳ chọn, ghi đè mật khẩu mặc định) */
   GATE_PASSWORD?: string;
+  /** ID server Discord để hiện widget (mặc định server CLB30) */
+  DISCORD_GUILD_ID?: string;
 }
 
 interface Attachment {
@@ -332,6 +335,11 @@ export default {
       const v = await verifyToken(env, bearer(req));
       if (!v) return json({ error: 'Phiên đăng nhập hết hạn' }, 401);
       return json({ username: v.username, rooms: v.rooms, avatarV: v.avatarV ?? 0, id: v.id });
+    }
+    // ---- Discord widget (cache 60 giây)
+    if (path === '/api/discord' && req.method === 'GET') {
+      const guild = /^\d{5,25}$/.test(env.DISCORD_GUILD_ID ?? '') ? env.DISCORD_GUILD_ID! : DEFAULT_DISCORD_GUILD;
+      return json(await fetchDiscord(guild));
     }
     // ---- Ảnh đại diện
     if (path === '/api/me/avatar' && (req.method === 'PUT' || req.method === 'DELETE')) {

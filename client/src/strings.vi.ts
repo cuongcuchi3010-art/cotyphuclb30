@@ -16,6 +16,15 @@ export const S = {
     stamp2: 'báo danh',
   },
 
+  discord: {
+    title: 'Discord CLB30',
+    loading: 'Đang tải…',
+    error: 'Không đọc được Discord',
+    online: (n: number) => `${n} thành viên đang online`,
+    empty: 'Chưa có ai online.',
+    join: 'Vào Discord',
+  },
+
   avatar: {
     title: 'Ảnh đại diện',
     upload: 'Tải ảnh lên',

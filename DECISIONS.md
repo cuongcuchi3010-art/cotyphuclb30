@@ -192,3 +192,10 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 | A1  | Trang chủ có mục **Ảnh đại diện**: tải ảnh của mình (trình duyệt tự cắt vuông giữa, thu còn 160×160, nén JPEG ~10–20 KB rồi mới gửi) hoặc chọn 1 trong 16 biểu tượng có sẵn (vẽ thành ảnh PNG nền màu). "Dùng quân cờ" để bỏ ảnh.                      |
 | A2  | Ảnh lưu trong Durable Object **Account** (theo tài khoản, đổi máy vẫn giữ), phục vụ qua `GET /api/avatar/<tài khoản>?v=<phiên bản>` với cache lâu (đổi ảnh thì đổi phiên bản). Không gửi ảnh qua WebSocket để giữ tin nhắn phòng nhẹ. Giới hạn ~90 KB. |
 | A3  | Ảnh hiển thị ở góc người chơi / danh sách / sảnh / quân cờ trên bàn / thông báo, kèm **huy hiệu quân cờ** nhỏ để vẫn nhận ra quân. Ảnh mới áp dụng từ lần vào phòng (hoặc vào lại) tiếp theo.                                                          |
+
+## Cập nhật lần 18: Discord
+
+| #   | Quyết định                                                                                                                                                                                                                                                                                              |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DC1 | Hiện **widget Discord** của server CLB30 (`widget.json`, guild `1572067055161835542`, đổi bằng biến `DISCORD_GUILD_ID`): nút "Discord · N" ở trang chủ và trong ván; bảng tên server, thành viên đang online (avatar, trạng thái, đang chơi gì), nút **Vào Discord** dùng link mời có sẵn trong widget. |
+| DC2 | Worker gọi Discord hộ trình duyệt (`GET /api/discord`), **cache 60 giây** để không bị giới hạn; chỉ chấp nhận link mời `https://discord.*` và ảnh `https://`. Server phải bật **Server Widget** trong Cài đặt máy chủ Discord.                                                                          |

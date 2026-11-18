@@ -5,6 +5,7 @@ import { navigate } from '../router';
 import { api, saveAuth, useStore } from '../store';
 import { Btn, Panel } from './ui';
 import { AvatarEditor } from './AvatarEditor';
+import { DiscordButton } from './DiscordButton';
 import { TokenIcon } from './TokenIcon';
 
 export function Home() {
@@ -77,8 +78,9 @@ export function Home() {
         <p className="mt-2 text-gray-600 dark:text-gray-300">{S.tagline}</p>
       </div>
 
-      <div className="flex items-center justify-between rounded-xl bg-white/70 px-4 py-2 text-sm shadow dark:bg-white/10">
-        <span>{S.auth.hello(auth?.username ?? '')}</span>
+      <div className="flex items-center justify-between gap-2 rounded-xl bg-white/70 px-4 py-2 text-sm shadow dark:bg-white/10">
+        <span className="min-w-0 flex-1 truncate">{S.auth.hello(auth?.username ?? '')}</span>
+        <DiscordButton full />
         <button
           type="button"
           className="font-semibold text-son underline"

@@ -6,6 +6,7 @@ import { computeLayout, cx, useGame, useMeasuredHeight, useViewport } from '../l
 import { isMuted, setMuted } from '../sound';
 import { setMusicOn, startMusic, stopMusic, useMusic } from '../music';
 import { VoiceControls } from './VoiceControls';
+import { DiscordButton } from './DiscordButton';
 import { Board } from './Board';
 import { GameOver } from './GameOver';
 import { PlayerList } from './PlayerList';
@@ -244,6 +245,7 @@ function TopBar() {
       <RoomCode />
       <div className="flex gap-1">
         <VoiceControls />
+        <DiscordButton />
         <ShapeButton />
         <MusicButton />
         <SoundButton />
@@ -265,6 +267,7 @@ function RailLeft({ width }: { width: number }) {
 function RailRight({ width }: { width: number }) {
   return (
     <div className="flex shrink-0 flex-col items-stretch gap-2 text-sm" style={{ width }}>
+      <DiscordButton />
       <ShapeButton />
       <MusicButton />
       <SoundButton />
