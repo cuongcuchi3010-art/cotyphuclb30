@@ -187,6 +187,15 @@ export const S = {
     openAssets: 'Mở Tài sản',
   },
 
+  guide: {
+    open: 'Xem luật chơi',
+    short: 'Luật',
+    title: 'Luật chơi',
+    close: 'Đóng',
+    thisGame: 'Luật ván này',
+    current: 'đang dùng',
+  },
+
   festivalSquare: { name: 'Lễ Hội', sub: 'Thuê ×2–×4' },
 
   tabs: { assets: 'Tài sản', trade: 'Giao dịch', loan: 'Vay', chat: 'Chat' },

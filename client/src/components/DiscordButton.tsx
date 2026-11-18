@@ -43,7 +43,6 @@ export function DiscordButton({ className, full }: { className?: string; full?: 
       if (alive && r.ok) setData(r.data);
     };
     void load();
-    load();
     const t = setInterval(load, 60_000);
     return () => {
       alive = false;

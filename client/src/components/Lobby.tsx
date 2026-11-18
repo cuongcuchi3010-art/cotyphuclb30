@@ -6,6 +6,7 @@ import { cx, useGame } from '../lib';
 import { TokenIcon } from './TokenIcon';
 import { Avatar } from './Avatar';
 import { Btn, Panel } from './ui';
+import { RulesButton } from './RulesGuide';
 
 export function Lobby() {
   const { room, me } = useGame();
@@ -93,7 +94,10 @@ export function Lobby() {
       </Panel>
 
       <Panel>
-        <div className="mb-2 font-bold">{S.lobby.rules}</div>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="font-bold">{S.lobby.rules}</div>
+          <RulesButton label className="!min-h-[32px] text-xs" />
+        </div>
         <fieldset disabled={!isHost} className="space-y-2 text-sm disabled:opacity-80">
           <label className="flex items-center justify-between gap-2">
             {S.lobby.startingCash}

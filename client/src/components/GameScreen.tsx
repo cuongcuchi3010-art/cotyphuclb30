@@ -13,6 +13,7 @@ import { PropertyCardModal } from './PropertyCard';
 import { Prompts } from './Prompts';
 import { PayNotices } from './PayNotices';
 import { TabBar, TabContent } from './Tabs';
+import { RulesButton } from './RulesGuide';
 import { Btn } from './ui';
 
 const RAIL = 84;
@@ -258,7 +259,8 @@ function TopBar() {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
       <RoomCode />
-      <div className="flex gap-1">
+      <div className="flex flex-wrap justify-end gap-1">
+        <RulesButton />
         <DiscordButton />
         <ShapeButton />
         <MusicButton />
@@ -280,6 +282,7 @@ function RailLeft({ width }: { width: number }) {
 function RailRight({ width }: { width: number }) {
   return (
     <div className="flex shrink-0 flex-col items-stretch gap-2 text-sm" style={{ width }}>
+      <RulesButton label />
       <DiscordButton />
       <ShapeButton vertical />
       <MusicButton />
