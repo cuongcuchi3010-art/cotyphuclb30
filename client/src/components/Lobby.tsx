@@ -7,6 +7,7 @@ import { TokenIcon } from './TokenIcon';
 import { Avatar } from './Avatar';
 import { Btn, Panel } from './ui';
 import { RulesButton } from './RulesGuide';
+import { LegalNotice } from './LegalNotice';
 
 export function Lobby() {
   const { room, me } = useGame();
@@ -27,6 +28,7 @@ export function Lobby() {
         <h1 className="text-3xl font-extrabold text-son dark:text-nghe">{S.appName}</h1>
         <div className="text-sm text-gray-500">{S.lobby.title}</div>
       </header>
+      <LegalNotice />
 
       <Panel className="text-center">
         <div className="text-sm text-gray-500">{S.lobby.code}</div>

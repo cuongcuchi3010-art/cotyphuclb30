@@ -15,6 +15,7 @@ import { PayNotices } from './PayNotices';
 import { TabBar, TabContent } from './Tabs';
 import { RulesButton } from './RulesGuide';
 import { Btn } from './ui';
+import { LegalNotice } from './LegalNotice';
 
 const RAIL = 84;
 const TOPBAR = 48;
@@ -84,6 +85,7 @@ export function GameScreen() {
               <TabContent />
             </div>
           </div>
+          <LegalNotice compact className="shrink-0" />
         </aside>
         {overlays}
       </div>
@@ -110,6 +112,7 @@ export function GameScreen() {
           </div>
         )}
         {!diamond && <PlayerList compact cols={w >= 600 ? 3 : 2} />}
+        <LegalNotice compact className="mt-1.5" />
       </div>
       <div
         ref={barRef}

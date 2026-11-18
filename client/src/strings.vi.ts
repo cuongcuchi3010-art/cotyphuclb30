@@ -187,6 +187,10 @@ export const S = {
     openAssets: 'Mở Tài sản',
   },
 
+  legalTitle: 'Lưu ý:',
+  legal:
+    'Đây là trò chơi giải trí nội bộ giữa bạn bè. Nghiêm cấm người chơi tham gia cá cược, đánh bạc dưới mọi hình thức theo quy định của pháp luật.',
+
   guide: {
     open: 'Xem luật chơi',
     short: 'Luật',

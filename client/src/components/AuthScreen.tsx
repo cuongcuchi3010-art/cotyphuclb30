@@ -4,6 +4,7 @@ import { S } from '../strings.vi';
 import { api, saveAuth } from '../store';
 import { Btn, Panel } from './ui';
 import { TokenIcon } from './TokenIcon';
+import { LegalNotice } from './LegalNotice';
 
 export function AuthScreen() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -135,6 +136,7 @@ export function AuthScreen() {
           </Btn>
         </form>
       </Panel>
+      <LegalNotice />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { Btn, Panel } from './ui';
 import { AvatarEditor } from './AvatarEditor';
 import { DiscordButton } from './DiscordButton';
 import { TokenIcon } from './TokenIcon';
+import { LegalNotice } from './LegalNotice';
 
 export function Home() {
   const auth = useStore((s) => s.auth);
@@ -183,6 +184,7 @@ export function Home() {
         </Panel>
       )}
       <p className="text-center text-sm text-gray-500">{S.home.how}</p>
+      <LegalNotice />
     </div>
   );
 }

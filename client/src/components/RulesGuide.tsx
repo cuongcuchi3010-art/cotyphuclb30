@@ -3,6 +3,7 @@ import { formatMoney, type BuildRule, type Rules } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { cx, useGame } from '../lib';
 import { Btn, Modal } from './ui';
+import { LegalNotice } from './LegalNotice';
 
 /** Nút "Luật chơi": mở bảng luật ngay trong phòng (sảnh chờ và trong ván) */
 export function RulesButton({ className, label }: { className?: string; label?: boolean }) {
@@ -34,6 +35,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
           ✕
         </Btn>
       </div>
+      <LegalNotice className="mb-3" />
       {rules && <ThisGame rules={rules} />}
       <div className="mt-3 space-y-2 text-sm leading-relaxed">
         <Section title="🎲 Một lượt chơi" open>
