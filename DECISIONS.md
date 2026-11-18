@@ -225,3 +225,9 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 | B2  | **Trăm điều khó** (`combined`): trọn nhóm màu, không ô nào thế chấp, rồi bước vào lại ô đó mới được xây (như trước).                                                                                                                                     |
 | B3  | **Theo màu** (`color`): trọn nhóm màu, không ô nào thế chấp, là xây được bất cứ lúc nào trong lượt mình (ở tab Tài sản / thẻ ô). Không bắt xây đều, giữ thống nhất với các chế độ khác. Đủ 4 nhà thì lên khách sạn ngay.                                 |
 | B4  | **Theo ô** (`landing`): không cần trọn màu, chỉ cần ô của mình không thế chấp; bước vào lại ô là xây tuỳ ý tới 4 nhà, khách sạn khi lúc bước vào ô đã có sẵn 4 nhà. Tiền thuê đất trống vẫn chỉ ×2 khi trọn nhóm; thế chấp vẫn cần cả nhóm không có nhà. |
+
+## Cập nhật lần 22
+
+| #   | Quyết định                                                                                                                                                                                                                                                                                                            |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| K1  | **Sửa lỗi bàn phím tự tắt** (Z Fold mở trong): khi bàn phím ảo bật, chiều cao màn hình giảm làm bố cục đổi từ "dọc" sang "ngang", ô nhập bị dựng lại nên mất focus. Nay khi đang gõ trong ô nhập mà chỉ chiều cao giảm thì giữ nguyên kích thước cũ để chọn bố cục; gõ xong (rời ô nhập) mới đọc lại kích thước thật. |

@@ -80,6 +80,23 @@ export function cx(...c: (string | false | null | undefined)[]): string {
 }
 
 /** Kích thước vùng hiển thị (cập nhật khi xoay màn hình / gập-mở máy gập) */
+/** Đang gõ trong ô nhập (bàn phím ảo có thể đang mở) */
+function typing(): boolean {
+  const el = document.activeElement as HTMLElement | null;
+  if (!el) return false;
+  if (el.isContentEditable) return true;
+  if (el.tagName === 'TEXTAREA') return true;
+  if (el.tagName !== 'INPUT') return false;
+  const t = (el as HTMLInputElement).type;
+  return !['button', 'checkbox', 'radio', 'range', 'submit', 'reset', 'file', 'color'].includes(t);
+}
+
+/**
+ * Kích thước màn hình để chọn bố cục.
+ * Khi bàn phím ảo bật (đang gõ, chỉ chiều cao giảm) thì GIỮ NGUYÊN kích thước cũ:
+ * nếu không, màn hình gần vuông (Z Fold mở trong) sẽ bị coi là nằm ngang → đổi bố cục →
+ * ô nhập bị dựng lại, mất focus và bàn phím tắt ngay.
+ */
 export function useViewport(): { w: number; h: number } {
   const read = () => ({
     w: Math.round(window.visualViewport?.width ?? window.innerWidth),
@@ -87,14 +104,24 @@ export function useViewport(): { w: number; h: number } {
   });
   const [vp, setVp] = useState(read);
   useEffect(() => {
-    const on = () => setVp(read());
+    const on = () => {
+      const next = read();
+      setVp((prev) => {
+        if (next.w === prev.w && next.h < prev.h && typing()) return prev;
+        return next.w === prev.w && next.h === prev.h ? prev : next;
+      });
+    };
+    // Gõ xong (bàn phím đóng): đọc lại kích thước thật
+    const onBlur = () => setTimeout(on, 300);
     window.addEventListener('resize', on);
     window.addEventListener('orientationchange', on);
     window.visualViewport?.addEventListener('resize', on);
+    document.addEventListener('focusout', onBlur);
     return () => {
       window.removeEventListener('resize', on);
       window.removeEventListener('orientationchange', on);
       window.visualViewport?.removeEventListener('resize', on);
+      document.removeEventListener('focusout', onBlur);
     };
   }, []);
   return vp;
