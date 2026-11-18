@@ -111,6 +111,7 @@ export const S = {
     standard: 'chuẩn',
     festivalSquare:
       'Thay ô Cà Phê bằng ô Lễ Hội (ai dừng được chọn ô đất của mình tổ chức lễ hội, thuê ×2–×4)',
+    maxFestivals: 'Số ô lễ hội tối đa cùng lúc',
     buildRule: 'Chế độ xây nhà',
     buildRules: {
       combined: 'Trăm điều khó (trọn màu + bước vào ô)',
@@ -316,8 +317,8 @@ export const S = {
     demolishTitle: '🔨 Tranh chấp đất đai',
     demolishHint: 'Chọn 1 căn nhà của người khác để đập (mất 1 nhà).',
     festivalTitle: '🎉 Tổ chức Lễ hội',
-    festivalHint:
-      'Chọn 1 ô đất của bạn: tiền thuê tăng ngẫu nhiên ×2 đến ×4. Bàn có tối đa 3 lễ hội, quá 3 thì lễ hội cũ nhất kết thúc.',
+    festivalHint: (max: number) =>
+      `Chọn 1 ô đất của bạn: tiền thuê tăng ngẫu nhiên ×2 đến ×4. Bàn có tối đa ${max} lễ hội, quá ${max} thì lễ hội cũ nhất kết thúc.`,
     giftTitle: '🎁 Làm từ thiện bắt buộc',
     giftHint: 'Chọn 1 ô đất của bạn (nhóm chưa có nhà) và người nhận.',
     to: 'Tặng cho',

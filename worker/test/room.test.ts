@@ -160,6 +160,7 @@ describe('Phòng chơi', () => {
         showStandings: true,
         buildRule: 'landing',
         festivalSquare: true,
+        maxFestivals: 4,
       },
     });
     a.msg({ type: 'start' });

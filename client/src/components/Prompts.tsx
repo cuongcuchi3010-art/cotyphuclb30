@@ -3,6 +3,7 @@ import {
   demolishTargets,
   festivalTargets,
   festivalMult,
+  maxFestivals,
   rentFor,
   giftTargets,
   GROUPS,
@@ -507,7 +508,9 @@ function CardChoicePrompt() {
     return (
       <Modal open>
         <div className="text-center text-lg font-bold">{S.choice.festivalTitle}</div>
-        <div className="mb-3 text-center text-sm text-gray-500">{S.choice.festivalHint}</div>
+        <div className="mb-3 text-center text-sm text-gray-500">
+          {S.choice.festivalHint(maxFestivals(game))}
+        </div>
         <div className="max-h-[50vh] space-y-1.5 overflow-y-auto">
           {targets.map((pos) => {
             const now = rentFor(game, pos, { diceTotal: 7 });

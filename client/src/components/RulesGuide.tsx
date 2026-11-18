@@ -112,7 +112,10 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
               của mình, không thế chấp.
             </li>
             <li>Tiền thuê ô đó nhân ngẫu nhiên ×2, ×3 hoặc ×4. Ô hiện huy hiệu 🎉×N.</li>
-            <li>Tối đa 3 lễ hội trên bàn; lễ hội thứ 4 làm lễ hội cũ nhất kết thúc.</li>
+            <li>
+              Tối đa {rules?.maxFestivals ?? 3} lễ hội trên bàn; mở thêm thì lễ hội cũ nhất kết
+              thúc.
+            </li>
             <li>Ô đổi chủ thì lễ hội ở ô đó kết thúc.</li>
           </ul>
         </Section>
@@ -186,6 +189,7 @@ function ThisGame({ rules }: { rules: Rules }) {
     ['Tiền khởi đầu', formatMoney(rules.startingCash)],
     ['Xây nhà', S.lobby.buildRules[build].replace(/ \(.*\)$/, '')],
     ['Ô 20', rules.festivalSquare ? 'Lễ Hội' : rules.jackpot ? 'Cà Phê + hũ tiền' : 'Cà Phê'],
+    ['Lễ hội tối đa', `${rules.maxFestivals ?? 3} ô`],
     ['Đấu giá', rules.auctions ? 'Có' : 'Tắt'],
     ['Khởi Hành ×2', rules.doubleGo ? 'Bật' : 'Tắt'],
     ['Thời gian ván', rules.timeLimitMinutes ? `${rules.timeLimitMinutes} phút` : 'Không giới hạn'],

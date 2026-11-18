@@ -1,4 +1,4 @@
-import { canBuild, formatMoney, ownable, square } from '@cotyphu/shared';
+import { canBuild, formatMoney, maxFestivals, ownable, square } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
 import { nameOf, useGame } from '../lib';
@@ -25,7 +25,7 @@ export function ActionBar() {
     return (
       <div className={note}>
         {myTurn
-          ? `👆 ${ph.choice === 'demolish' ? S.choice.demolishHint : ph.choice === 'festival' ? S.choice.festivalHint : S.choice.giftHint}`
+          ? `👆 ${ph.choice === 'demolish' ? S.choice.demolishHint : ph.choice === 'festival' ? S.choice.festivalHint(maxFestivals(game)) : S.choice.giftHint}`
           : S.choice.waiting(cur.name)}
       </div>
     );

@@ -189,6 +189,20 @@ export function Lobby() {
             </select>
           </label>
           <label className="flex items-center justify-between gap-2">
+            {S.lobby.maxFestivals}
+            <select
+              value={rules.maxFestivals ?? 3}
+              onChange={(e) => setRules({ maxFestivals: Number(e.target.value) })}
+              className="rounded-lg border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-black/30"
+            >
+              {[1, 2, 3, 4, 5].map((v) => (
+                <option key={v} value={v}>
+                  {v} ô{v === 3 ? ` (${S.lobby.standard})` : ''}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center justify-between gap-2">
             {S.lobby.buildRule}
             <select
               value={rules.buildRule ?? 'combined'}

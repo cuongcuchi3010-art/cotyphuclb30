@@ -1023,6 +1023,23 @@ describe('Thẻ Lễ hội', () => {
     expect(r.events).toContainEqual(expect.objectContaining({ t: 'festival', pos: 8, ended: [1] }));
   });
 
+  it('số lễ hội tối đa theo luật phòng (chọn 1–5)', () => {
+    let s = mkGame(2, { maxFestivals: 1 });
+    own(s, 'p1', 1, 3);
+    for (const pos of [1, 3]) {
+      s.phase = { kind: 'cardChoice', choice: 'festival' };
+      ({ state: s } = act(s, 'p1', { type: 'chooseFestival', pos }));
+    }
+    expect(fest(s)).toEqual([3]);
+    s = mkGame(2, { maxFestivals: 5 });
+    own(s, 'p1', 1, 3, 6, 8, 9);
+    for (const pos of [1, 3, 6, 8, 9]) {
+      s.phase = { kind: 'cardChoice', choice: 'festival' };
+      ({ state: s } = act(s, 'p1', { type: 'chooseFestival', pos }));
+    }
+    expect(fest(s)).toEqual([1, 3, 6, 8, 9]);
+  });
+
   it('ô đổi chủ thì lễ hội kết thúc (nhường chỗ)', () => {
     const s = mkGame();
     own(s, 'p1', 39);

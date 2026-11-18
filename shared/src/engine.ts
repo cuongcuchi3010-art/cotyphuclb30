@@ -284,8 +284,12 @@ export function rentFor(s: GameState, pos: number, ctx: RentContext): number {
   return base * festivalMult(s, pos);
 }
 
-/** Số ô lễ hội tối đa cùng lúc trên bàn */
+/** Số ô lễ hội tối đa cùng lúc trên bàn (mặc định; chủ phòng chọn 1–5) */
 export const MAX_FESTIVALS = 3;
+
+export function maxFestivals(s: GameState): number {
+  return s.rules.maxFestivals ?? MAX_FESTIVALS;
+}
 
 /** Các lễ hội còn hiệu lực (ô vẫn thuộc người tổ chức), cũ nhất đứng đầu */
 export function activeFestivals(s: GameState): Festival[] {
@@ -1046,7 +1050,7 @@ function doFestival(c: Ctx, p: PlayerState, pos: number): void {
   const list = activeFestivals(s).filter((f) => f.pos !== pos);
   list.push({ pos, owner: p.id, mult });
   const ended: number[] = [];
-  while (list.length > MAX_FESTIVALS) ended.push(list.shift()!.pos);
+  while (list.length > maxFestivals(s)) ended.push(list.shift()!.pos);
   s.festivals = list;
   s.festival = null;
   c.ev.push({ t: 'festival', playerId: p.id, pos, mult, ended });

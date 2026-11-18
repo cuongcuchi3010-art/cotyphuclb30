@@ -41,6 +41,8 @@ export interface Rules {
   buildRule: BuildRule;
   /** Thay ô Cà Phê Vỉa Hè (20) bằng ô Lễ Hội: ai dừng ở đó được chọn 1 ô đất của mình, thuê ×2 */
   festivalSquare: boolean;
+  /** Số ô lễ hội tối đa cùng lúc (1–5, chuẩn 3) */
+  maxFestivals: number;
 }
 
 export type BuildRule = 'combined' | 'color' | 'landing';
@@ -57,6 +59,7 @@ export const DEFAULT_RULES: Rules = {
   showStandings: false,
   buildRule: 'combined',
   festivalSquare: false,
+  maxFestivals: 3,
 };
 
 export interface PlayerStats {
@@ -223,7 +226,7 @@ export interface GameState {
   /** Lễ hội đang diễn ra (1 ô duy nhất trên bàn, tiền thuê ×2) */
   /** (cũ) một lễ hội duy nhất ×2 — chỉ còn để đọc ván lưu trước đây */
   festival?: { pos: number; owner: PlayerId } | null;
-  /** Các ô đang có lễ hội (tối đa 3, cũ nhất đứng đầu); mult = hệ số tiền thuê ×2–×4 */
+  /** Các ô đang có lễ hội (tối đa rules.maxFestivals, cũ nhất đứng đầu); mult = hệ số tiền thuê ×2–×4 */
   festivals?: Festival[];
   /** Bốc thăm thứ tự: lá đã bốc (vị trí lá + số) và các số còn lại */
   lots?: { picks: Record<PlayerId, { card: number; number: number }>; remaining: number[] };
