@@ -331,6 +331,16 @@ export default {
       if (!v) return json({ error: 'Phiên đăng nhập hết hạn' }, 401);
       return json({ username: v.username, rooms: v.rooms, avatarV: v.avatarV ?? 0, id: v.id });
     }
+    // ---- Xoá phòng gần đây: DELETE /api/me/rooms (hết) hoặc /api/me/rooms/<mã> (một phòng)
+    const rm = path.match(/^\/api\/me\/rooms(?:\/([A-Za-z0-9]{1,12}))?$/);
+    if (rm && req.method === 'DELETE') {
+      const v = await verifyToken(env, bearer(req));
+      if (!v) return json({ error: 'Phiên đăng nhập hết hạn' }, 401);
+      return accountStub(env, v.id).fetch('https://acc/removeRoom', {
+        method: 'POST',
+        body: JSON.stringify({ code: rm[1]?.toUpperCase() ?? '' }),
+      });
+    }
     // ---- Discord widget (cache 60 giây)
     if (path === '/api/discord' && req.method === 'GET') {
       const guild = /^\d{5,25}$/.test(env.DISCORD_GUILD_ID ?? '')

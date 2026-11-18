@@ -26,6 +26,18 @@ export function Home() {
     });
   }, []);
 
+  const removeRoom = async (code?: string) => {
+    if (!code && !window.confirm(S.home.confirmClear)) return;
+    const prev = rooms;
+    setRooms(code ? rooms.filter((r) => r.code !== code) : []);
+    const r = await api<{ rooms?: Profile['rooms'] }>(
+      code ? `/api/me/rooms/${encodeURIComponent(code)}` : '/api/me/rooms',
+      { method: 'DELETE' },
+    );
+    if (r.ok && r.data.rooms) setRooms(r.data.rooms);
+    else if (!r.ok) setRooms(prev);
+  };
+
   const create = async () => {
     setBusy(true);
     setErr('');
@@ -131,7 +143,16 @@ export function Home() {
 
       {rooms.length > 0 && (
         <Panel className="p-4">
-          <div className="mb-2 text-sm font-bold">{S.home.recent}</div>
+          <div className="mb-2 flex items-center justify-between">
+            <div className="text-sm font-bold">{S.home.recent}</div>
+            <button
+              type="button"
+              onClick={() => void removeRoom()}
+              className="rounded-lg px-2 py-1 text-xs font-semibold text-son hover:bg-son/10"
+            >
+              🗑 {S.home.clearRooms}
+            </button>
+          </div>
           <div className="space-y-1.5">
             {rooms.map((r) => (
               <div
@@ -142,9 +163,20 @@ export function Home() {
                 <span className="text-xs text-gray-500">
                   {new Date(r.at).toLocaleString('vi-VN')}
                 </span>
-                <Btn variant="secondary" onClick={() => navigate(`/r/${r.code}`)}>
-                  {S.home.rejoin}
-                </Btn>
+                <div className="flex items-center gap-1">
+                  <Btn variant="secondary" onClick={() => navigate(`/r/${r.code}`)}>
+                    {S.home.rejoin}
+                  </Btn>
+                  <button
+                    type="button"
+                    aria-label={S.home.removeRoom}
+                    title={S.home.removeRoom}
+                    onClick={() => void removeRoom(r.code)}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 hover:bg-son/10 hover:text-son"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
             ))}
           </div>

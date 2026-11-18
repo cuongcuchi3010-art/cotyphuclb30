@@ -59,6 +59,9 @@ export const S = {
   home: {
     recent: 'Phòng gần đây',
     rejoin: 'Vào lại',
+    removeRoom: 'Xoá phòng này khỏi danh sách',
+    clearRooms: 'Xoá tất cả',
+    confirmClear: 'Xoá toàn bộ danh sách phòng gần đây?',
     create: 'Tạo phòng',
     join: 'Vào phòng',
     codePlaceholder: 'Mã phòng (6 ký tự)',

@@ -247,3 +247,9 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 | L1  | **Tối đa 3 ô lễ hội cùng lúc** (`state.festivals`, cũ nhất đứng đầu). Lễ hội thứ 4 làm lễ hội cũ nhất kết thúc; nhật ký ghi rõ ô nào kết thúc. Ô đổi chủ thì lễ hội ô đó kết thúc và nhường chỗ. Tổ chức lại ở ô đang có lễ hội thì bốc lại hệ số (không chiếm thêm chỗ). |
 | L2  | **Hệ số tiền thuê ngẫu nhiên ×2, ×3 hoặc ×4** (bốc lúc chọn ô, bằng RNG của server). Ô lễ hội hiện huy hiệu 🎉×N. Áp dụng cho cả thẻ Lễ hội và ô Lễ Hội. Ván lưu kiểu cũ (`festival` đơn) vẫn đọc được, tính ×2.                                                          |
 | L3  | Đang chờ chọn (thẻ đập nhà/tặng đất/lễ hội, ô Lễ Hội) mà người chọn không còn ô hợp lệ (vd. vừa đổi ô qua giao dịch) thì tự bỏ qua, tránh kẹt lượt.                                                                                                                       |
+
+## Cập nhật lần 25
+
+| #   | Quyết định                                                                                                                                                                                                                  |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R1  | **Xoá phòng gần đây** ở trang chủ: nút ✕ từng phòng và nút "Xoá tất cả" (có hỏi xác nhận). API `DELETE /api/me/rooms/<mã>` và `DELETE /api/me/rooms`, chỉ xoá khỏi danh sách của tài khoản, không ảnh hưởng tới phòng chơi. |

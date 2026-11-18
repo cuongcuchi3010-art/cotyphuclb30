@@ -142,6 +142,13 @@ export class Account extends DurableObject {
         await this.save(a);
         return json({ ok: true });
       }
+      case '/removeRoom': {
+        // code rỗng = xoá hết danh sách phòng gần đây
+        if (!a) return json({ error: 'Không tìm thấy tài khoản' }, 404);
+        a.rooms = body.code ? a.rooms.filter((r) => r.code !== body.code) : [];
+        await this.save(a);
+        return json({ rooms: a.rooms });
+      }
       case '/setAvatar': {
         if (!a) return json({ error: 'Không tìm thấy tài khoản' }, 404);
         await this.ctx.storage.put('avatar', body.data);
