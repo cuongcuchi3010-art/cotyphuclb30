@@ -265,6 +265,17 @@ export interface RentContext {
 
 /** Tiền thuê khi dừng ở ô `pos` (0 nếu chưa có chủ / đang thế chấp) */
 export function rentFor(s: GameState, pos: number, ctx: RentContext): number {
+  const base = baseRent(s, pos, ctx);
+  return isFestival(s, pos) ? base * 2 : base;
+}
+
+/** Ô đang có lễ hội (chủ ô vẫn là người tổ chức) */
+export function isFestival(s: GameState, pos: number): boolean {
+  const f = s.festival;
+  return !!f && f.pos === pos && s.properties[pos]?.owner === f.owner;
+}
+
+function baseRent(s: GameState, pos: number, ctx: RentContext): number {
   const sq = ownable(pos);
   const st = getProp(s, pos);
   if (!st.owner || st.mortgaged) return 0;
@@ -543,6 +554,13 @@ function applyPlayer(c: Ctx, p: PlayerState, a: PlayerAction): void {
       if (s.phase.kind !== 'cardChoice' || s.phase.choice !== 'demolish')
         fail('Không có gì để chọn');
       doDemolish(c, p, a.pos);
+      setNeutral(s);
+      proceed(c);
+      return;
+    case 'chooseFestival':
+      requireCurrent(c, p);
+      if (s.phase.kind !== 'cardChoice' || s.phase.choice !== 'festival') fail('Không có gì để chọn');
+      doFestival(c, p, a.pos);
       setNeutral(s);
       proceed(c);
       return;
@@ -885,6 +903,15 @@ function applyCard(c: Ctx, p: PlayerState, e: CardEffect): void {
       });
       return;
     }
+    case 'festival': {
+      if (festivalTargets(s, p.id).length === 0) {
+        c.ev.push({ t: 'cardNoEffect', playerId: p.id });
+        return;
+      }
+      s.phase = { kind: 'cardChoice', choice: 'festival' };
+      c.ev.push({ t: 'choosing', playerId: p.id, choice: 'festival' });
+      return;
+    }
     case 'demolishNeighbor': {
       // Người rút thẻ tự chọn căn nhà của người khác để đập
       if (demolishTargets(s, p.id).length === 0) {
@@ -966,6 +993,18 @@ export function demolishTargets(s: GameState, pid: PlayerId): number[] {
   });
 }
 
+/** Ô của mình có thể tổ chức lễ hội (không thế chấp) */
+export function festivalTargets(s: GameState, pid: PlayerId): number[] {
+  return OWNABLE_INDICES.filter((i) => s.properties[i]!.owner === pid && !s.properties[i]!.mortgaged);
+}
+
+function doFestival(c: Ctx, p: PlayerState, pos: number): void {
+  const { s } = c;
+  if (!festivalTargets(s, p.id).includes(pos)) fail('Hãy chọn một ô đất (không thế chấp) của bạn');
+  s.festival = { pos, owner: p.id };
+  c.ev.push({ t: 'festival', playerId: p.id, pos });
+}
+
 /** Ô của mình có thể tặng (cả nhóm không có nhà) */
 export function giftTargets(s: GameState, pid: PlayerId): number[] {
   return OWNABLE_INDICES.filter((i) => s.properties[i]!.owner === pid && blockHasNoBuildings(s, i));
@@ -1004,7 +1043,12 @@ function autoChoose(c: Ctx): void {
   const ph = s.phase;
   if (ph.kind !== 'cardChoice') fail('Không có gì để chọn');
   setNeutral(s);
-  if (ph.choice === 'demolish') {
+  if (ph.choice === 'festival') {
+    // Tự chọn: ô có giá cao nhất
+    const t = festivalTargets(s, p.id).sort((a, b) => ownable(b).price - ownable(a).price);
+    if (t.length) doFestival(c, p, t[0]!);
+    else c.ev.push({ t: 'cardNoEffect', playerId: p.id });
+  } else if (ph.choice === 'demolish') {
     const t = demolishTargets(s, p.id);
     if (t.length) doDemolish(c, p, t[c.rng.int(0, t.length - 1)]!);
     else c.ev.push({ t: 'cardNoEffect', playerId: p.id });

@@ -924,3 +924,45 @@ describe('Bốc thăm thứ tự xuất phát', () => {
     expect(new Set(Object.values(s.lots!.picks).map((x) => x.card)).size).toBe(3);
   });
 });
+
+describe('Thẻ Lễ hội', () => {
+  const idx = (deck: 'chance' | 'chest', id: string) => DECKS[deck].findIndex((c) => c.id === id);
+
+  it('người rút chọn ô của mình, tiền thuê ×2; lễ hội mới thay lễ hội cũ', () => {
+    let s = mkGame();
+    own(s, 'p1', 16, 39);
+    own(s, 'p2', 37);
+    topCard(s, 'chance', idx('chance', 'ch20'));
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
+    expect(s.phase).toEqual({ kind: 'cardChoice', choice: 'festival' });
+    expect(() => act(s, 'p1', { type: 'chooseFestival', pos: 37 })).toThrow('của bạn');
+    ({ state: s } = act(s, 'p1', { type: 'chooseFestival', pos: 39 }));
+    expect(s.festival).toEqual({ pos: 39, owner: 'p1' });
+    expect(rentFor(s, 39, { diceTotal: 7 })).toBe(100); // 50 × 2
+    expect(rentFor(s, 16, { diceTotal: 7 })).toBe(14);
+    // Lễ hội mới (của người khác) thay lễ hội cũ
+    s.festival = { pos: 37, owner: 'p2' };
+    expect(rentFor(s, 39, { diceTotal: 7 })).toBe(50);
+  });
+
+  it('ô đổi chủ thì lễ hội kết thúc', () => {
+    const s = mkGame();
+    own(s, 'p1', 39);
+    s.festival = { pos: 39, owner: 'p1' };
+    s.properties[39]!.owner = 'p2';
+    expect(rentFor(s, 39, { diceTotal: 7 })).toBe(50);
+  });
+
+  it('không có ô thì thẻ không tác dụng; hết giờ máy chọn ô giá cao nhất', () => {
+    let s = mkGame();
+    topCard(s, 'chance', idx('chance', 'ch20'));
+    let r = act(s, 'p1', { type: 'roll' }, [3, 4]);
+    expect(r.events).toContainEqual(expect.objectContaining({ t: 'cardNoEffect' }));
+    s = mkGame();
+    own(s, 'p1', 1, 39);
+    topCard(s, 'chance', idx('chance', 'ch20'));
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
+    r = act(s, 'system', { type: 'autoChoose' });
+    expect(r.state.festival).toEqual({ pos: 39, owner: 'p1' });
+  });
+});

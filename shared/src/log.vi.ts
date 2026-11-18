@@ -89,8 +89,12 @@ export function describeEvent(ev: GameEvent, s: Pick<GameState, 'players'>): str
       return `🎁 ${name(ev.from)} buộc phải tặng ${sq(ev.pos)} cho ${name(ev.to)}`;
     case 'propertyWon':
       return `🍀 ${name(ev.playerId)} trúng thưởng ô ${sq(ev.pos)}`;
+    case 'festival':
+      return `🎉 ${name(ev.playerId)} tổ chức Lễ hội ở ${sq(ev.pos)}: tiền thuê ×2!`;
     case 'choosing':
-      return ev.choice === 'demolish'
+      return ev.choice === 'festival'
+        ? `${name(ev.playerId)} đang chọn ô tổ chức lễ hội…`
+        : ev.choice === 'demolish'
         ? `${name(ev.playerId)} đang chọn nhà để đập…`
         : `${name(ev.playerId)} đang chọn ô đất để tặng…`;
     case 'cardNoEffect':

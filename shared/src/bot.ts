@@ -5,6 +5,7 @@ import {
   canBuild,
   currentPlayer,
   demolishTargets,
+  festivalTargets,
   giftTargets,
   getPlayer,
   liquidationValue,
@@ -101,6 +102,7 @@ export function candidateActions(s: GameState, id: PlayerId, rng: Rng): PlayerAc
     for (let k = 0; k < s.players.length; k++) out.push({ type: 'drawLot', card: k });
   if (s.phase.kind === 'cardChoice') {
     for (const pos of demolishTargets(s, id).slice(0, 4)) out.push({ type: 'chooseDemolish', pos });
+    for (const pos of festivalTargets(s, id).slice(0, 4)) out.push({ type: 'chooseFestival', pos });
     const others = s.players.filter((p) => !p.bankrupt && p.id !== id);
     for (const pos of giftTargets(s, id).slice(0, 4))
       for (const o of others.slice(0, 2)) out.push({ type: 'chooseGift', pos, to: o.id });

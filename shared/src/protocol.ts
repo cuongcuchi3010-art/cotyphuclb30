@@ -50,6 +50,7 @@ export const playerActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('resign') }),
   z.object({ type: z.literal('drawLot'), card: z.number().int().min(0).max(5) }),
   z.object({ type: z.literal('chooseDemolish'), pos }),
+  z.object({ type: z.literal('chooseFestival'), pos }),
   z.object({ type: z.literal('chooseGift'), pos, to: z.string().min(1).max(40) }),
   z.object({ type: z.literal('bankLoan'), amount: money }),
   z.object({ type: z.literal('repayLoan'), id: z.string().max(20) }),

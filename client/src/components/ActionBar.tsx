@@ -25,7 +25,7 @@ export function ActionBar() {
     return (
       <div className={note}>
         {myTurn
-          ? `👆 ${ph.choice === 'demolish' ? S.choice.demolishHint : S.choice.giftHint}`
+          ? `👆 ${ph.choice === 'demolish' ? S.choice.demolishHint : ph.choice === 'festival' ? S.choice.festivalHint : S.choice.giftHint}`
           : S.choice.waiting(cur.name)}
       </div>
     );

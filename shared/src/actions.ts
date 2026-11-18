@@ -30,6 +30,7 @@ export type PlayerAction =
   | { type: 'drawLot'; card: number }
   | { type: 'chooseDemolish'; pos: number }
   | { type: 'chooseGift'; pos: number; to: PlayerId }
+  | { type: 'chooseFestival'; pos: number }
   | { type: 'bankLoan'; amount: number }
   | { type: 'repayLoan'; id: string }
   | {
@@ -116,7 +117,8 @@ export type GameEvent =
   | { t: 'propertyGifted'; from: PlayerId; to: PlayerId; pos: number }
   | { t: 'propertyWon'; playerId: PlayerId; pos: number }
   | { t: 'cardNoEffect'; playerId: PlayerId }
-  | { t: 'choosing'; playerId: PlayerId; choice: 'demolish' | 'gift' }
+  | { t: 'choosing'; playerId: PlayerId; choice: 'demolish' | 'gift' | 'festival' }
+  | { t: 'festival'; playerId: PlayerId; pos: number }
   | { t: 'build'; playerId: PlayerId; pos: number; level: number; cost: number }
   | { t: 'sell'; playerId: PlayerId; pos: number; level: number; refund: number }
   | { t: 'mortgage'; playerId: PlayerId; pos: number; amount: number }

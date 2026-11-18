@@ -1,6 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   demolishTargets,
+  festivalTargets,
+  isFestival,
+  rentFor,
   giftTargets,
   GROUPS,
   formatMoney,
@@ -499,6 +502,29 @@ function CardChoicePrompt() {
       </button>
     );
   };
+  if (ph.choice === 'festival') {
+    const targets = festivalTargets(game, me);
+    return (
+      <Modal open>
+        <div className="text-center text-lg font-bold">{S.choice.festivalTitle}</div>
+        <div className="mb-3 text-center text-sm text-gray-500">{S.choice.festivalHint}</div>
+        <div className="max-h-[50vh] space-y-1.5 overflow-y-auto">
+          {targets.map((pos) => {
+            const now = rentFor(game, pos, { diceTotal: 7 });
+            const base = isFestival(game, pos) ? now / 2 : now;
+            return row(
+              pos,
+              <>
+                {formatMoney(base)} → <b className="text-son">{formatMoney(base * 2)}</b>
+              </>,
+              false,
+              () => act({ type: 'chooseFestival', pos }),
+            );
+          })}
+        </div>
+      </Modal>
+    );
+  }
   if (ph.choice === 'demolish') {
     const targets = demolishTargets(game, me);
     return (

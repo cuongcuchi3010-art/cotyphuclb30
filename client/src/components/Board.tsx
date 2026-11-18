@@ -7,6 +7,7 @@ import {
   cardById,
   UTILITY_INDICES,
   formatMoney,
+  isFestival,
   rentFor,
   standings,
   type GameEvent,
@@ -407,6 +408,15 @@ function SquareCell({ sq }: { sq: Sq }) {
         </span>
       )}
       {st && st.houses > 0 && <Buildings houses={st.houses} side={side} />}
+      {game && isFestival(game, sq.index) && (
+        <span
+          className="upright absolute right-[3%] top-[3%] z-[7] leading-none drop-shadow"
+          style={{ fontSize: '2.2cqw' }}
+          title="Lễ hội: tiền thuê ×2"
+        >
+          🎉
+        </span>
+      )}
     </button>
   );
 }

@@ -199,3 +199,10 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | DC1 | Hiện **widget Discord** của server CLB30 (`widget.json`, guild `1572067055161835542`, đổi bằng biến `DISCORD_GUILD_ID`): nút "Discord · N" ở trang chủ và trong ván; bảng tên server, thành viên đang online (avatar, trạng thái, đang chơi gì), nút **Vào Discord** dùng link mời có sẵn trong widget. |
 | DC2 | Worker gọi Discord hộ trình duyệt (`GET /api/discord`), **cache 60 giây** để không bị giới hạn; chỉ chấp nhận link mời `https://discord.*` và ảnh `https://`. Server phải bật **Server Widget** trong Cài đặt máy chủ Discord.                                                                          |
+
+## Cập nhật lần 19: thẻ Lễ hội
+
+| #   | Quyết định                                                                                                                                                                                                                  |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F1  | Giữ ô Cà Phê Vỉa Hè; thêm thẻ **Tổ chức Lễ hội** vào mỗi bộ (Cơ Hội `ch20`, Khí Vận `kv20`; mỗi bộ 20 thẻ). Người rút **tự chọn** 1 ô đất (không thế chấp) của mình: tiền thuê ô đó **×2**.                                 |
+| F2  | Cả bàn chỉ có **1 lễ hội**: lễ hội mới thay lễ hội cũ. Ô đổi chủ (giao dịch, tặng, phá sản) thì lễ hội kết thúc. Hết giờ / mất kết nối / bot: máy chọn ô có giá cao nhất. Ô có lễ hội hiện 🎉, dải tiền thuê hiện số đã ×2. |

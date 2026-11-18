@@ -25,7 +25,9 @@ export type CardEffect =
   /** Buộc tặng 1 ô đất (chưa có nhà) của mình cho một người chơi khác ngẫu nhiên */
   | { type: 'giftProperty' }
   /** Nhận miễn phí 1 ô đất ngẫu nhiên còn thuộc ngân hàng */
-  | { type: 'freeProperty' };
+  | { type: 'freeProperty' }
+  /** Tổ chức lễ hội: chọn 1 ô của mình, tiền thuê ô đó ×2 (thay lễ hội cũ) */
+  | { type: 'festival' };
 
 export type DeckId = 'chance' | 'chest';
 
@@ -155,6 +157,12 @@ export const CHANCE_CARDS: readonly Card[] = [
     text: 'Làm từ thiện bắt buộc: chọn 1 ô đất (chưa xây nhà) của bạn để tặng cho một người chơi khác.',
     effect: { type: 'giftProperty' },
   },
+  {
+    id: 'ch20',
+    deck: 'chance',
+    text: '🎉 Tổ chức Lễ hội! Chọn 1 ô đất của bạn: tiền thuê ô đó ×2 (lễ hội cũ trên bàn kết thúc).',
+    effect: { type: 'festival' },
+  },
 ];
 
 export const CHEST_CARDS: readonly Card[] = [
@@ -272,6 +280,12 @@ export const CHEST_CARDS: readonly Card[] = [
     deck: 'chest',
     text: 'Trúng thưởng bốc thăm: nhận miễn phí 1 ô đất bất kỳ còn thuộc ngân hàng.',
     effect: { type: 'freeProperty' },
+  },
+  {
+    id: 'kv20',
+    deck: 'chest',
+    text: '🎉 Lễ hội làng! Chọn 1 ô đất của bạn để mở hội: tiền thuê ô đó ×2 (lễ hội cũ trên bàn kết thúc).',
+    effect: { type: 'festival' },
   },
 ];
 
