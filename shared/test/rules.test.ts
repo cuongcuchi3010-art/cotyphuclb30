@@ -10,6 +10,9 @@ import {
   mortgageTransferFee,
   mortgageValue,
   rentFor,
+  activeFestivals,
+  festivalMult,
+  isFestival,
   unmortgageCost,
   type GameState,
 } from '../src/index.js';
@@ -973,8 +976,9 @@ describe('Bốc thăm thứ tự xuất phát', () => {
 
 describe('Thẻ Lễ hội', () => {
   const idx = (deck: 'chance' | 'chest', id: string) => DECKS[deck].findIndex((c) => c.id === id);
+  const fest = (s: GameState) => activeFestivals(s).map((f) => f.pos);
 
-  it('người rút chọn ô của mình, tiền thuê ×2; lễ hội mới thay lễ hội cũ', () => {
+  it('người rút chọn ô của mình, tiền thuê ×2 đến ×4 (ngẫu nhiên)', () => {
     let s = mkGame();
     own(s, 'p1', 16, 39);
     own(s, 'p2', 37);
@@ -983,20 +987,57 @@ describe('Thẻ Lễ hội', () => {
     expect(s.phase).toEqual({ kind: 'cardChoice', choice: 'festival' });
     expect(() => act(s, 'p1', { type: 'chooseFestival', pos: 37 })).toThrow('của bạn');
     ({ state: s } = act(s, 'p1', { type: 'chooseFestival', pos: 39 }));
-    expect(s.festival).toEqual({ pos: 39, owner: 'p1' });
-    expect(rentFor(s, 39, { diceTotal: 7 })).toBe(100); // 50 × 2
+    const m = festivalMult(s, 39);
+    expect(m).toBeGreaterThanOrEqual(2);
+    expect(m).toBeLessThanOrEqual(4);
+    expect(rentFor(s, 39, { diceTotal: 7 })).toBe(50 * m);
     expect(rentFor(s, 16, { diceTotal: 7 })).toBe(14);
-    // Lễ hội mới (của người khác) thay lễ hội cũ
-    s.festival = { pos: 37, owner: 'p2' };
-    expect(rentFor(s, 39, { diceTotal: 7 })).toBe(50);
   });
 
-  it('ô đổi chủ thì lễ hội kết thúc', () => {
+  it('hệ số bốc từ ×2 đến ×4', () => {
+    for (const m of [2, 3, 4]) {
+      let s = mkGame();
+      own(s, 'p1', 39);
+      s.phase = { kind: 'cardChoice', choice: 'festival' };
+      ({ state: s } = act(s, 'p1', { type: 'chooseFestival', pos: 39 }, [m]));
+      expect(festivalMult(s, 39)).toBe(m);
+    }
+    const s = mkGame();
+    own(s, 'p1', 39);
+    s.phase = { kind: 'cardChoice', choice: 'festival' };
+    expect(() => act(s, 'p1', { type: 'chooseFestival', pos: 39 }, [5])).toThrow('ngoài [2,4]');
+  });
+
+  it('tối đa 3 lễ hội; lễ hội thứ 4 làm lễ hội cũ nhất kết thúc', () => {
+    let s = mkGame();
+    own(s, 'p1', 1, 3, 6, 8);
+    for (const pos of [1, 3, 6]) {
+      s.phase = { kind: 'cardChoice', choice: 'festival' };
+      ({ state: s } = act(s, 'p1', { type: 'chooseFestival', pos }));
+    }
+    expect(fest(s)).toEqual([1, 3, 6]);
+    s.phase = { kind: 'cardChoice', choice: 'festival' };
+    const r = act(s, 'p1', { type: 'chooseFestival', pos: 8 });
+    expect(fest(r.state)).toEqual([3, 6, 8]);
+    expect(isFestival(r.state, 1)).toBe(false);
+    expect(r.events).toContainEqual(expect.objectContaining({ t: 'festival', pos: 8, ended: [1] }));
+  });
+
+  it('ô đổi chủ thì lễ hội kết thúc (nhường chỗ)', () => {
+    const s = mkGame();
+    own(s, 'p1', 39);
+    s.festivals = [{ pos: 39, owner: 'p1', mult: 3 }];
+    expect(rentFor(s, 39, { diceTotal: 7 })).toBe(150);
+    s.properties[39]!.owner = 'p2';
+    expect(rentFor(s, 39, { diceTotal: 7 })).toBe(50);
+    expect(activeFestivals(s)).toEqual([]);
+  });
+
+  it('ván lưu kiểu cũ (một lễ hội) vẫn đọc được: ×2', () => {
     const s = mkGame();
     own(s, 'p1', 39);
     s.festival = { pos: 39, owner: 'p1' };
-    s.properties[39]!.owner = 'p2';
-    expect(rentFor(s, 39, { diceTotal: 7 })).toBe(50);
+    expect(rentFor(s, 39, { diceTotal: 7 })).toBe(100);
   });
 
   it('không có ô thì thẻ không tác dụng; hết giờ máy chọn ô giá cao nhất', () => {
@@ -1009,7 +1050,7 @@ describe('Thẻ Lễ hội', () => {
     topCard(s, 'chance', idx('chance', 'ch20'));
     ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
     r = act(s, 'system', { type: 'autoChoose' });
-    expect(r.state.festival).toEqual({ pos: 39, owner: 'p1' });
+    expect(fest(r.state)).toEqual([39]);
   });
 });
 
@@ -1021,7 +1062,7 @@ describe('Ô Lễ Hội thay Cà Phê', () => {
     ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4])); // 13 → 20
     expect(s.phase).toEqual({ kind: 'cardChoice', choice: 'festival' });
     ({ state: s } = act(s, 'p1', { type: 'chooseFestival', pos: 39 }));
-    expect(s.festival).toEqual({ pos: 39, owner: 'p1' });
+    expect(activeFestivals(s).map((f) => f.pos)).toEqual([39]);
   });
 
   it('chưa có ô nào thì không phải chọn; hũ tiền tắt khi bật ô Lễ Hội', () => {

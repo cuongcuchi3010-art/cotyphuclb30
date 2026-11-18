@@ -90,7 +90,10 @@ export function describeEvent(ev: GameEvent, s: Pick<GameState, 'players'>): str
     case 'propertyWon':
       return `🍀 ${name(ev.playerId)} trúng thưởng ô ${sq(ev.pos)}`;
     case 'festival':
-      return `🎉 ${name(ev.playerId)} tổ chức Lễ hội ở ${sq(ev.pos)}: tiền thuê ×2!`;
+      return (
+        `🎉 ${name(ev.playerId)} tổ chức Lễ hội ở ${sq(ev.pos)}: tiền thuê ×${ev.mult ?? 2}!` +
+        (ev.ended?.length ? ` Lễ hội ở ${ev.ended.map(sq).join(', ')} kết thúc.` : '')
+      );
     case 'choosing':
       return ev.choice === 'festival'
         ? `${name(ev.playerId)} đang chọn ô tổ chức lễ hội…`

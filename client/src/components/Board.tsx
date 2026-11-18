@@ -7,6 +7,7 @@ import {
   cardById,
   UTILITY_INDICES,
   formatMoney,
+  festivalMult,
   isFestival,
   jackpotOn,
   rentFor,
@@ -410,11 +411,14 @@ function SquareCell({ sq }: { sq: Sq }) {
       {st && st.houses > 0 && <Buildings houses={st.houses} side={side} />}
       {game && isFestival(game, sq.index) && (
         <span
-          className="upright absolute right-[3%] top-[3%] z-[7] leading-none drop-shadow"
+          className="upright absolute right-[3%] top-[3%] z-[7] flex items-center leading-none drop-shadow"
           style={{ fontSize: '2.2cqw' }}
-          title="Lễ hội: tiền thuê ×2"
+          title={`Lễ hội: tiền thuê ×${festivalMult(game, sq.index)}`}
         >
           🎉
+          <b className="rounded bg-son px-[0.3cqw] text-white" style={{ fontSize: '1.3cqw' }}>
+            ×{festivalMult(game, sq.index)}
+          </b>
         </span>
       )}
     </button>

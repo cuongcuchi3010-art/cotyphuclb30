@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import {
   demolishTargets,
   festivalTargets,
-  isFestival,
+  festivalMult,
   rentFor,
   giftTargets,
   GROUPS,
@@ -511,11 +511,14 @@ function CardChoicePrompt() {
         <div className="max-h-[50vh] space-y-1.5 overflow-y-auto">
           {targets.map((pos) => {
             const now = rentFor(game, pos, { diceTotal: 7 });
-            const base = isFestival(game, pos) ? now / 2 : now;
+            const base = now / festivalMult(game, pos);
             return row(
               pos,
               <>
-                {formatMoney(base)} → <b className="text-son">{formatMoney(base * 2)}</b>
+                {formatMoney(base)} →{' '}
+                <b className="text-son">
+                  {formatMoney(base * 2)}–{formatMoney(base * 4)}
+                </b>
               </>,
               false,
               () => act({ type: 'chooseFestival', pos }),

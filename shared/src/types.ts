@@ -221,7 +221,10 @@ export interface GameState {
   /** Số nhà trên ô lúc vừa dừng lại (4 = được xây khách sạn) */
   buildPassLevel?: number;
   /** Lễ hội đang diễn ra (1 ô duy nhất trên bàn, tiền thuê ×2) */
+  /** (cũ) một lễ hội duy nhất ×2 — chỉ còn để đọc ván lưu trước đây */
   festival?: { pos: number; owner: PlayerId } | null;
+  /** Các ô đang có lễ hội (tối đa 3, cũ nhất đứng đầu); mult = hệ số tiền thuê ×2–×4 */
+  festivals?: Festival[];
   /** Bốc thăm thứ tự: lá đã bốc (vị trí lá + số) và các số còn lại */
   lots?: { picks: Record<PlayerId, { card: number; number: number }>; remaining: number[] };
   endReason?: 'lastStanding' | 'timeUp';
@@ -230,4 +233,11 @@ export interface GameState {
 export interface Rng {
   /** Số nguyên ngẫu nhiên trong [min, max] (bao gồm 2 đầu) */
   int(min: number, max: number): number;
+}
+
+export interface Festival {
+  pos: number;
+  owner: PlayerId;
+  /** Hệ số tiền thuê (2–4, bốc ngẫu nhiên khi tổ chức) */
+  mult: number;
 }

@@ -239,3 +239,11 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 | F1  | Tuỳ chọn **Ô Lễ Hội thay Cà Phê** (`rules.festivalSquare`, mặc định tắt). Ai dừng ô 20 được chọn 1 ô đất (không thế chấp) của mình tổ chức lễ hội, thuê ×2, dùng chung cơ chế với thẻ Lễ hội (mỗi bàn một lễ hội, lễ hội mới thay lễ hội cũ). Chưa có ô nào thì không phải chọn. |
 | F2  | Khi bật ô Lễ Hội thì **hũ tiền tắt** (thuế/phạt về ngân hàng), sảnh chờ ẩn lựa chọn hũ tiền.                                                                                                                                                                                     |
 | F3  | Ô 37 đổi tên đầy đủ thành "Hà Nội – Hồ Gươm" cho khớp tên ngắn trên bàn cờ.                                                                                                                                                                                                      |
+
+## Cập nhật lần 24
+
+| #   | Quyết định                                                                                                                                                                                                                                                                |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L1  | **Tối đa 3 ô lễ hội cùng lúc** (`state.festivals`, cũ nhất đứng đầu). Lễ hội thứ 4 làm lễ hội cũ nhất kết thúc; nhật ký ghi rõ ô nào kết thúc. Ô đổi chủ thì lễ hội ô đó kết thúc và nhường chỗ. Tổ chức lại ở ô đang có lễ hội thì bốc lại hệ số (không chiếm thêm chỗ). |
+| L2  | **Hệ số tiền thuê ngẫu nhiên ×2, ×3 hoặc ×4** (bốc lúc chọn ô, bằng RNG của server). Ô lễ hội hiện huy hiệu 🎉×N. Áp dụng cho cả thẻ Lễ hội và ô Lễ Hội. Ván lưu kiểu cũ (`festival` đơn) vẫn đọc được, tính ×2.                                                          |
+| L3  | Đang chờ chọn (thẻ đập nhà/tặng đất/lễ hội, ô Lễ Hội) mà người chọn không còn ô hợp lệ (vd. vừa đổi ô qua giao dịch) thì tự bỏ qua, tránh kẹt lượt.                                                                                                                       |

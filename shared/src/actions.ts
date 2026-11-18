@@ -118,7 +118,7 @@ export type GameEvent =
   | { t: 'propertyWon'; playerId: PlayerId; pos: number }
   | { t: 'cardNoEffect'; playerId: PlayerId }
   | { t: 'choosing'; playerId: PlayerId; choice: 'demolish' | 'gift' | 'festival' }
-  | { t: 'festival'; playerId: PlayerId; pos: number }
+  | { t: 'festival'; playerId: PlayerId; pos: number; mult?: number; ended?: number[] }
   | { t: 'build'; playerId: PlayerId; pos: number; level: number; cost: number }
   | { t: 'sell'; playerId: PlayerId; pos: number; level: number; refund: number }
   | { t: 'mortgage'; playerId: PlayerId; pos: number; amount: number }

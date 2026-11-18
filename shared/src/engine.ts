@@ -26,6 +26,7 @@ import type { Action, Actor, GameEvent, PlayerAction } from './actions.js';
 import type {
   Creditor,
   Debt,
+  Festival,
   GameState,
   PlayerId,
   PlayerState,
@@ -280,13 +281,26 @@ export interface RentContext {
 /** Tiền thuê khi dừng ở ô `pos` (0 nếu chưa có chủ / đang thế chấp) */
 export function rentFor(s: GameState, pos: number, ctx: RentContext): number {
   const base = baseRent(s, pos, ctx);
-  return isFestival(s, pos) ? base * 2 : base;
+  return base * festivalMult(s, pos);
+}
+
+/** Số ô lễ hội tối đa cùng lúc trên bàn */
+export const MAX_FESTIVALS = 3;
+
+/** Các lễ hội còn hiệu lực (ô vẫn thuộc người tổ chức), cũ nhất đứng đầu */
+export function activeFestivals(s: GameState): Festival[] {
+  const list = s.festivals ?? (s.festival ? [{ ...s.festival, mult: 2 }] : []);
+  return list.filter((f) => s.properties[f.pos]?.owner === f.owner);
+}
+
+/** Hệ số tiền thuê do lễ hội (1 = không có lễ hội) */
+export function festivalMult(s: GameState, pos: number): number {
+  return activeFestivals(s).find((f) => f.pos === pos)?.mult ?? 1;
 }
 
 /** Ô đang có lễ hội (chủ ô vẫn là người tổ chức) */
 export function isFestival(s: GameState, pos: number): boolean {
-  const f = s.festival;
-  return !!f && f.pos === pos && s.properties[pos]?.owner === f.owner;
+  return festivalMult(s, pos) > 1;
 }
 
 function baseRent(s: GameState, pos: number, ctx: RentContext): number {
@@ -406,6 +420,8 @@ export function applyAction(state: GameState, by: Actor, action: Action, rng: Rn
     if (p.bankrupt) fail('Bạn đã phá sản');
     applyPlayer(c, p, action as PlayerAction);
   }
+  // Đang chờ chọn (thẻ / ô Lễ Hội) mà không còn ô hợp lệ (vd. vừa đổi ô qua giao dịch): tự bỏ qua
+  if (s.phase.kind === 'cardChoice' && choiceTargets(s, s.phase.choice).length === 0) autoChoose(c);
   s.seq++;
   return { state: s, events: c.ev };
 }
@@ -1025,8 +1041,15 @@ export function festivalTargets(s: GameState, pid: PlayerId): number[] {
 function doFestival(c: Ctx, p: PlayerState, pos: number): void {
   const { s } = c;
   if (!festivalTargets(s, p.id).includes(pos)) fail('Hãy chọn một ô đất (không thế chấp) của bạn');
-  s.festival = { pos, owner: p.id };
-  c.ev.push({ t: 'festival', playerId: p.id, pos });
+  const mult = c.rng.int(2, 4);
+  // Tổ chức lại ở ô đang có lễ hội thì bốc lại hệ số
+  const list = activeFestivals(s).filter((f) => f.pos !== pos);
+  list.push({ pos, owner: p.id, mult });
+  const ended: number[] = [];
+  while (list.length > MAX_FESTIVALS) ended.push(list.shift()!.pos);
+  s.festivals = list;
+  s.festival = null;
+  c.ev.push({ t: 'festival', playerId: p.id, pos, mult, ended });
 }
 
 /** Ô của mình có thể tặng (cả nhóm không có nhà) */
@@ -1058,6 +1081,14 @@ function doGift(c: Ctx, p: PlayerState, pos: number, to: PlayerId): void {
   s.mortgageChoices = s.mortgageChoices.filter((m) => m.pos !== pos);
   if (s.buildPass === pos) s.buildPass = null;
   c.ev.push({ t: 'propertyGifted', from: p.id, to: rcv.id, pos });
+}
+
+/** Các ô người chơi hiện tại có thể chọn ở pha cardChoice */
+function choiceTargets(s: GameState, choice: 'demolish' | 'gift' | 'festival'): number[] {
+  const id = currentPlayer(s).id;
+  if (choice === 'festival') return festivalTargets(s, id);
+  if (choice === 'demolish') return demolishTargets(s, id);
+  return s.players.some((p) => !p.bankrupt && p.id !== id) ? giftTargets(s, id) : [];
 }
 
 /** Lựa chọn ngẫu nhiên khi hết giờ / mất kết nối / bot */

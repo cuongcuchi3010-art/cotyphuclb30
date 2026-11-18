@@ -160,7 +160,7 @@ export const CHANCE_CARDS: readonly Card[] = [
   {
     id: 'ch20',
     deck: 'chance',
-    text: '🎉 Tổ chức Lễ hội! Chọn 1 ô đất của bạn: tiền thuê ô đó ×2 (lễ hội cũ trên bàn kết thúc).',
+    text: '🎉 Tổ chức Lễ hội! Chọn 1 ô đất của bạn: tiền thuê ô đó tăng ngẫu nhiên ×2 đến ×4.',
     effect: { type: 'festival' },
   },
 ];
@@ -284,7 +284,7 @@ export const CHEST_CARDS: readonly Card[] = [
   {
     id: 'kv20',
     deck: 'chest',
-    text: '🎉 Lễ hội làng! Chọn 1 ô đất của bạn để mở hội: tiền thuê ô đó ×2 (lễ hội cũ trên bàn kết thúc).',
+    text: '🎉 Lễ hội làng! Chọn 1 ô đất của bạn để mở hội: tiền thuê ô đó tăng ngẫu nhiên ×2 đến ×4.',
     effect: { type: 'festival' },
   },
 ];
