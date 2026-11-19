@@ -454,8 +454,11 @@ function SquareCell({ sq }: { sq: Sq }) {
       {st && st.houses > 0 && <Buildings houses={st.houses} side={side} />}
       {game && isFestival(game, sq.index) && (
         <span
-          className="upright absolute right-[3%] top-[3%] z-[7] flex items-center leading-none drop-shadow"
-          style={{ fontSize: '2.2cqw' }}
+          className={cx(
+            'upright absolute z-[7] flex items-center leading-none drop-shadow',
+            FEST_POS[side],
+          )}
+          style={{ fontSize: '1.9cqw' }}
           title={`Lễ hội: tiền thuê ×${festivalMult(game, sq.index)}`}
         >
           🎉
@@ -467,6 +470,15 @@ function SquareCell({ sq }: { sq: Sq }) {
     </button>
   );
 }
+
+/** Huy hiệu lễ hội: ngay bên trong dải tiền (dải ở mép ngoài) để không che số tiền */
+const FEST_POS: Record<string, string> = {
+  bottom: 'right-[3%] bottom-[21%]',
+  top: 'right-[3%] top-[21%]',
+  left: 'left-[21%] top-[3%]',
+  right: 'right-[21%] top-[3%]',
+  corner: 'right-[3%] top-[3%]',
+};
 
 /** Nhà / khách sạn: đặt ở mép trong (phía giữa bàn) */
 function Buildings({ houses, side }: { houses: number; side: string }) {
