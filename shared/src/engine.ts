@@ -964,7 +964,7 @@ function applyCard(c: Ctx, p: PlayerState, e: CardEffect): void {
       return;
     }
     case 'collect': {
-      const amount = fee(s, e.amount);
+      const amount = e.fixed ? e.amount : fee(s, e.amount);
       p.cash += amount;
       c.ev.push({ t: 'collect', playerId: p.id, amount, reason: 'card' });
       return;
@@ -1865,7 +1865,16 @@ function bankrupt(c: Ctx, p: PlayerState, to: Creditor): void {
   }
 
   const owned = OWNABLE_INDICES.filter((i) => s.properties[i]!.owner === p.id);
-  if (to !== 'bank') {
+  if (s.rules.bankruptcyMode === 'bankBuyout') {
+    // Ngân hàng mua lại nhà (tiền đã cộng vào p.cash ở trên), trả hết cho chủ nợ; đất thành đất trống
+    if (to !== 'bank') getPlayer(s, to).cash += Math.max(0, p.cash);
+    for (const i of owned) {
+      const st = s.properties[i]!;
+      st.owner = null;
+      st.mortgaged = false;
+    }
+    for (const d of p.jailCards) returnJailCard(s, d);
+  } else if (to !== 'bank') {
     const cr = getPlayer(s, to);
     cr.cash += Math.max(0, p.cash);
     for (const i of owned) {
@@ -1911,7 +1920,12 @@ function bankrupt(c: Ctx, p: PlayerState, to: Creditor): void {
   }
   s.loanOffers = s.loanOffers.filter((x) => x.from !== p.id && x.to !== p.id);
   if (currentPlayer(s).id === p.id) s.resume = { kind: 'none' };
-  c.ev.push({ t: 'bankrupt', playerId: p.id, to });
+  c.ev.push({
+    t: 'bankrupt',
+    playerId: p.id,
+    to,
+    buyout: s.rules.bankruptcyMode === 'bankBuyout',
+  });
 }
 
 /** Phá sản cưỡng bức về ngân hàng (bỏ cuộc / host xử lý người mất kết nối) */

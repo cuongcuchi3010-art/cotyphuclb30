@@ -55,7 +55,15 @@ export interface Rules {
   casinoMaxBet: number;
   /** Freestyle: số nhà tối đa được xây ngay lần đầu (vừa mua xong), 0–4 */
   firstBuildMax: number;
+  /**
+   * Khi phá sản:
+   * - creditor: chủ nợ nhận hết tiền, nhà đất (luật chính thức)
+   * - bankBuyout: ngân hàng mua lại hết nhà (50% giá xây), tiền đó cùng tiền mặt trả cho chủ nợ; đất thành đất trống
+   */
+  bankruptcyMode: BankruptcyMode;
 }
+
+export type BankruptcyMode = 'creditor' | 'bankBuyout';
 
 export type GameMode = 'classic' | 'freestyle';
 
@@ -80,6 +88,7 @@ export const DEFAULT_RULES: Rules = {
   feeMult: 2,
   casinoMaxBet: 1000,
   firstBuildMax: 4,
+  bankruptcyMode: 'creditor',
 };
 
 export interface PlayerStats {

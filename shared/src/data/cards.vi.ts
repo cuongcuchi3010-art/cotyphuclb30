@@ -10,7 +10,8 @@ export type CardEffect =
   | { type: 'nearestTransport' }
   /** Đi tới tiện ích gần nhất phía trước; có chủ thì tung xúc xắc trả 10× */
   | { type: 'nearestUtility' }
-  | { type: 'collect'; amount: number }
+  /** fixed = không nhân hệ số tiền Freestyle (vd. trúng Vietlott 5 tỷ) */
+  | { type: 'collect'; amount: number; fixed?: boolean }
   | { type: 'pay'; amount: number }
   | { type: 'jailFree' }
   | { type: 'back'; steps: number }
@@ -162,6 +163,12 @@ export const CHANCE_CARDS: readonly Card[] = [
     deck: 'chance',
     text: '🎉 Tổ chức Lễ hội! Chọn 1 ô đất của bạn: tiền thuê ô đó tăng ngẫu nhiên ×2 đến ×4.',
     effect: { type: 'festival' },
+  },
+  {
+    id: 'ch21',
+    deck: 'chance',
+    text: '🎰 Trúng Vietlott Jackpot! Nhận 5 tỷ.',
+    effect: { type: 'collect', amount: 5000, fixed: true },
   },
 ];
 

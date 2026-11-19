@@ -180,6 +180,7 @@ export function runSimulation(from: number, count: number): { finished: number; 
         feeMult: [1, 2, 3][g % 3]!,
         goSalary: [200, 500][g % 2]!,
         firstBuildMax: g % 5,
+        bankruptcyMode: g % 2 === 0 ? 'bankBuyout' : 'creditor',
       },
       rng,
     );

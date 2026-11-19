@@ -110,6 +110,13 @@ export const S = {
     feeMult: 'Hệ số tiền phạt, thuế, thẻ',
     casinoMaxBet: 'Cược tối đa ở Sòng Bạc Tiền',
     firstBuildMax: 'Mua xong được xây ngay',
+    bankruptcy: 'Khi phá sản',
+    bankruptcyModes: { creditor: 'Chủ nợ nhận hết', bankBuyout: 'Ngân hàng mua lại nhà' },
+    bankruptcyInfo: {
+      creditor: 'Chủ nợ nhận hết tiền và nhà đất của người phá sản.',
+      bankBuyout:
+        'Ngân hàng mua lại hết nhà (50% giá xây), tiền đó cùng tiền mặt trả cho chủ nợ; các ô thành đất trống, ai cũng mua được.',
+    },
     firstBuildNone: 'Không xây',
     jackpot: 'Hũ tiền Cà Phê Vỉa Hè (thuế & phạt vào hũ, ai dừng ô 20 nhận hết)',
     doubleGo: (amount: string) => `Dừng đúng Khởi Hành nhận gấp đôi (${amount})`,

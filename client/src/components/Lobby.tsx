@@ -203,6 +203,25 @@ export function Lobby() {
             onChange={(v) => setRules({ auctions: !v })}
             label={S.lobby.noAuction}
           />
+          <label className="flex items-center justify-between gap-2">
+            {S.lobby.bankruptcy}
+            <select
+              value={rules.bankruptcyMode ?? 'creditor'}
+              onChange={(e) =>
+                setRules({ bankruptcyMode: e.target.value as 'creditor' | 'bankBuyout' })
+              }
+              className="max-w-[60%] rounded-lg border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-black/30"
+            >
+              {(['creditor', 'bankBuyout'] as const).map((v) => (
+                <option key={v} value={v}>
+                  {S.lobby.bankruptcyModes[v]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="text-xs text-gray-600 dark:text-gray-300">
+            {S.lobby.bankruptcyInfo[rules.bankruptcyMode ?? 'creditor']}
+          </div>
           <Toggle
             checked={!!rules.showStandings}
             onChange={(v) => setRules({ showStandings: v })}

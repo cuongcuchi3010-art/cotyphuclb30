@@ -527,6 +527,42 @@ describe('Gom tiền & phá sản', () => {
     expect(s.players[s.current]!.id).toBe('p2');
   });
 
+  it('phá sản kiểu ngân hàng mua lại: nhà bán 50% trả chủ nợ, các ô thành đất trống', () => {
+    let s = mkGame(3, { bankruptcyMode: 'bankBuyout' });
+    own(s, 'p2', 37, 39);
+    s.properties[39]!.houses = 5;
+    const p1 = pl(s, 'p1');
+    p1.cash = 100;
+    p1.position = 32;
+    p1.jailCards = ['chance'];
+    s.decks.chance = s.decks.chance.filter((x) => x !== CH_JAILFREE);
+    own(s, 'p1', 1, 3, 5);
+    s.properties[1]!.houses = 1;
+    s.properties[3]!.houses = 1;
+    s.properties[5]!.mortgaged = true;
+    s.bank.houses = 30;
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
+    const r = act(s, 'p1', { type: 'declareBankruptcy' });
+    s = r.state;
+    expect(pl(s, 'p1').bankrupt).toBe(true);
+    expect(pl(s, 'p2').cash).toBe(1500 + 100 + 50); // tiền mặt + 2 nhà × 25
+    for (const i of [1, 3, 5])
+      expect(s.properties[i]).toEqual({ owner: null, houses: 0, mortgaged: false });
+    expect(s.auctionQueue).toEqual([]);
+    expect(pl(s, 'p2').jailCards).toEqual([]);
+    expect(r.events).toContainEqual(expect.objectContaining({ t: 'bankrupt', buyout: true }));
+  });
+
+  it('thẻ trúng Vietlott nhận 5 tỷ (Freestyle không nhân hệ số)', () => {
+    const idx = DECKS.chance.findIndex((c) => c.id === 'ch21');
+    for (const rules of [{}, { mode: 'freestyle' as const, feeMult: 3 }]) {
+      let s = mkGame(2, rules);
+      topCard(s, 'chance', idx);
+      ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
+      expect(pl(s, 'p1').cash).toBe(1500 + 5000);
+    }
+  });
+
   it('phá sản về ngân hàng: nhà về kho, ô đem đấu giá đã xoá thế chấp, thẻ về bộ bài', () => {
     let s = mkGame(3);
     const p1 = pl(s, 'p1');

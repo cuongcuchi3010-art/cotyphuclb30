@@ -202,7 +202,9 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
               ['Gom tiền', 'Nợ hơn tiền đang có: bán nhà, thế chấp, vay cho đủ'],
               [
                 'Phá sản',
-                'Nợ người chơi: người đó nhận hết tài sản; nợ ngân hàng: đất về ngân hàng',
+                rules?.bankruptcyMode === 'bankBuyout'
+                  ? 'Ngân hàng mua lại hết nhà (50% giá xây); tiền đó cùng tiền mặt trả cho chủ nợ; các ô thành đất trống'
+                  : 'Nợ người chơi: người đó nhận hết tiền và nhà đất; nợ ngân hàng: đất về ngân hàng',
               ],
             ]}
           />
@@ -249,6 +251,7 @@ function ThisGame({ rules }: { rules: Rules }) {
     ],
     ['Lễ hội tối đa', `${rules.maxFestivals ?? 3} ô`],
     ['Đấu giá', rules.auctions ? 'Có' : 'Tắt'],
+    ['Phá sản', rules.bankruptcyMode === 'bankBuyout' ? 'Ngân hàng mua lại' : 'Chủ nợ nhận hết'],
     ['Khởi Hành ×2', rules.doubleGo ? 'Bật' : 'Tắt'],
     ['Thời gian ván', rules.timeLimitMinutes ? `${rules.timeLimitMinutes} phút` : 'Không giới hạn'],
     ['Đồng hồ lượt', rules.turnTimerSec ? `${rules.turnTimerSec} giây` : 'Tắt'],

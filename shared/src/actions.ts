@@ -190,7 +190,7 @@ export type GameEvent =
   | { t: 'loanRejected'; id: string; by: PlayerId }
   | { t: 'loanCancelled'; id: string; reason: 'withdrawn' | 'invalid' | 'bankrupt' | 'replaced' }
   | { t: 'raiseFunds'; playerId: PlayerId; owed: number; to: Creditor }
-  | { t: 'bankrupt'; playerId: PlayerId; to: Creditor }
+  | { t: 'bankrupt'; playerId: PlayerId; to: Creditor; buyout?: boolean }
   | {
       t: 'gameOver';
       winner: PlayerId | null;

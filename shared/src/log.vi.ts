@@ -195,6 +195,8 @@ export function describeEvent(
     case 'raiseFunds':
       return `${name(ev.playerId)} thiếu ${formatMoney(ev.owed)} — phải gom tiền!`;
     case 'bankrupt':
+      if (ev.buyout)
+        return `${name(ev.playerId)} PHÁ SẢN: ngân hàng mua lại nhà${ev.to === 'bank' ? '' : `, tiền trả cho ${name(ev.to)}`}; các ô thành đất trống`;
       return `${name(ev.playerId)} PHÁ SẢN${ev.to === 'bank' ? '' : `, tài sản về tay ${name(ev.to)}`}`;
     case 'gameOver':
       return ev.winner ? `🏆 ${name(ev.winner)} chiến thắng!` : 'Ván đấu kết thúc';

@@ -95,6 +95,7 @@ export const rulesSchema = z.object({
   feeMult: z.number().min(1).max(5).default(2),
   casinoMaxBet: z.number().int().min(50).max(1000).default(1000),
   firstBuildMax: z.number().int().min(0).max(4).default(4),
+  bankruptcyMode: z.enum(['creditor', 'bankBuyout']).default('creditor'),
 });
 
 /** Biệt danh = tên đăng nhập: chữ (có dấu), số, khoảng trắng, . _ - */
