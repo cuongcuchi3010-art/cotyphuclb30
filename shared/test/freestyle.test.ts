@@ -82,9 +82,10 @@ describe('Sòng Bạc Tiền', () => {
     ({ state: s } = act(s, 'p2', { type: 'casinoBet', amount: 100 }));
     ({ state: s } = act(s, 'p3', { type: 'casinoBet', amount: 200 }));
     expect(s.casino!.stage).toBe('roll');
-    ({ state: s } = act(s, 'p1', { type: 'casinoRoll' }, [3, 3]));
+    expect(() => act(s, 'p1', { type: 'casinoRoll' })).toThrow('đổ cuối');
     ({ state: s } = act(s, 'p2', { type: 'casinoRoll' }, [5, 5]));
-    const r = act(s, 'p3', { type: 'casinoRoll' }, [1, 2]);
+    ({ state: s } = act(s, 'p3', { type: 'casinoRoll' }, [1, 2]));
+    const r = act(s, 'p1', { type: 'casinoRoll' }, [3, 3]);
     s = r.state;
     expect(s.casino).toBeNull();
     expect(s.phase.kind).toBe('awaitEnd');
@@ -98,8 +99,8 @@ describe('Sòng Bạc Tiền', () => {
     let s = open3();
     ({ state: s } = act(s, 'p2', { type: 'casinoBet', amount: 300 }));
     ({ state: s } = act(s, 'p3', { type: 'casinoPass' }));
-    ({ state: s } = act(s, 'p1', { type: 'casinoRoll' }, [3, 4]));
     ({ state: s } = act(s, 'p2', { type: 'casinoRoll' }, [5, 2]));
+    ({ state: s } = act(s, 'p1', { type: 'casinoRoll' }, [3, 4]));
     expect(pl(s, 'p1').cash).toBe(1500);
     expect(pl(s, 'p2').cash).toBe(1500);
     s = open3();
@@ -121,8 +122,8 @@ describe('Sòng Bạc Tiền', () => {
     let s = open3();
     ({ state: s } = act(s, 'p2', { type: 'casinoBet', amount: 100 }));
     ({ state: s } = act(s, 'system', { type: 'casinoTimeout' }));
-    expect(s.casino!.rollers).toEqual(['p1', 'p2']);
-    ({ state: s } = act(s, 'system', { type: 'casinoTimeout' }, [6, 6, 1, 1]));
+    expect(s.casino!.rollers).toEqual(['p2', 'p1']);
+    ({ state: s } = act(s, 'system', { type: 'casinoTimeout' }, [1, 1, 6, 6]));
     expect(s.casino).toBeNull();
     expect(pl(s, 'p2').cash).toBe(1400);
   });

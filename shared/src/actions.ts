@@ -157,6 +157,9 @@ export type GameEvent =
       winner: PlayerId;
       dice: [number, number];
       won: { pos: number; from: PlayerId }[];
+      /** Người đã đặt ô và xí ngầu ở vòng cuối */
+      players?: PlayerId[];
+      rolls?: Record<PlayerId, [number, number]>;
     }
   | { t: 'choosing'; playerId: PlayerId; choice: 'demolish' | 'gift' | 'festival' }
   | { t: 'festival'; playerId: PlayerId; pos: number; mult?: number; ended?: number[] }

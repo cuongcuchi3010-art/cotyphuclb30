@@ -4,6 +4,7 @@ import {
   applyAction,
   canBuild,
   casinoBetLimit,
+  casinoHouseTurn,
   casinoStakeTargets,
   currentPlayer,
   demolishTargets,
@@ -183,7 +184,8 @@ function botCasino(s: GameState, botId: PlayerId): Plan | null {
   const k = s.casino;
   if (!k) return null;
   if (k.stage === 'roll') {
-    return k.rollers.includes(botId) && !k.rolls[botId]
+    const houseWaits = k.kind === 'cash' && botId === k.opener && !casinoHouseTurn(k);
+    return k.rollers.includes(botId) && !k.rolls[botId] && !houseWaits
       ? { by: botId, action: { type: 'casinoRoll' } }
       : null;
   }

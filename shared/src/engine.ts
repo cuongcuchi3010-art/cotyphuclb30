@@ -32,6 +32,7 @@ import type {
   PlayerState,
   PropertyState,
   BuildRule,
+  Casino,
   CasinoKind,
   Rng,
   Rules,
@@ -1241,7 +1242,8 @@ function startRolling(c: Ctx): void {
     return;
   }
   k.stage = 'roll';
-  k.rollers = k.kind === 'cash' ? [k.opener, ...players.filter((id) => id !== k.opener)] : players;
+  // Sòng tiền: nhà cái đổ cuối cùng
+  k.rollers = k.kind === 'cash' ? [...players.filter((id) => id !== k.opener), k.opener] : players;
   k.rolls = {};
   k.round++;
   c.ev.push({ t: 'casinoRolling', kind: k.kind, rollers: k.rollers, round: k.round });
@@ -1252,8 +1254,15 @@ function casinoRoll(c: Ctx, p: PlayerState): void {
   if (c.s.phase.kind !== 'casino' || !k || k.stage !== 'roll') fail('Chưa tới lúc đổ xí ngầu');
   if (!k.rollers.includes(p.id)) fail('Bạn không đổ ở vòng này');
   if (k.rolls[p.id]) fail('Bạn đã đổ rồi');
+  if (k.kind === 'cash' && p.id === k.opener && !casinoHouseTurn(k))
+    fail('Nhà cái đổ cuối cùng, chờ mọi người đổ xong');
   rollFor(c, p.id);
   if (k.rollers.every((id) => k.rolls[id])) resolveCasino(c);
+}
+
+/** Sòng tiền: mọi người cược đã đổ xong, tới lượt nhà cái */
+export function casinoHouseTurn(k: Casino): boolean {
+  return k.rollers.every((id) => id === k.opener || !!k.rolls[id]);
 }
 
 function rollFor(c: Ctx, id: PlayerId): void {
@@ -1336,6 +1345,8 @@ function resolveCasino(c: Ctx): void {
     winner: winner.id,
     dice: k.rolls[winner.id]!,
     won,
+    players: Object.keys(k.bets),
+    rolls: { ...k.rolls },
   });
   closeCasino(c);
 }
