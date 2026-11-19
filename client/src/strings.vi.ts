@@ -212,7 +212,7 @@ export const S = {
     allIn: 'Tất tay',
     customPh: 'Số tiền khác (tr)',
     place: 'Đặt',
-    pickLand: 'Chọn 1 ô đất để đặt (cả nhóm chưa có nhà)',
+    pickLand: 'Chọn 1 ô đất để đặt (nhà, khách sạn trên ô đi kèm)',
     mortgaged: 'đang thế chấp',
     pass: 'Không chơi',
     canChange: 'Bạn vẫn đổi được cho tới khi hết giờ',

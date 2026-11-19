@@ -187,6 +187,7 @@ export function CasinoPrompt() {
                       >
                         <span className="font-semibold">{squareName(game, pos)}</span>
                         <span className="text-xs opacity-80">
+                          {houseLabel(game.properties[pos]?.houses ?? 0)}
                           {formatMoney(ownable(pos).price)}
                           {game.properties[pos]?.mortgaged ? ` · ${S.casino.mortgaged}` : ''}
                         </span>
@@ -515,4 +516,11 @@ export function CasinoTable({
       })}
     </div>
   );
+}
+
+/** Nhãn số nhà trên ô (đặt ở Sòng Bạc Đất thì nhà đi kèm) */
+function houseLabel(h: number): string {
+  if (h >= 5) return '🏨 khách sạn · ';
+  if (h > 0) return `🏠 ${h} nhà · `;
+  return '';
 }

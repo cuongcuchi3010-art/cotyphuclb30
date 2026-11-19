@@ -58,8 +58,8 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
               chia đều). Đổ cao hơn nhà cái thắng tiền cược, thấp hơn thì thua, bằng điểm thì hoà.
             </li>
             <li>
-              <b>Sòng Bạc Đất</b> (thay Viettel): mỗi người đặt tối đa 1 ô (cả nhóm chưa có nhà),
-              cần từ 2 người; tất cả cùng đổ, ai cao nhất lấy hết, hoà thì đổ lại.
+              <b>Sòng Bạc Đất</b> (thay Viettel): mỗi người đặt tối đa 1 ô của mình (nhà, khách sạn
+              trên ô đi kèm), cần từ 2 người; tất cả cùng đổ, ai cao nhất lấy hết, hoà thì đổ lại.
             </li>
             <li>Thẻ “Đi tới tiện ích gần nhất” thành “Đi tới Sòng Bạc gần nhất”.</li>
           </ul>

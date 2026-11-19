@@ -209,20 +209,24 @@ describe('Sòng Bạc Đất', () => {
     expect(r2.events).toContainEqual(expect.objectContaining({ t: 'casinoSkip', kind: 'land' }));
   });
 
-  it('nhóm đã có nhà thì không đặt được; nhận ô thế chấp trả phí 10%', () => {
+  it('đặt được ô đã có nhà (nhà đi kèm ô); nhận ô thế chấp trả phí 10%', () => {
     let s = mkGame(3, FS);
     own(s, 'p1', 1, 3);
-    s.properties[3]!.houses = 1;
+    s.properties[3]!.houses = 4;
     own(s, 'p2', 6);
     own(s, 'p3', 9);
     s.properties[9]!.mortgaged = true;
     pl(s, 'p1').position = 25;
     ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 2]));
-    expect(s.casino!.eligible).toEqual(['p2', 'p3']);
+    expect(s.casino!.eligible).toEqual(['p1', 'p2', 'p3']);
+    ({ state: s } = act(s, 'p1', { type: 'casinoStake', pos: 3 }));
     ({ state: s } = act(s, 'p2', { type: 'casinoStake', pos: 6 }));
     ({ state: s } = act(s, 'p3', { type: 'casinoStake', pos: 9 }));
+    ({ state: s } = act(s, 'p1', { type: 'casinoRoll' }, [1, 2]));
     ({ state: s } = act(s, 'p2', { type: 'casinoRoll' }, [6, 6]));
     ({ state: s } = act(s, 'p3', { type: 'casinoRoll' }, [1, 1]));
+    expect(s.properties[3]!.owner).toBe('p2');
+    expect(s.properties[3]!.houses).toBe(4);
     expect(s.properties[9]!.owner).toBe('p2');
     expect(pl(s, 'p2').cash).toBe(1500 - 6); // phí 10% của 60 tr thế chấp
   });

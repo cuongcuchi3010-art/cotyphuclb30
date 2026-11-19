@@ -1129,11 +1129,10 @@ export function casinoKindAt(s: GameState, pos: number): CasinoKind | null {
   return null;
 }
 
-/** Ô người chơi có thể đặt ở Sòng Bạc Đất: của mình, cả nhóm chưa có nhà */
+/** Ô người chơi có thể đặt ở Sòng Bạc Đất: mọi ô của mình (nhà / khách sạn trên ô đi kèm) */
 export function casinoStakeTargets(s: GameState, pid: PlayerId): number[] {
-  return OWNABLE_INDICES.filter(
-    (i) => s.properties[i]!.owner === pid && !casinoKindAt(s, i) && blockHasNoBuildings(s, i),
-  );
+  // Freestyle xây nhà ngay nên ô nào cũng có nhà: cho đặt mọi ô của mình, nhà đi kèm ô
+  return OWNABLE_INDICES.filter((i) => s.properties[i]!.owner === pid && !casinoKindAt(s, i));
 }
 
 /** Mức cược tối đa của một người ở Sòng Bạc Tiền đang mở */
@@ -1327,7 +1326,7 @@ function resolveCasino(c: Ctx): void {
   const won: { pos: number; from: PlayerId }[] = [];
   for (const [id, pos] of Object.entries(k.bets)) {
     if (id === winner.id) continue;
-    // Ô phải còn hợp lệ lúc trao (vẫn của người đặt, cả nhóm chưa có nhà)
+    // Ô phải còn của người đặt lúc trao; nhà / khách sạn trên ô đi kèm
     if (!casinoStakeTargets(s, id).includes(pos)) continue;
     const st = s.properties[pos]!;
     st.owner = winner.id;
