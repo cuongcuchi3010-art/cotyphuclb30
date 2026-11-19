@@ -93,7 +93,7 @@ export const rulesSchema = z.object({
   goSalary: z.number().int().min(0).max(5000).default(200),
   rentMult: z.number().min(1).max(5).default(2),
   feeMult: z.number().min(1).max(5).default(2),
-  casinoMaxBet: z.number().int().min(50).max(10000).default(500),
+  casinoMaxBet: z.number().int().min(50).max(1000).default(1000),
 });
 
 /** Biệt danh = tên đăng nhập: chữ (có dấu), số, khoảng trắng, . _ - */

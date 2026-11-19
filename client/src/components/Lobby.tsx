@@ -163,9 +163,9 @@ export function Lobby() {
               />
               <Sel
                 label={S.lobby.casinoMaxBet}
-                value={rules.casinoMaxBet ?? 500}
-                options={[200, 500, 1000, 2000]}
-                format={(v) => formatMoney(v)}
+                value={Math.min(rules.casinoMaxBet ?? 1000, 1000)}
+                options={[200, 500, 1000]}
+                format={(v) => formatMoney(v) + (v === 1000 ? ` (${S.lobby.standard})` : '')}
                 onChange={(v) => setRules({ casinoMaxBet: v })}
               />
             </>
@@ -419,7 +419,7 @@ const MODE_PRESETS: Record<'classic' | 'freestyle', Partial<Rules>> = {
     goSalary: 500,
     rentMult: 2,
     feeMult: 2,
-    casinoMaxBet: 500,
+    casinoMaxBet: 1000,
     festivalSquare: false,
     jackpot: false,
   },

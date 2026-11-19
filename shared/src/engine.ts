@@ -1119,6 +1119,8 @@ function finishDraw(c: Ctx): void {
 export const CASINO_CASH_POS = 12;
 export const CASINO_LAND_POS = 28;
 const CASINO_MIN_BET = 10;
+/** Mức cược tối đa mỗi người ở Sòng Bạc Tiền: 1 tỷ */
+export const CASINO_MAX_BET = 1000;
 
 export function casinoKindAt(s: GameState, pos: number): CasinoKind | null {
   if (!isFreestyle(s)) return null;
@@ -1155,7 +1157,11 @@ function openCasino(c: Ctx, p: PlayerState, kind: CasinoKind, pos: number): void
       return;
     }
     // Nhà cái luôn đủ tiền trả: tiền nhà cái chia đều cho số người có thể cược
-    cap = Math.min(s.rules.casinoMaxBet ?? 500, Math.floor(p.cash / Math.max(1, bettors.length)));
+    cap = Math.min(
+      CASINO_MAX_BET,
+      s.rules.casinoMaxBet ?? CASINO_MAX_BET,
+      Math.floor(p.cash / Math.max(1, bettors.length)),
+    );
     eligible = bettors.map((o) => o.id);
     if (eligible.length === 0 || cap < CASINO_MIN_BET) {
       c.ev.push({ t: 'casinoSkip', kind, opener: p.id, reason: 'noPlayers' });

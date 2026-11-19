@@ -54,8 +54,8 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
             <li>Lễ hội nhân tiền thuê ngẫu nhiên ×3 đến ×10 (số nhỏ hay ra hơn).</li>
             <li>
               <b>Sòng Bạc Tiền</b> (thay EVN): người dừng ô làm nhà cái; ai muốn thì đặt cược (tối
-              đa {formatMoney(rules?.casinoMaxBet ?? 500)}, không quá tiền nhà cái chia đều). Đổ cao
-              hơn nhà cái thắng tiền cược, thấp hơn thì thua, bằng điểm thì hoà.
+              đa {formatMoney(Math.min(rules?.casinoMaxBet ?? 1000, 1000))}, không quá tiền nhà cái
+              chia đều). Đổ cao hơn nhà cái thắng tiền cược, thấp hơn thì thua, bằng điểm thì hoà.
             </li>
             <li>
               <b>Sòng Bạc Đất</b> (thay Viettel): mỗi người đặt tối đa 1 ô (cả nhóm chưa có nhà),

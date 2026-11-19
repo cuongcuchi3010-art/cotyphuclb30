@@ -165,7 +165,7 @@ describe('Phòng chơi', () => {
         goSalary: 500,
         rentMult: 1.5,
         feeMult: 3,
-        casinoMaxBet: 1000,
+        casinoMaxBet: 500,
       },
     });
     a.msg({ type: 'start' });

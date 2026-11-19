@@ -76,7 +76,7 @@ export const DEFAULT_RULES: Rules = {
   goSalary: 200,
   rentMult: 2,
   feeMult: 2,
-  casinoMaxBet: 500,
+  casinoMaxBet: 1000,
 };
 
 export interface PlayerStats {
