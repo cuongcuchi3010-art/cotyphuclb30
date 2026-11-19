@@ -369,15 +369,16 @@ function seatPos(i: number, n: number, house: boolean): { x: number; y: number }
   if (house) {
     if (i === 0) deg = -90;
     else {
+      // người chơi ngồi vòng phía dưới, đối diện nhà cái
       const m = n - 1;
-      // trải từ phải (−10°) vòng xuống dưới qua trái (190°)
-      deg = m === 1 ? 90 : -10 + (200 * (i - 1)) / (m - 1);
+      const span = Math.min(160, 50 * (m - 1));
+      deg = m === 1 ? 90 : 90 + span / 2 - (span * (i - 1)) / (m - 1);
     }
   } else {
     deg = -90 + (360 * i) / n + (n === 2 ? 90 : 0);
   }
   const r = (deg * Math.PI) / 180;
-  return { x: 50 + 44 * Math.cos(r), y: 50 + 40 * Math.sin(r) };
+  return { x: 50 + 42 * Math.cos(r), y: 48 + 36 * Math.sin(r) };
 }
 
 /** Bàn nỉ đỏ có người chơi ngồi quanh; ai đổ thì hiện xí ngầu cạnh người đó */
@@ -460,15 +461,17 @@ export function CasinoTable({
                     initial={{ scale: 0.2, rotate: -200, opacity: 0 }}
                     animate={{ scale: 1, rotate: 0, opacity: 1 }}
                     transition={{ type: 'spring', stiffness: 220, damping: 14 }}
-                    className="absolute left-1/2 top-[-30px] flex -translate-x-1/2 items-center gap-0.5 rounded-lg bg-black/70 px-1 py-0.5"
+                    className="absolute left-1/2 top-[-36px] flex -translate-x-1/2 items-center gap-0.5 rounded-lg bg-black/70 px-1 py-0.5"
                   >
-                    <span className="w-4">
+                    <span className="w-6">
                       <Die value={s.dice[0]} />
                     </span>
-                    <span className="w-4">
+                    <span className="w-6">
                       <Die value={s.dice[1]} />
                     </span>
-                    <b className="ml-0.5 text-sm tabular-nums text-nghe">{s.dice[0] + s.dice[1]}</b>
+                    <b className="ml-0.5 text-base tabular-nums text-nghe">
+                      {s.dice[0] + s.dice[1]}
+                    </b>
                   </motion.div>
                 )}
               </AnimatePresence>
