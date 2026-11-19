@@ -53,6 +53,8 @@ export interface Rules {
   feeMult: number;
   /** Freestyle: mức cược tối đa mỗi người ở Sòng Bạc Tiền */
   casinoMaxBet: number;
+  /** Freestyle: số nhà tối đa được xây ngay lần đầu (vừa mua xong), 0–4 */
+  firstBuildMax: number;
 }
 
 export type GameMode = 'classic' | 'freestyle';
@@ -77,6 +79,7 @@ export const DEFAULT_RULES: Rules = {
   rentMult: 2,
   feeMult: 2,
   casinoMaxBet: 1000,
+  firstBuildMax: 4,
 };
 
 export interface PlayerStats {
@@ -250,6 +253,8 @@ export interface GameState {
   buildPass?: number | null;
   /** Số nhà trên ô lúc vừa dừng lại (4 = được xây khách sạn) */
   buildPassLevel?: number;
+  /** Freestyle: lần xây đầu (vừa mua) chỉ được tới số nhà này */
+  buildPassCap?: number | null;
   /** Lễ hội đang diễn ra (1 ô duy nhất trên bàn, tiền thuê ×2) */
   /** (cũ) một lễ hội duy nhất ×2 — chỉ còn để đọc ván lưu trước đây */
   festival?: { pos: number; owner: PlayerId } | null;

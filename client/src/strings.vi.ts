@@ -103,12 +103,14 @@ export const S = {
     modeInfo: {
       classic: 'Luật cờ tỷ phú quen thuộc, tuỳ chỉnh bên dưới.',
       freestyle:
-        'Tiền to hơn, dừng ô của mình là xây ngay tới 4 nhà, lễ hội ×3–×10, ô EVN và Viettel thành Sòng Bạc Tiền và Sòng Bạc Đất.',
+        'Tiền to hơn, mua xong được xây ngay (số nhà tuỳ chọn), ghé lại ô là xây tới 4 nhà, lễ hội ×3–×10, ô EVN và Viettel thành Sòng Bạc Tiền và Sòng Bạc Đất.',
     },
     goSalary: 'Tiền qua Khởi Hành',
     rentMult: 'Hệ số tiền thuê',
     feeMult: 'Hệ số tiền phạt, thuế, thẻ',
     casinoMaxBet: 'Cược tối đa ở Sòng Bạc Tiền',
+    firstBuildMax: 'Mua xong được xây ngay',
+    firstBuildNone: 'Không xây',
     jackpot: 'Hũ tiền Cà Phê Vỉa Hè (thuế & phạt vào hũ, ai dừng ô 20 nhận hết)',
     doubleGo: (amount: string) => `Dừng đúng Khởi Hành nhận gấp đôi (${amount})`,
     noAuction: 'Tắt đấu giá (từ chối mua thì ô vẫn của ngân hàng)',

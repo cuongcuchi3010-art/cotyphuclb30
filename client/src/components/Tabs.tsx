@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  BANK_LOAN_MAX,
+  bankLoanMax,
   BANK_LOAN_RATE_PCT,
   BANK_LOAN_TURNS,
   GROUPS,
@@ -454,7 +454,8 @@ function LoanTab() {
     return <div className="p-3 text-sm text-gray-500">{S.game.bankrupt}</div>;
   const loans = game.loans ?? [];
   const offers = game.loanOffers ?? [];
-  const left = BANK_LOAN_MAX - bankLoanPrincipal(game, me);
+  const loanMax = bankLoanMax(game);
+  const left = loanMax - bankLoanPrincipal(game, me);
   const canBank = canBorrowFromBank(game, meP);
   const myLoans = loans.filter((l) => l.borrower === me);
   const lent = loans.filter((l) => l.lender === me);
@@ -478,26 +479,28 @@ function LoanTab() {
       <div className="rounded-2xl bg-white/70 p-3 dark:bg-white/5">
         <div className="font-bold">🏦 {S.loan.bankTitle}</div>
         <div className="text-xs text-gray-500">
-          {S.loan.bankInfo(BANK_LOAN_RATE_PCT, BANK_LOAN_TURNS, formatMoney(BANK_LOAN_MAX))}
+          {S.loan.bankInfo(BANK_LOAN_RATE_PCT, BANK_LOAN_TURNS, formatMoney(loanMax))}
         </div>
         <div className="mt-2 flex flex-wrap gap-1">
-          {[50, 100, 200, 500].map((v) => (
-            <button
-              key={v}
-              type="button"
-              disabled={v > left}
-              onClick={() => setAmount(v)}
-              className={cx(
-                'rounded-lg border px-2 py-1 text-xs',
-                amount === v
-                  ? 'border-son bg-son text-white'
-                  : 'border-black/10 dark:border-white/20',
-                v > left && 'opacity-30',
-              )}
-            >
-              {formatMoney(v)}
-            </button>
-          ))}
+          {[50, 100, 200, 500, 1000, 2000]
+            .filter((v) => v <= loanMax)
+            .map((v) => (
+              <button
+                key={v}
+                type="button"
+                disabled={v > left}
+                onClick={() => setAmount(v)}
+                className={cx(
+                  'rounded-lg border px-2 py-1 text-xs',
+                  amount === v
+                    ? 'border-son bg-son text-white'
+                    : 'border-black/10 dark:border-white/20',
+                  v > left && 'opacity-30',
+                )}
+              >
+                {formatMoney(v)}
+              </button>
+            ))}
           <input
             inputMode="numeric"
             value={amount || ''}

@@ -162,6 +162,13 @@ export function Lobby() {
                 onChange={(v) => setRules({ feeMult: v })}
               />
               <Sel
+                label={S.lobby.firstBuildMax}
+                value={rules.firstBuildMax ?? 4}
+                options={[0, 1, 2, 3, 4]}
+                format={(v) => (v === 0 ? S.lobby.firstBuildNone : `${v} nhà`)}
+                onChange={(v) => setRules({ firstBuildMax: v })}
+              />
+              <Sel
                 label={S.lobby.casinoMaxBet}
                 value={Math.min(rules.casinoMaxBet ?? 1000, 1000)}
                 options={[200, 500, 1000]}
@@ -420,6 +427,7 @@ const MODE_PRESETS: Record<'classic' | 'freestyle', Partial<Rules>> = {
     rentMult: 2,
     feeMult: 2,
     casinoMaxBet: 1000,
+    firstBuildMax: 4,
     festivalSquare: false,
     jackpot: false,
   },

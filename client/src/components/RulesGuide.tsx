@@ -48,8 +48,12 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
               thẻ ×{rules?.feeMult ?? 2}.
             </li>
             <li>
-              Dừng ở ô đất của mình, hoặc vừa mua xong, là xây ngay tới 4 nhà (không cần trọn màu).
-              Khách sạn khi ghé lại ô đã có 4 nhà. Kho nhà không giới hạn.
+              Vừa mua xong được xây ngay{' '}
+              {(rules?.firstBuildMax ?? 4) === 0
+                ? '0 nhà (chờ lần ghé sau)'
+                : `tối đa ${rules?.firstBuildMax ?? 4} nhà`}
+              ; những lần dừng lại ô của mình sau đó xây tới 4 nhà (không cần trọn màu). Khách sạn
+              khi ghé lại ô đã có 4 nhà. Kho nhà không giới hạn.
             </li>
             <li>Lễ hội nhân tiền thuê ngẫu nhiên ×3 đến ×10 (số nhỏ hay ra hơn).</li>
             <li>
@@ -226,7 +230,12 @@ function ThisGame({ rules }: { rules: Rules }) {
     ['Chế độ', rules.mode === 'freestyle' ? '🎰 Freestyle' : 'Cổ điển'],
     ['Tiền khởi đầu', formatMoney(rules.startingCash)],
     ['Qua Khởi Hành', formatMoney(rules.goSalary ?? 200)],
-    ['Xây nhà', fs ? 'Xây ngay tới 4 nhà' : S.lobby.buildRules[build].replace(/ \(.*\)$/, '')],
+    [
+      'Xây nhà',
+      fs
+        ? `Mua xong xây ${rules.firstBuildMax ?? 4} nhà`
+        : S.lobby.buildRules[build].replace(/ \(.*\)$/, ''),
+    ],
     [
       'Ô 20',
       fs

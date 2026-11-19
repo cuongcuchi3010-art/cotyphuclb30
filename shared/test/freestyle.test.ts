@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { FREESTYLE_STOCK, casinoBetLimit, festivalMult, rentFor } from '../src/index.js';
+import {
+  FREESTYLE_STOCK,
+  bankLoanMax,
+  casinoBetLimit,
+  festivalMult,
+  rentFor,
+} from '../src/index.js';
 import { act, mkGame, own, pl } from './helpers.js';
 
 const FS = { mode: 'freestyle' as const, goSalary: 500, rentMult: 2, feeMult: 2 };
@@ -36,11 +42,43 @@ describe('Freestyle: tiền và xây nhà', () => {
     expect(() => act(s, 'p1', { type: 'build', pos: 6 })).toThrow('sẵn 4 nhà');
   });
 
+  it('lần đầu (vừa mua) chỉ xây tới số nhà chủ phòng chọn; lần sau tới 4', () => {
+    let s = mkGame(2, { ...FS, firstBuildMax: 2 });
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [2, 4])); // → 6 Sa Pa
+    ({ state: s } = act(s, 'p1', { type: 'buy' }));
+    ({ state: s } = act(s, 'p1', { type: 'build', pos: 6 }));
+    ({ state: s } = act(s, 'p1', { type: 'build', pos: 6 }));
+    expect(() => act(s, 'p1', { type: 'build', pos: 6 })).toThrow('tối đa 2 nhà');
+    // Lần ghé sau: xây tiếp tới 4
+    s.buildPass = null;
+    s.buildPassCap = null;
+    s.players.find((p) => p.id === 'p1')!.position = 0;
+    s.phase = { kind: 'awaitRoll' };
+    s.rolled = false;
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [2, 4]));
+    ({ state: s } = act(s, 'p1', { type: 'build', pos: 6 }));
+    ({ state: s } = act(s, 'p1', { type: 'build', pos: 6 }));
+    expect(s.properties[6]!.houses).toBe(4);
+    let z = mkGame(2, { ...FS, firstBuildMax: 0 });
+    ({ state: z } = act(z, 'p1', { type: 'roll' }, [2, 4]));
+    ({ state: z } = act(z, 'p1', { type: 'buy' }));
+    expect(z.buildPass ?? null).toBeNull();
+  });
+
   it('dừng ở ô của mình (chưa trọn màu) là xây được', () => {
     let s = mkGame(2, FS);
     own(s, 'p1', 6);
     ({ state: s } = act(s, 'p1', { type: 'roll' }, [2, 4]));
     expect(s.buildPass).toBe(6);
+  });
+
+  it('hạn mức vay ngân hàng nhân theo hệ số tiền thuê', () => {
+    let s = mkGame(2, { ...FS, rentMult: 3 });
+    expect(bankLoanMax(s)).toBe(1500);
+    ({ state: s } = act(s, 'p1', { type: 'bankLoan', amount: 1500 }));
+    expect(pl(s, 'p1').cash).toBe(3000);
+    expect(() => act(s, 'p1', { type: 'bankLoan', amount: 10 })).toThrow('tối đa 0');
+    expect(bankLoanMax(mkGame(2))).toBe(500);
   });
 
   it('lễ hội ×3–×10', () => {

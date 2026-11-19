@@ -585,9 +585,11 @@ function applyPlayer(c: Ctx, p: PlayerState, a: PlayerAction): void {
       c.ev.push({ t: 'buy', playerId: p.id, pos, price });
       setNeutral(s);
       // Freestyle: mua xong được xây ngay tới 4 nhà
-      if (isFreestyle(s) && square(pos).kind === 'street') {
+      const firstMax = s.rules.firstBuildMax ?? 4;
+      if (isFreestyle(s) && square(pos).kind === 'street' && firstMax > 0) {
         s.buildPass = pos;
         s.buildPassLevel = 0;
+        s.buildPassCap = firstMax;
         c.ev.push({ t: 'buildChance', playerId: p.id, pos });
       }
       proceed(c);
@@ -861,6 +863,7 @@ function landOn(c: Ctx, p: PlayerState, ctx: RentContext): void {
     if (st.owner === p.id && sq.kind === 'street' && buildPassEligible(s, p.id, pos)) {
       s.buildPass = pos;
       s.buildPassLevel = st.houses;
+      s.buildPassCap = null;
       c.ev.push({ t: 'buildChance', playerId: p.id, pos });
       return;
     }
@@ -1608,6 +1611,7 @@ function nextTurn(c: Ctx): void {
   s.resume = { kind: 'none' };
   s.mortgageChoices = [];
   s.buildPass = null;
+  s.buildPassCap = null;
   s.phase = { kind: 'awaitRoll' };
   const cur = s.players[i]!;
   c.ev.push({ t: 'turnStart', playerId: cur.id, turn: s.turn });
@@ -1739,6 +1743,8 @@ export function canBuild(s: GameState, p: PlayerState, pos: number): string | nu
     if (s.buildPass !== pos) return 'Chỉ được xây khi bước vào lại ô này';
     if (st.houses === 4 && s.buildPassLevel !== 4)
       return 'Khách sạn chỉ xây được khi bước vào ô đã có sẵn 4 nhà';
+    if (s.buildPassCap != null && st.houses >= s.buildPassCap)
+      return `Lần đầu chỉ được xây tối đa ${s.buildPassCap} nhà`;
   }
   if (st.houses === 4) {
     if (s.bank.hotels < 1) return 'Ngân hàng đã hết khách sạn';
@@ -2099,12 +2105,17 @@ export function canBorrowFromBank(s: GameState, p: PlayerState): boolean {
   );
 }
 
+/** Hạn mức vay ngân hàng: 500 tr; Freestyle nhân theo hệ số tiền thuê */
+export function bankLoanMax(s: GameState): number {
+  return Math.round(BANK_LOAN_MAX * rentMultOf(s));
+}
+
 function takeBankLoan(c: Ctx, p: PlayerState, amount: number): void {
   const { s } = c;
   if (!canBorrowFromBank(s, p))
     fail('Chỉ vay ngân hàng trong lượt của mình hoặc khi đang gom tiền');
   if (!Number.isInteger(amount) || amount < 10) fail('Số tiền vay tối thiểu 10 tr');
-  const left = BANK_LOAN_MAX - bankLoanPrincipal(s, p.id);
+  const left = bankLoanMax(s) - bankLoanPrincipal(s, p.id);
   if (amount > left) fail(`Ngân hàng chỉ cho vay thêm tối đa ${left} tr`);
   const repay = bankLoanRepay(amount);
   p.cash += amount;

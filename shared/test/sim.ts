@@ -179,6 +179,7 @@ export function runSimulation(from: number, count: number): { finished: number; 
         rentMult: [1, 1.5, 2, 3][g % 4]!,
         feeMult: [1, 2, 3][g % 3]!,
         goSalary: [200, 500][g % 2]!,
+        firstBuildMax: g % 5,
       },
       rng,
     );

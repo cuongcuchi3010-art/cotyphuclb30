@@ -166,6 +166,7 @@ describe('Phòng chơi', () => {
         rentMult: 1.5,
         feeMult: 3,
         casinoMaxBet: 500,
+        firstBuildMax: 2,
       },
     });
     a.msg({ type: 'start' });
