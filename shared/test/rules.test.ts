@@ -553,6 +553,17 @@ describe('Gom tiền & phá sản', () => {
     expect(r.events).toContainEqual(expect.objectContaining({ t: 'bankrupt', buyout: true }));
   });
 
+  it('thẻ Khí Vận đầu tư thua lỗ: trả 1 tỷ (Freestyle không nhân hệ số)', () => {
+    const idx = DECKS.chest.findIndex((c) => c.id === 'kv21');
+    for (const rules of [{}, { mode: 'freestyle' as const, feeMult: 3 }]) {
+      let s = mkGame(2, rules);
+      pl(s, 'p1').cash = 5000;
+      topCard(s, 'chest', idx);
+      ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 1])); // → 2 Khí Vận
+      expect(pl(s, 'p1').cash).toBe(4000);
+    }
+  });
+
   it('thẻ trúng Vietlott nhận 3 tỷ (Freestyle không nhân hệ số)', () => {
     const idx = DECKS.chance.findIndex((c) => c.id === 'ch21');
     for (const rules of [{}, { mode: 'freestyle' as const, feeMult: 3 }]) {

@@ -12,7 +12,7 @@ export type CardEffect =
   | { type: 'nearestUtility' }
   /** fixed = không nhân hệ số tiền Freestyle (vd. trúng Vietlott 3 tỷ) */
   | { type: 'collect'; amount: number; fixed?: boolean }
-  | { type: 'pay'; amount: number }
+  | { type: 'pay'; amount: number; fixed?: boolean }
   | { type: 'jailFree' }
   | { type: 'back'; steps: number }
   | { type: 'goToJail' }
@@ -293,6 +293,12 @@ export const CHEST_CARDS: readonly Card[] = [
     deck: 'chest',
     text: '🎉 Lễ hội làng! Chọn 1 ô đất của bạn để mở hội: tiền thuê ô đó tăng ngẫu nhiên ×2 đến ×4.',
     effect: { type: 'festival' },
+  },
+  {
+    id: 'kv21',
+    deck: 'chest',
+    text: '💸 Đầu tư thua lỗ, trả cho giang hồ 1 tỷ.',
+    effect: { type: 'pay', amount: 1000, fixed: true },
   },
 ];
 

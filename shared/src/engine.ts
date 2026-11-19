@@ -970,7 +970,12 @@ function applyCard(c: Ctx, p: PlayerState, e: CardEffect): void {
       return;
     }
     case 'pay':
-      s.debts.push({ from: p.id, to: 'bank', amount: fee(s, e.amount), reason: 'card' });
+      s.debts.push({
+        from: p.id,
+        to: 'bank',
+        amount: e.fixed ? e.amount : fee(s, e.amount),
+        reason: 'card',
+      });
       return;
     case 'jailFree':
       return;
