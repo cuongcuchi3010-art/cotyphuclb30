@@ -103,7 +103,7 @@ export const S = {
     modeInfo: {
       classic: 'Luật cờ tỷ phú quen thuộc, tuỳ chỉnh bên dưới.',
       freestyle:
-        'Tiền to hơn, mua xong được xây ngay (số nhà tuỳ chọn), ghé lại ô là xây tới 4 nhà, lễ hội ×3–×10, ô EVN và Viettel thành Sòng Bạc Tiền và Sòng Bạc Đất.',
+        'Tiền to hơn, mua xong được xây ngay (số nhà tuỳ chọn), ghé lại ô là xây tới 4 nhà, lễ hội ×3–×10, ô EVN và Viettel thành Sòng Bạc Tiền và Sòng Bạc Đất, ô Cà Phê thành ô Cơ Hội.',
     },
     goSalary: 'Tiền qua Khởi Hành',
     rentMult: 'Hệ số tiền thuê',

@@ -28,7 +28,13 @@ export function describeEvent(
     id === 'bank' ? 'Ngân hàng' : (s.players.find((p) => p.id === id)?.name ?? '?');
   const free = s.rules?.mode === 'freestyle';
   const sq = (i: number) =>
-    free && i === 12 ? CASINO_NAMES.cash : free && i === 28 ? CASINO_NAMES.land : square(i).name;
+    free && i === 12
+      ? CASINO_NAMES.cash
+      : free && i === 28
+        ? CASINO_NAMES.land
+        : free && i === 20
+          ? 'Cơ Hội'
+          : square(i).name;
   const dice = (d: [number, number]) => `${d[0]}+${d[1]}=${d[0] + d[1]}`;
   switch (ev.t) {
     case 'orderRolls':

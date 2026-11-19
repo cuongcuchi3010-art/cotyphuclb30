@@ -178,6 +178,7 @@ export function useMeasuredHeight<T extends HTMLElement>(): [React.RefObject<T>,
 export function squareName(game: GameState | null | undefined, pos: number, short = false): string {
   const ck = game ? casinoKindAt(game, pos) : null;
   if (ck) return CASINO_NAMES[ck];
+  if (game?.rules.mode === 'freestyle' && pos === 20) return 'Cơ Hội';
   const sq = square(pos);
   return short ? (sq.short ?? sq.name) : sq.name;
 }

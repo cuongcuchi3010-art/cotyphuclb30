@@ -886,6 +886,11 @@ function landOn(c: Ctx, p: PlayerState, ctx: RentContext): void {
       sendToJail(c, p, 'square');
       return;
     case 'parking':
+      if (isFreestyle(s) && pos === PARKING_INDEX) {
+        // Freestyle: ô Cà Phê thành ô Cơ Hội
+        drawCard(c, p, 'chance');
+        return;
+      }
       if (s.rules.festivalSquare && pos === PARKING_INDEX) {
         // Ô Lễ Hội: chọn 1 ô đất của mình để tổ chức (thuê ×2)
         if (festivalTargets(s, p.id).length === 0) return;
