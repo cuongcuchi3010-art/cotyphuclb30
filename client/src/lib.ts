@@ -1,5 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { GameState, RoomView } from '@cotyphu/shared';
+import {
+  CASINO_NAMES,
+  casinoKindAt,
+  square,
+  type Card,
+  type GameState,
+  type RoomView,
+} from '@cotyphu/shared';
 import { PLAYER_COLORS } from './strings.vi';
 import { serverNow, useStore } from './store';
 
@@ -165,4 +172,29 @@ export function useMeasuredHeight<T extends HTMLElement>(): [React.RefObject<T>,
     return () => ro.disconnect();
   }, []);
   return [ref, h];
+}
+
+/** Tên ô theo ván (Freestyle: ô 12 / 28 là Sòng Bạc) */
+export function squareName(game: GameState | null | undefined, pos: number, short = false): string {
+  const ck = game ? casinoKindAt(game, pos) : null;
+  if (ck) return CASINO_NAMES[ck];
+  const sq = square(pos);
+  return short ? (sq.short ?? sq.name) : sq.name;
+}
+
+/** Chữ trên thẻ theo luật ván: tiền Khởi Hành, hệ số tiền Freestyle, thẻ tiện ích → Sòng Bạc */
+export function cardText(game: GameState | null | undefined, card: Card): string {
+  if (!game) return card.text;
+  const free = game.rules.mode === 'freestyle';
+  if (free && card.effect.type === 'nearestUtility')
+    return 'Đi tới Sòng Bạc gần nhất phía trước và mở bàn cược như khi dừng ở ô.';
+  const go = game.rules.goSalary ?? 200;
+  const mult = free ? (game.rules.feeMult ?? 2) : 1;
+  const fmt = (n: number) => (n >= 1000 ? `${(n / 1000).toLocaleString('vi-VN')} tỷ` : `${n} tr`);
+  return card.text.replace(/(\d+) tr/g, (m, n: string) => {
+    const v = Number(n);
+    // "200 tr" đi kèm Khởi Hành là tiền lương; còn lại là tiền thẻ
+    if (v === 200 && /Khởi Hành/.test(card.text)) return fmt(go);
+    return mult === 1 ? m : fmt(Math.round(v * mult));
+  });
 }

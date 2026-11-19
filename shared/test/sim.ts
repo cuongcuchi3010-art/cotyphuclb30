@@ -6,6 +6,9 @@ import {
   applyAction,
   canBuild,
   candidateActions,
+  casinoBetLimit,
+  casinoStakeTargets,
+  FREESTYLE_STOCK,
   createGame,
   seededRng,
   shuffle,
@@ -51,8 +54,8 @@ function checkInvariants(s: GameState): void {
     if (!st.owner && (st.houses > 0 || st.mortgaged))
       throw new Error(`Ô ${i} của ngân hàng có trạng thái lạ`);
   }
-  const H = s.rules.houseStock;
-  const K = s.rules.hotelStock;
+  const H = s.rules.mode === 'freestyle' ? FREESTYLE_STOCK : s.rules.houseStock;
+  const K = s.rules.mode === 'freestyle' ? FREESTYLE_STOCK : s.rules.hotelStock;
   if (houses > H || hotels > K) throw new Error('Vượt giới hạn kho');
   if (houses + s.bank.houses !== H) throw new Error(`Lệch kho nhà ${houses}+${s.bank.houses}`);
   if (hotels + s.bank.hotels !== K) throw new Error('Lệch kho khách sạn');
@@ -77,6 +80,26 @@ function step(s: GameState, rng: Rng): GameState {
     const free = s.players.map((_, k) => k).filter((k) => !taken.has(k));
     return applyAction(s, p.id, { type: 'drawLot', card: free[rng.int(0, free.length - 1)]! }, rng)
       .state;
+  }
+  if (ph.kind === 'casino') {
+    const k = s.casino!;
+    if (rng.int(0, 5) === 0) return applyAction(s, 'system', { type: 'casinoTimeout' }, rng).state;
+    if (k.stage === 'roll') {
+      const p = k.rollers.find((id) => !k.rolls[id])!;
+      return applyAction(s, p, { type: 'casinoRoll' }, rng).state;
+    }
+    const p = k.eligible.find((id) => !(id in k.bets) && !k.passed.includes(id));
+    if (!p) return applyAction(s, 'system', { type: 'casinoTimeout' }, rng).state;
+    const cands: Action[] = [{ type: 'casinoPass' }];
+    if (k.kind === 'cash') {
+      const lim = casinoBetLimit(s, p);
+      if (lim >= 10) cands.push({ type: 'casinoBet', amount: rng.int(10, lim) });
+    } else {
+      const t = casinoStakeTargets(s, p);
+      if (t.length) cands.push({ type: 'casinoStake', pos: t[rng.int(0, t.length - 1)]! });
+    }
+    const ns = tryApply(s, p, cands[rng.int(0, cands.length - 1)]!, rng);
+    return ns ?? applyAction(s, p, { type: 'casinoPass' }, rng).state;
   }
   if (ph.kind === 'auction') {
     if (rng.int(0, 2) > 0) {
@@ -152,6 +175,10 @@ export function runSimulation(from: number, count: number): { finished: number; 
         buildRule: (['combined', 'color', 'landing'] as const)[g % 3]!,
         festivalSquare: g % 2 === 1,
         maxFestivals: 1 + (g % 5),
+        mode: g % 3 === 2 ? 'freestyle' : 'classic',
+        rentMult: [1, 1.5, 2, 3][g % 4]!,
+        feeMult: [1, 2, 3][g % 3]!,
+        goSalary: [200, 500][g % 2]!,
       },
       rng,
     );

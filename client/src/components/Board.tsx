@@ -10,6 +10,9 @@ import {
   festivalMult,
   isFestival,
   jackpotOn,
+  casinoKindAt,
+  fee,
+  CASINO_NAMES,
   rentFor,
   standings,
   type GameEvent,
@@ -18,7 +21,7 @@ import {
 } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
-import { cellOf, centerPct, cx, playerColor, sideOf, useGame, photoOf } from '../lib';
+import { cardText, cellOf, centerPct, cx, playerColor, sideOf, useGame, photoOf } from '../lib';
 import { BrandLogo } from './BrandLogo';
 import { Avatar } from './Avatar';
 import { CenterInfo } from './CenterInfo';
@@ -324,6 +327,43 @@ function SquareCell({ sq }: { sq: Sq }) {
     );
   }
 
+  // ---- Ô Sòng Bạc (Freestyle, thay EVN / Viettel)
+  const casino = game ? casinoKindAt(game, sq.index) : null;
+  if (casino) {
+    return (
+      <div
+        className={cx(
+          'relative flex items-center justify-center gap-[4%] overflow-hidden rounded-[6px] text-center leading-[1.1] text-nghe shadow-sm',
+          PAD[side],
+        )}
+        style={{
+          gridRow: row,
+          gridColumn: col,
+          background: 'linear-gradient(135deg,#3B0F4F,#1E0A2B)',
+          boxShadow: 'inset 0 0 0 0.35cqw #F2A900',
+        }}
+        title={CASINO_NAMES[casino]}
+      >
+        <span className="upright leading-none" style={{ fontSize: '3.5cqw' }}>
+          🎰
+        </span>
+        <span
+          className={cx(
+            'upright flex min-w-0 flex-col',
+            vertical ? 'items-start text-left' : 'items-center',
+          )}
+        >
+          <span className="font-black uppercase" style={{ fontSize: '1.15cqw' }}>
+            Sòng Bạc
+          </span>
+          <span className="font-bold text-white" style={{ fontSize: '1.1cqw' }}>
+            {casino === 'cash' ? '💰 Tiền' : '🏠 Đất'}
+          </span>
+        </span>
+      </div>
+    );
+  }
+
   // ---- Ô thường
   const bandText =
     st?.owner && game ? rentLabel(game, sq.index) : price !== null ? formatMoney(price) : null;
@@ -376,7 +416,7 @@ function SquareCell({ sq }: { sq: Sq }) {
             className="font-semibold text-slate-500 dark:text-slate-300"
             style={{ fontSize: '1.1cqw' }}
           >
-            {formatMoney(sq.amount)}
+            {formatMoney(game ? fee(game, sq.amount) : sq.amount)}
           </span>
         )}
       </span>
@@ -549,7 +589,7 @@ function Tokens() {
 
 function CardReveal() {
   const events = useStore((s) => s.events);
-  const { room } = useGame();
+  const { room, game } = useGame();
   const [card, setCard] = useState<{
     id: string;
     deck: 'chance' | 'chest';
@@ -598,7 +638,7 @@ function CardReveal() {
               style={{ fontSize: 'max(11px, 1.75cqw)' }}
               className="font-medium text-gray-800 dark:text-gray-100"
             >
-              {cardById(card.id).text}
+              {cardText(game, cardById(card.id))}
             </div>
           </motion.div>
         </motion.button>

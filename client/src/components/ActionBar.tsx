@@ -1,4 +1,12 @@
-import { canBuild, formatMoney, maxFestivals, ownable, square } from '@cotyphu/shared';
+import {
+  CASINO_NAMES,
+  canBuild,
+  formatMoney,
+  jailFine,
+  maxFestivals,
+  ownable,
+  square,
+} from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
 import { nameOf, useGame } from '../lib';
@@ -21,6 +29,8 @@ export function ActionBar() {
   if (spectator || !meP) return <div className={note}>👀 {S.game.spectating}</div>;
   if (meP.bankrupt) return <div className={note}>{S.game.bankrupt}</div>;
   if (ph.kind === 'drawOrder') return <div className={note}>{S.draw.spectate}</div>;
+  if (ph.kind === 'casino' && game.casino)
+    return <div className={note}>{S.casino.waiting(CASINO_NAMES[game.casino.kind])}</div>;
   if (ph.kind === 'cardChoice') {
     return (
       <div className={note}>
@@ -59,8 +69,12 @@ export function ActionBar() {
           🚓 {S.game.inJail} · {S.game.jailAttempts(meP.jailAttempts)}
         </div>
         <div className="grid grid-cols-3 gap-1.5">
-          <Btn className={B} disabled={meP.cash < 50} onClick={() => act({ type: 'payBail' })}>
-            {S.game.payBail}
+          <Btn
+            className={B}
+            disabled={meP.cash < jailFine(game)}
+            onClick={() => act({ type: 'payBail' })}
+          >
+            {S.game.payBail(formatMoney(jailFine(game)))}
           </Btn>
           <Btn
             className={B}

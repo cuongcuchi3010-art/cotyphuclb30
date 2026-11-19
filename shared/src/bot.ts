@@ -3,6 +3,8 @@ import { OWNABLE_INDICES, ownable } from './data/board.vi.js';
 import {
   applyAction,
   canBuild,
+  casinoBetLimit,
+  casinoStakeTargets,
   currentPlayer,
   demolishTargets,
   festivalTargets,
@@ -42,6 +44,7 @@ export function botDecision(s: GameState, botId: PlayerId): Plan | null {
   if (ph.kind === 'cardChoice') {
     return currentPlayer(s).id === botId ? { by: 'system', action: { type: 'autoChoose' } } : null;
   }
+  if (ph.kind === 'casino') return botCasino(s, botId);
   if (ph.kind === 'raiseFunds') {
     if (ph.debtor !== botId) return null;
     if (liquidationValue(s, botId) < totalOwed(s, botId))
@@ -173,4 +176,30 @@ export function legalActions(s: GameState, id: PlayerId, rng: Rng): PlayerAction
       return false;
     }
   });
+}
+
+/** Bot ở Sòng Bạc: cược ~10% tiền (không phải lần nào cũng chơi); sòng đất chỉ đặt ô rẻ nhất khi trên bàn có ô đắt hơn */
+function botCasino(s: GameState, botId: PlayerId): Plan | null {
+  const k = s.casino;
+  if (!k) return null;
+  if (k.stage === 'roll') {
+    return k.rollers.includes(botId) && !k.rolls[botId]
+      ? { by: botId, action: { type: 'casinoRoll' } }
+      : null;
+  }
+  if (!k.eligible.includes(botId) || botId in k.bets || k.passed.includes(botId)) return null;
+  const idx = s.players.findIndex((p) => p.id === botId);
+  if (k.kind === 'cash') {
+    const limit = casinoBetLimit(s, botId);
+    const amount = Math.min(limit, Math.max(10, Math.round(getPlayer(s, botId).cash / 100) * 10));
+    if ((s.turn + idx) % 3 === 0 || amount < 10)
+      return { by: botId, action: { type: 'casinoPass' } };
+    return { by: botId, action: { type: 'casinoBet', amount } };
+  }
+  const mine = casinoStakeTargets(s, botId).sort((a, b) => ownable(a).price - ownable(b).price);
+  const cheapest = mine[0];
+  const best = Math.max(0, ...Object.values(k.bets).map((pos) => ownable(pos).price));
+  if (cheapest !== undefined && best > ownable(cheapest).price)
+    return { by: botId, action: { type: 'casinoStake', pos: cheapest } };
+  return { by: botId, action: { type: 'casinoPass' } };
 }

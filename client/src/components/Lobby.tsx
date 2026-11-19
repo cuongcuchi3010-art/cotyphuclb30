@@ -19,6 +19,8 @@ export function Lobby() {
   const mySeat = room.players.find((p) => p.id === me);
   const link = `${location.origin}/r/${room.code}`;
   const rules = room.rules;
+  const mode = rules.mode ?? 'classic';
+  const free = mode === 'freestyle';
   const setRules = (patch: Partial<Rules>) =>
     send({ type: 'setRules', rules: { ...rules, ...patch } });
 
@@ -101,28 +103,83 @@ export function Lobby() {
           <RulesButton label className="!min-h-[32px] text-xs" />
         </div>
         <fieldset disabled={!isHost} className="space-y-2 text-sm disabled:opacity-80">
-          <label className="flex items-center justify-between gap-2">
-            {S.lobby.startingCash}
-            <select
-              value={rules.startingCash}
-              onChange={(e) => setRules({ startingCash: Number(e.target.value) })}
-              className="rounded-lg border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-black/30"
-            >
-              {[1000, 1500, 2000, 2500, 3000].map((v) => (
-                <option key={v} value={v}>
-                  {formatMoney(v)}
-                </option>
+          <div>
+            <div className="mb-1 font-semibold">{S.lobby.mode}</div>
+            <div className="flex rounded-xl bg-black/5 p-0.5 dark:bg-white/10" role="group">
+              {(['classic', 'freestyle'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setRules(m === mode ? {} : MODE_PRESETS[m])}
+                  className={cx(
+                    'flex-1 rounded-lg px-3 py-1.5 text-sm font-bold',
+                    mode === m
+                      ? 'bg-white text-son shadow dark:bg-gray-800 dark:text-nghe'
+                      : 'text-gray-500',
+                  )}
+                >
+                  {m === 'freestyle' ? '🎰 ' : '🎲 '}
+                  {S.lobby.modes[m]}
+                </button>
               ))}
-            </select>
-          </label>
-          <Toggle
-            checked={!!rules.festivalSquare}
-            onChange={(v) =>
-              setRules(v ? { festivalSquare: true, jackpot: false } : { festivalSquare: false })
+            </div>
+            <div className="mt-1 text-xs text-gray-600 dark:text-gray-300">
+              {S.lobby.modeInfo[mode]}
+            </div>
+          </div>
+          <Sel
+            label={S.lobby.startingCash}
+            value={rules.startingCash}
+            options={[1000, 1500, 2000, 2500, 3000, 5000, 10000]}
+            format={(v) =>
+              formatMoney(v) + (v === (free ? 3000 : 1500) ? ` (${S.lobby.standard})` : '')
             }
-            label={S.lobby.festivalSquare}
+            onChange={(v) => setRules({ startingCash: v })}
           />
-          {!rules.festivalSquare && (
+          <Sel
+            label={S.lobby.goSalary}
+            value={rules.goSalary ?? 200}
+            options={[100, 200, 300, 500, 1000]}
+            format={(v) =>
+              formatMoney(v) + (v === (free ? 500 : 200) ? ` (${S.lobby.standard})` : '')
+            }
+            onChange={(v) => setRules({ goSalary: v })}
+          />
+          {free && (
+            <>
+              <Sel
+                label={S.lobby.rentMult}
+                value={rules.rentMult ?? 2}
+                options={[1, 1.5, 2, 3, 5]}
+                format={(v) => `×${String(v).replace('.', ',')}`}
+                onChange={(v) => setRules({ rentMult: v })}
+              />
+              <Sel
+                label={S.lobby.feeMult}
+                value={rules.feeMult ?? 2}
+                options={[1, 2, 3, 5]}
+                format={(v) => `×${v}`}
+                onChange={(v) => setRules({ feeMult: v })}
+              />
+              <Sel
+                label={S.lobby.casinoMaxBet}
+                value={rules.casinoMaxBet ?? 500}
+                options={[200, 500, 1000, 2000]}
+                format={(v) => formatMoney(v)}
+                onChange={(v) => setRules({ casinoMaxBet: v })}
+              />
+            </>
+          )}
+          {!free && (
+            <Toggle
+              checked={!!rules.festivalSquare}
+              onChange={(v) =>
+                setRules(v ? { festivalSquare: true, jackpot: false } : { festivalSquare: false })
+              }
+              label={S.lobby.festivalSquare}
+            />
+          )}
+          {!free && !rules.festivalSquare && (
             <Toggle
               checked={rules.jackpot}
               onChange={(v) => setRules({ jackpot: v })}
@@ -132,7 +189,7 @@ export function Lobby() {
           <Toggle
             checked={rules.doubleGo}
             onChange={(v) => setRules({ doubleGo: v })}
-            label={S.lobby.doubleGo}
+            label={S.lobby.doubleGo(formatMoney((rules.goSalary ?? 200) * 2))}
           />
           <Toggle
             checked={!rules.auctions}
@@ -160,34 +217,38 @@ export function Lobby() {
               ))}
             </select>
           </label>
-          <label className="flex items-center justify-between gap-2">
-            {S.lobby.houseStock}
-            <select
-              value={rules.houseStock ?? 32}
-              onChange={(e) => setRules({ houseStock: Number(e.target.value) })}
-              className="rounded-lg border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-black/30"
-            >
-              {[16, 24, 32, 48, 64, 88, 120].map((v) => (
-                <option key={v} value={v}>
-                  {v} nhà{v === 32 ? ` (${S.lobby.standard})` : ''}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex items-center justify-between gap-2">
-            {S.lobby.hotelStock}
-            <select
-              value={rules.hotelStock ?? 12}
-              onChange={(e) => setRules({ hotelStock: Number(e.target.value) })}
-              className="rounded-lg border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-black/30"
-            >
-              {[4, 8, 12, 16, 22, 30].map((v) => (
-                <option key={v} value={v}>
-                  {v} khách sạn{v === 12 ? ` (${S.lobby.standard})` : ''}
-                </option>
-              ))}
-            </select>
-          </label>
+          {!free && (
+            <>
+              <label className="flex items-center justify-between gap-2">
+                {S.lobby.houseStock}
+                <select
+                  value={rules.houseStock ?? 32}
+                  onChange={(e) => setRules({ houseStock: Number(e.target.value) })}
+                  className="rounded-lg border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-black/30"
+                >
+                  {[16, 24, 32, 48, 64, 88, 120].map((v) => (
+                    <option key={v} value={v}>
+                      {v} nhà{v === 32 ? ` (${S.lobby.standard})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex items-center justify-between gap-2">
+                {S.lobby.hotelStock}
+                <select
+                  value={rules.hotelStock ?? 12}
+                  onChange={(e) => setRules({ hotelStock: Number(e.target.value) })}
+                  className="rounded-lg border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-black/30"
+                >
+                  {[4, 8, 12, 16, 22, 30].map((v) => (
+                    <option key={v} value={v}>
+                      {v} khách sạn{v === 12 ? ` (${S.lobby.standard})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
+          )}
           <label className="flex items-center justify-between gap-2">
             {S.lobby.maxFestivals}
             <select
@@ -202,23 +263,27 @@ export function Lobby() {
               ))}
             </select>
           </label>
-          <label className="flex items-center justify-between gap-2">
-            {S.lobby.buildRule}
-            <select
-              value={rules.buildRule ?? 'combined'}
-              onChange={(e) => setRules({ buildRule: e.target.value as BuildRule })}
-              className="max-w-[60%] rounded-lg border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-black/30"
-            >
-              {(['combined', 'color', 'landing'] as const).map((v) => (
-                <option key={v} value={v}>
-                  {S.lobby.buildRules[v]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="rounded-lg bg-nghe-50 px-2 py-1.5 text-xs text-gray-700 dark:bg-white/10 dark:text-gray-200">
-            🏠 {S.lobby.buildInfos[rules.buildRule ?? 'combined']}
-          </div>
+          {!free && (
+            <>
+              <label className="flex items-center justify-between gap-2">
+                {S.lobby.buildRule}
+                <select
+                  value={rules.buildRule ?? 'combined'}
+                  onChange={(e) => setRules({ buildRule: e.target.value as BuildRule })}
+                  className="max-w-[60%] rounded-lg border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-black/30"
+                >
+                  {(['combined', 'color', 'landing'] as const).map((v) => (
+                    <option key={v} value={v}>
+                      {S.lobby.buildRules[v]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="rounded-lg bg-nghe-50 px-2 py-1.5 text-xs text-gray-700 dark:bg-white/10 dark:text-gray-200">
+                🏠 {S.lobby.buildInfos[rules.buildRule ?? 'combined']}
+              </div>
+            </>
+          )}
           <label className="flex items-center justify-between gap-2">
             {S.lobby.turnTimer}
             <select
@@ -342,5 +407,52 @@ export function TokenPicker({
         );
       })}
     </div>
+  );
+}
+
+/** Mức mặc định khi đổi chế độ chơi */
+const MODE_PRESETS: Record<'classic' | 'freestyle', Partial<Rules>> = {
+  classic: { mode: 'classic', startingCash: 1500, goSalary: 200 },
+  freestyle: {
+    mode: 'freestyle',
+    startingCash: 3000,
+    goSalary: 500,
+    rentMult: 2,
+    feeMult: 2,
+    casinoMaxBet: 500,
+    festivalSquare: false,
+    jackpot: false,
+  },
+};
+
+function Sel({
+  label,
+  value,
+  options,
+  format,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  options: number[];
+  format: (v: number) => string;
+  onChange: (v: number) => void;
+}) {
+  const opts = options.includes(value) ? options : [...options, value].sort((a, b) => a - b);
+  return (
+    <label className="flex items-center justify-between gap-2">
+      {label}
+      <select
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="rounded-lg border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-black/30"
+      >
+        {opts.map((v) => (
+          <option key={v} value={v}>
+            {format(v)}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }

@@ -1,5 +1,13 @@
 import type { DeckId } from './data/cards.vi.js';
-import type { Creditor, DebtReason, LoanOffer, PlayerId, Trade, TradeSide } from './types.js';
+import type {
+  CasinoKind,
+  Creditor,
+  DebtReason,
+  LoanOffer,
+  PlayerId,
+  Trade,
+  TradeSide,
+} from './types.js';
 
 export type PlayerAction =
   | { type: 'roll' }
@@ -44,7 +52,11 @@ export type PlayerAction =
     }
   | { type: 'acceptLoan'; id: string }
   | { type: 'rejectLoan'; id: string }
-  | { type: 'cancelLoan'; id: string };
+  | { type: 'cancelLoan'; id: string }
+  | { type: 'casinoBet'; amount: number }
+  | { type: 'casinoStake'; pos: number }
+  | { type: 'casinoPass' }
+  | { type: 'casinoRoll' };
 
 export type SystemAction =
   | { type: 'auctionClose' }
@@ -52,7 +64,8 @@ export type SystemAction =
   | { type: 'forceBankrupt'; playerId: PlayerId }
   | { type: 'timeUp' }
   | { type: 'autoChoose' }
-  | { type: 'autoDraw' };
+  | { type: 'autoDraw' }
+  | { type: 'casinoTimeout' };
 
 export type Action = PlayerAction | SystemAction;
 export type Actor = PlayerId | 'system';
@@ -117,6 +130,34 @@ export type GameEvent =
   | { t: 'propertyGifted'; from: PlayerId; to: PlayerId; pos: number }
   | { t: 'propertyWon'; playerId: PlayerId; pos: number }
   | { t: 'cardNoEffect'; playerId: PlayerId }
+  | { t: 'casinoOpen'; kind: CasinoKind; pos: number; opener: PlayerId; cap: number }
+  | { t: 'casinoSkip'; kind: CasinoKind; opener: PlayerId; reason: 'noPlayers' | 'noCash' }
+  | { t: 'casinoBet'; playerId: PlayerId; amount: number }
+  | { t: 'casinoStake'; playerId: PlayerId; pos: number }
+  | { t: 'casinoPass'; playerId: PlayerId }
+  | { t: 'casinoCancel'; kind: CasinoKind }
+  | { t: 'casinoRolling'; kind: CasinoKind; rollers: PlayerId[]; round: number }
+  | { t: 'casinoRoll'; playerId: PlayerId; dice: [number, number] }
+  | { t: 'casinoTie'; players: PlayerId[]; total: number }
+  | {
+      t: 'casinoResult';
+      kind: 'cash';
+      opener: PlayerId;
+      openerDice: [number, number];
+      results: {
+        playerId: PlayerId;
+        bet: number;
+        dice: [number, number];
+        outcome: 'win' | 'lose' | 'push';
+      }[];
+    }
+  | {
+      t: 'casinoResult';
+      kind: 'land';
+      winner: PlayerId;
+      dice: [number, number];
+      won: { pos: number; from: PlayerId }[];
+    }
   | { t: 'choosing'; playerId: PlayerId; choice: 'demolish' | 'gift' | 'festival' }
   | { t: 'festival'; playerId: PlayerId; pos: number; mult?: number; ended?: number[] }
   | { t: 'build'; playerId: PlayerId; pos: number; level: number; cost: number }

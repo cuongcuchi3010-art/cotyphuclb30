@@ -100,10 +100,14 @@ export function CenterInfo() {
         className="flex flex-wrap justify-center gap-x-3 text-gray-600 dark:text-gray-300"
         style={{ fontSize: '1.25cqw' }}
       >
-        <span>
-          🏠 {game.bank.houses}/{game.rules.houseStock ?? 32} · 🏨 {game.bank.hotels}/
-          {game.rules.hotelStock ?? 12}
-        </span>
+        {game.rules.mode === 'freestyle' ? (
+          <span>🎰 Freestyle · 🏠 không giới hạn</span>
+        ) : (
+          <span>
+            🏠 {game.bank.houses}/{game.rules.houseStock ?? 32} · 🏨 {game.bank.hotels}/
+            {game.rules.hotelStock ?? 12}
+          </span>
+        )}
         {jackpotOn(game) && (
           <span>
             ☕ {S.game.jackpot}: <b>{formatMoney(game.jackpot)}</b>

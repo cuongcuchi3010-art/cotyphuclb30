@@ -43,7 +43,19 @@ export interface Rules {
   festivalSquare: boolean;
   /** Số ô lễ hội tối đa cùng lúc (1–5, chuẩn 3) */
   maxFestivals: number;
+  /** Chế độ chơi: Cổ điển hoặc Freestyle (tiền to, xây ngay, sòng bạc) */
+  mode: GameMode;
+  /** Tiền qua / dừng Khởi Hành (chuẩn 200) */
+  goSalary: number;
+  /** Freestyle: hệ số tiền thuê */
+  rentMult: number;
+  /** Freestyle: hệ số tiền phạt / thuế / tiền thẻ */
+  feeMult: number;
+  /** Freestyle: mức cược tối đa mỗi người ở Sòng Bạc Tiền */
+  casinoMaxBet: number;
 }
+
+export type GameMode = 'classic' | 'freestyle';
 
 export type BuildRule = 'combined' | 'color' | 'landing';
 
@@ -60,6 +72,11 @@ export const DEFAULT_RULES: Rules = {
   buildRule: 'combined',
   festivalSquare: false,
   maxFestivals: 3,
+  mode: 'classic',
+  goSalary: 200,
+  rentMult: 2,
+  feeMult: 2,
+  casinoMaxBet: 500,
 };
 
 export interface PlayerStats {
@@ -105,7 +122,15 @@ export interface Debt {
 }
 
 export type DebtReason =
-  'rent' | 'tax' | 'card' | 'jailFine' | 'mortgageFee' | 'payEach' | 'collectEach' | 'loan';
+  | 'rent'
+  | 'tax'
+  | 'card'
+  | 'jailFine'
+  | 'mortgageFee'
+  | 'payEach'
+  | 'collectEach'
+  | 'loan'
+  | 'casino';
 
 /** Việc cần làm tiếp sau khi trả hết nợ */
 export type Resume =
@@ -180,6 +205,8 @@ export type Phase =
   /** Thẻ cho người rút tự chọn: đập nhà người khác / tặng ô đất */
   | { kind: 'cardChoice'; choice: 'demolish' | 'gift' | 'festival' }
   | { kind: 'raiseFunds'; debtor: PlayerId }
+  /** Freestyle: bàn cược Sòng Bạc đang mở (chi tiết ở state.casino) */
+  | { kind: 'casino' }
   | { kind: 'gameOver' };
 
 export interface GameState {
@@ -231,6 +258,32 @@ export interface GameState {
   /** Bốc thăm thứ tự: lá đã bốc (vị trí lá + số) và các số còn lại */
   lots?: { picks: Record<PlayerId, { card: number; number: number }>; remaining: number[] };
   endReason?: 'lastStanding' | 'timeUp';
+  /** Freestyle: bàn cược Sòng Bạc đang mở */
+  casino?: Casino | null;
+}
+
+export type CasinoKind = 'cash' | 'land';
+
+export interface Casino {
+  kind: CasinoKind;
+  pos: number;
+  /** Người dừng ở ô (nhà cái ở sòng tiền) */
+  opener: PlayerId;
+  /** 'bet': đang đặt cược · 'roll': đang đổ xí ngầu */
+  stage: 'bet' | 'roll';
+  /** Người được đặt cược */
+  eligible: PlayerId[];
+  /** Sòng tiền: số tiền cược · Sòng đất: ô đặt cược */
+  bets: Record<PlayerId, number>;
+  /** Người bấm Không chơi */
+  passed: PlayerId[];
+  /** Mức cược tối đa mỗi người (sòng tiền) */
+  cap: number;
+  /** Người phải đổ xí ngầu ở vòng này */
+  rollers: PlayerId[];
+  rolls: Record<PlayerId, [number, number]>;
+  /** Vòng đổ (sòng đất: hoà điểm cao nhất thì đổ lại) */
+  round: number;
 }
 
 export interface Rng {

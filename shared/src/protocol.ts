@@ -65,10 +65,14 @@ export const playerActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('acceptLoan'), id: z.string().max(20) }),
   z.object({ type: z.literal('rejectLoan'), id: z.string().max(20) }),
   z.object({ type: z.literal('cancelLoan'), id: z.string().max(20) }),
+  z.object({ type: z.literal('casinoBet'), amount: z.number().int().min(1).max(1_000_000) }),
+  z.object({ type: z.literal('casinoStake'), pos }),
+  z.object({ type: z.literal('casinoPass') }),
+  z.object({ type: z.literal('casinoRoll') }),
 ]);
 
 export const rulesSchema = z.object({
-  startingCash: z.number().int().min(500).max(5000),
+  startingCash: z.number().int().min(500).max(20000),
   jackpot: z.boolean(),
   doubleGo: z.boolean(),
   auctions: z.boolean(),
@@ -85,6 +89,11 @@ export const rulesSchema = z.object({
   buildRule: z.enum(['combined', 'color', 'landing']).default('combined'),
   festivalSquare: z.boolean().default(false),
   maxFestivals: z.number().int().min(1).max(5).default(3),
+  mode: z.enum(['classic', 'freestyle']).default('classic'),
+  goSalary: z.number().int().min(0).max(5000).default(200),
+  rentMult: z.number().min(1).max(5).default(2),
+  feeMult: z.number().min(1).max(5).default(2),
+  casinoMaxBet: z.number().int().min(50).max(10000).default(500),
 });
 
 /** Biệt danh = tên đăng nhập: chữ (có dấu), số, khoảng trắng, . _ - */

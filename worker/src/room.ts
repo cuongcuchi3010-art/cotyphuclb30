@@ -30,6 +30,10 @@ export const OFFLINE_AUTOPLAY_MS = 3_000;
 export const BOT_DELAY_MS = 1_200;
 export const AUCTION_MS = 10_000;
 export const DRAW_MS = 30_000;
+/** Sòng Bạc: thời gian đặt cược (tiền / đất) và thời gian đổ xí ngầu */
+export const CASINO_BET_MS = 20_000;
+export const CASINO_STAKE_MS = 25_000;
+export const CASINO_ROLL_MS = 10_000;
 export const RAISE_FUNDS_MS = 120_000;
 export const INACTIVE_MS = 2 * 60 * 60_000;
 const LOG_KEEP = 200;
@@ -495,7 +499,7 @@ export class RoomCore {
 
   private deadlineKeyFor(g: GameState): string {
     const actor = actingPlayer(g) ?? '-';
-    return `${g.phase.kind}:${actor}:${g.turn}:${g.doublesCount}:${g.rolled}:${g.auction?.seq ?? ''}:${g.auction?.pos ?? ''}`;
+    return `${g.phase.kind}:${actor}:${g.turn}:${g.doublesCount}:${g.rolled}:${g.auction?.seq ?? ''}:${g.auction?.pos ?? ''}:${g.casino?.stage ?? ''}:${g.casino?.round ?? ''}`;
   }
 
   private updateDeadline(now: number): void {
@@ -515,6 +519,16 @@ export class RoomCore {
       case 'drawOrder':
         // Bốc thăm: luôn giới hạn 30 giây, hết giờ máy bốc hộ
         snap.deadline = now + DRAW_MS;
+        break;
+      case 'casino':
+        // Sòng Bạc: luôn có đếm ngược riêng để ván không bị treo
+        snap.deadline =
+          now +
+          (g.casino?.stage === 'roll'
+            ? CASINO_ROLL_MS
+            : g.casino?.kind === 'land'
+              ? CASINO_STAKE_MS
+              : CASINO_BET_MS);
         break;
       default:
         snap.deadline = turnMs > 0 ? now + turnMs : null;

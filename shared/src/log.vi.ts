@@ -13,13 +13,23 @@ const REASON: Record<string, string> = {
   payEach: 'theo thẻ Chủ tịch HĐQT',
   collectEach: 'lì xì Tết',
   loan: 'trả nợ vay đến hạn',
+  casino: 'thua cược Sòng Bạc',
 };
 
+/** Tên hai ô Sòng Bạc (Freestyle) */
+export const CASINO_NAMES = { cash: 'Sòng Bạc Tiền', land: 'Sòng Bạc Đất' } as const;
+
 /** Câu nhật ký tiếng Việt cho một sự kiện. null = không cần ghi. */
-export function describeEvent(ev: GameEvent, s: Pick<GameState, 'players'>): string | null {
+export function describeEvent(
+  ev: GameEvent,
+  s: Pick<GameState, 'players'> & { rules?: Pick<GameState['rules'], 'mode'> },
+): string | null {
   const name = (id: string | null | undefined) =>
     id === 'bank' ? 'Ngân hàng' : (s.players.find((p) => p.id === id)?.name ?? '?');
-  const sq = (i: number) => square(i).name;
+  const free = s.rules?.mode === 'freestyle';
+  const sq = (i: number) =>
+    free && i === 12 ? CASINO_NAMES.cash : free && i === 28 ? CASINO_NAMES.land : square(i).name;
+  const dice = (d: [number, number]) => `${d[0]}+${d[1]}=${d[0] + d[1]}`;
   switch (ev.t) {
     case 'orderRolls':
       return `Thứ tự đi: ${ev.order.map(name).join(' → ')}`;
@@ -100,6 +110,40 @@ export function describeEvent(ev: GameEvent, s: Pick<GameState, 'players'>): str
         : ev.choice === 'demolish'
           ? `${name(ev.playerId)} đang chọn nhà để đập…`
           : `${name(ev.playerId)} đang chọn ô đất để tặng…`;
+    case 'casinoOpen':
+      return ev.kind === 'cash'
+        ? `🎰 ${name(ev.opener)} mở ${CASINO_NAMES.cash}: mọi người đặt cược (tối đa ${formatMoney(ev.cap)})`
+        : `🎰 ${name(ev.opener)} mở ${CASINO_NAMES.land}: ai muốn chơi thì đặt 1 ô đất`;
+    case 'casinoSkip':
+      return `🎰 ${CASINO_NAMES[ev.kind]} không mở được: ${ev.reason === 'noCash' ? `${name(ev.opener)} không đủ tiền làm nhà cái` : 'không đủ người có thể tham gia'}`;
+    case 'casinoBet':
+      return `${name(ev.playerId)} cược ${formatMoney(ev.amount)}`;
+    case 'casinoStake':
+      return `${name(ev.playerId)} đặt ${sq(ev.pos)}`;
+    case 'casinoPass':
+      return `${name(ev.playerId)} không chơi`;
+    case 'casinoCancel':
+      return `🎰 ${CASINO_NAMES[ev.kind]}: không đủ người đặt, huỷ bàn`;
+    case 'casinoRolling':
+      return ev.round > 1 ? '🎲 Hoà điểm cao nhất, đổ lại' : '🎲 Đổ xí ngầu!';
+    case 'casinoRoll':
+      return `${name(ev.playerId)} đổ ${dice(ev.dice)}`;
+    case 'casinoTie':
+      return `Hoà ${ev.total} điểm: ${ev.players.map(name).join(', ')}`;
+    case 'casinoResult':
+      if (ev.kind === 'cash') {
+        const parts = ev.results.map((r) =>
+          r.outcome === 'win'
+            ? `${name(r.playerId)} thắng ${formatMoney(r.bet)}`
+            : r.outcome === 'lose'
+              ? `${name(r.playerId)} thua ${formatMoney(r.bet)}`
+              : `${name(r.playerId)} hoà`,
+        );
+        return `🎰 Nhà cái ${name(ev.opener)} đổ ${dice(ev.openerDice)}: ${parts.join(' · ')}`;
+      }
+      return ev.won.length
+        ? `🏆 ${name(ev.winner)} đổ ${dice(ev.dice)}, lấy ${ev.won.map((w) => sq(w.pos)).join(', ')}`
+        : `🏆 ${name(ev.winner)} thắng bàn cược đất`;
     case 'cardNoEffect':
       return `Thẻ không có tác dụng với ${name(ev.playerId)}`;
     case 'buildChance':

@@ -22,6 +22,7 @@ import { useStore } from '../store';
 import { cx, fmtClock, nameOf, playerColor, useGame, useNow, photoOf } from '../lib';
 import { Btn, Modal } from './ui';
 import { Avatar } from './Avatar';
+import { CasinoPrompt, CasinoResult } from './Casino';
 import { motion } from 'framer-motion';
 
 /** Các popup quan trọng: mua ô, đấu giá, gom tiền, giao dịch đến, chuộc ô, host xử lý mất kết nối */
@@ -36,6 +37,8 @@ export function Prompts() {
       <IncomingLoan />
       <CardChoicePrompt />
       <DrawOrderPrompt />
+      <CasinoPrompt />
+      <CasinoResult />
       <HostDisconnect />
     </>
   );

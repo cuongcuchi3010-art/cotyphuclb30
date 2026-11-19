@@ -161,6 +161,11 @@ describe('Phòng chơi', () => {
         buildRule: 'landing',
         festivalSquare: true,
         maxFestivals: 4,
+        mode: 'classic',
+        goSalary: 500,
+        rentMult: 1.5,
+        feeMult: 3,
+        casinoMaxBet: 1000,
       },
     });
     a.msg({ type: 'start' });

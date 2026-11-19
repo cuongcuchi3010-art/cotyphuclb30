@@ -32,6 +32,7 @@ import type {
   PlayerState,
   PropertyState,
   BuildRule,
+  CasinoKind,
   Rng,
   Rules,
   TokenId,
@@ -136,7 +137,10 @@ export function createGame(
     players: ps,
     current: 0,
     properties,
-    bank: { houses: rules.houseStock ?? HOUSE_STOCK, hotels: rules.hotelStock ?? HOTEL_STOCK },
+    bank:
+      rules.mode === 'freestyle'
+        ? { houses: FREESTYLE_STOCK, hotels: FREESTYLE_STOCK }
+        : { houses: rules.houseStock ?? HOUSE_STOCK, hotels: rules.hotelStock ?? HOTEL_STOCK },
     decks: {
       chance: shuffle(
         DECKS.chance.map((_, i) => i),
@@ -254,9 +258,35 @@ function canBuildGroup(s: GameState, owner: PlayerId, pos: number): boolean {
   );
 }
 
-/** Chế độ xây nhà của ván (ván cũ chưa có trường này = Trăm điều khó) */
+/** Chế độ xây nhà của ván (ván cũ chưa có trường này = Trăm điều khó; Freestyle = theo ô) */
 export function buildRuleOf(s: GameState): BuildRule {
+  if (isFreestyle(s)) return 'landing';
   return s.rules.buildRule ?? 'combined';
+}
+
+/** Ván chơi chế độ Freestyle */
+export function isFreestyle(s: GameState): boolean {
+  return s.rules.mode === 'freestyle';
+}
+
+/** Tiền qua Khởi Hành */
+export function goSalary(s: GameState): number {
+  return s.rules.goSalary ?? GO_SALARY;
+}
+
+/** Hệ số tiền thuê (chỉ Freestyle) */
+export function rentMultOf(s: GameState): number {
+  return isFreestyle(s) ? (s.rules.rentMult ?? 2) : 1;
+}
+
+/** Nhân tiền phạt / thuế / tiền thẻ theo hệ số Freestyle (làm tròn tới triệu) */
+export function fee(s: GameState, amount: number): number {
+  return isFreestyle(s) ? Math.round(amount * (s.rules.feeMult ?? 2)) : amount;
+}
+
+/** Tiền nộp để ra Tạm Giữ */
+export function jailFine(s: GameState): number {
+  return fee(s, JAIL_FINE);
 }
 
 /** Dừng ở ô của mình có được tính là "bước vào lại" để xây không */
@@ -281,7 +311,31 @@ export interface RentContext {
 /** Tiền thuê khi dừng ở ô `pos` (0 nếu chưa có chủ / đang thế chấp) */
 export function rentFor(s: GameState, pos: number, ctx: RentContext): number {
   const base = baseRent(s, pos, ctx);
-  return base * festivalMult(s, pos);
+  return Math.round(base * rentMultOf(s)) * festivalMult(s, pos);
+}
+
+/** Freestyle: kho nhà coi như không giới hạn */
+export const FREESTYLE_STOCK = 9999;
+
+/** Freestyle: hệ số lễ hội ×3–×10, nghiêng về số nhỏ (trung bình ≈ ×5,3) */
+export const FREESTYLE_FESTIVAL_WEIGHTS: readonly [number, number][] = [
+  [3, 25],
+  [4, 20],
+  [5, 15],
+  [6, 12],
+  [7, 10],
+  [8, 8],
+  [9, 6],
+  [10, 4],
+];
+
+function freestyleFestivalMult(rng: Rng): number {
+  let r = rng.int(1, 100);
+  for (const [m, w] of FREESTYLE_FESTIVAL_WEIGHTS) {
+    if (r <= w) return m;
+    r -= w;
+  }
+  return 3;
 }
 
 /** Số ô lễ hội tối đa cùng lúc trên bàn (mặc định; chủ phòng chọn 1–5) */
@@ -454,6 +508,9 @@ function applySystem(c: Ctx, a: Action): void {
     case 'autoChoose':
       autoChoose(c);
       return;
+    case 'casinoTimeout':
+      casinoTimeout(c);
+      return;
     case 'autoDraw': {
       if (s.phase.kind !== 'drawOrder' || !s.lots) fail('Không ở pha bốc thăm');
       const n = s.players.length;
@@ -502,8 +559,8 @@ function applyPlayer(c: Ctx, p: PlayerState, a: PlayerAction): void {
       requireCurrent(c, p);
       requirePhase(c, 'awaitRoll');
       if (!p.inJail) fail('Bạn không ở Phòng Tạm Giữ');
-      if (p.cash < JAIL_FINE) fail('Không đủ tiền nộp phạt');
-      payToBank(c, p, JAIL_FINE, 'jailFine');
+      if (p.cash < jailFine(s)) fail('Không đủ tiền nộp phạt');
+      payToBank(c, p, jailFine(s), 'jailFine');
       leaveJail(c, p, 'paid');
       return;
     case 'useJailCard': {
@@ -526,6 +583,12 @@ function applyPlayer(c: Ctx, p: PlayerState, a: PlayerAction): void {
       getProp(s, pos).owner = p.id;
       c.ev.push({ t: 'buy', playerId: p.id, pos, price });
       setNeutral(s);
+      // Freestyle: mua xong được xây ngay tới 4 nhà
+      if (isFreestyle(s) && square(pos).kind === 'street') {
+        s.buildPass = pos;
+        s.buildPassLevel = 0;
+        c.ev.push({ t: 'buildChance', playerId: p.id, pos });
+      }
       proceed(c);
       return;
     }
@@ -590,6 +653,18 @@ function applyPlayer(c: Ctx, p: PlayerState, a: PlayerAction): void {
       doDemolish(c, p, a.pos);
       setNeutral(s);
       proceed(c);
+      return;
+    case 'casinoBet':
+      casinoBet(c, p, a.amount);
+      return;
+    case 'casinoStake':
+      casinoStake(c, p, a.pos);
+      return;
+    case 'casinoPass':
+      casinoPass(c, p);
+      return;
+    case 'casinoRoll':
+      casinoRoll(c, p);
       return;
     case 'chooseFestival':
       requireCurrent(c, p);
@@ -695,7 +770,7 @@ function doRoll(c: Ctx, p: PlayerState): void {
       p.inJail = false;
       p.jailAttempts = 0;
       c.ev.push({ t: 'leaveJail', playerId: p.id, how: 'forced' });
-      s.debts.push({ from: p.id, to: 'bank', amount: JAIL_FINE, reason: 'jailFine' });
+      s.debts.push({ from: p.id, to: 'bank', amount: jailFine(s), reason: 'jailFine' });
       s.resume = { kind: 'moveAfterJail', steps: total };
       setNeutral(s);
       proceed(c);
@@ -752,7 +827,7 @@ function moveBy(c: Ctx, p: PlayerState, steps: number, byDice = false): void {
   p.position = to;
   c.ev.push({ t: 'move', playerId: p.id, from, to, steps });
   if (from + steps >= BOARD_SIZE) {
-    const amount = byDice && to === 0 && c.s.rules.doubleGo ? GO_SALARY * 2 : GO_SALARY;
+    const amount = byDice && to === 0 && c.s.rules.doubleGo ? goSalary(c.s) * 2 : goSalary(c.s);
     p.cash += amount;
     c.ev.push({ t: 'passGo', playerId: p.id, amount });
   }
@@ -770,6 +845,11 @@ function landOn(c: Ctx, p: PlayerState, ctx: RentContext): void {
   s.landings[pos] = (s.landings[pos] ?? 0) + 1;
   c.ev.push({ t: 'land', playerId: p.id, pos });
 
+  const ck = casinoKindAt(s, pos);
+  if (ck) {
+    openCasino(c, p, ck, pos);
+    return;
+  }
   if (isOwnable(sq)) {
     const st = getProp(s, pos);
     if (!st.owner) {
@@ -792,7 +872,7 @@ function landOn(c: Ctx, p: PlayerState, ctx: RentContext): void {
   }
   switch (sq.kind) {
     case 'tax':
-      s.debts.push({ from: p.id, to: 'bank', amount: sq.amount, reason: 'tax', pos });
+      s.debts.push({ from: p.id, to: 'bank', amount: fee(s, sq.amount), reason: 'tax', pos });
       return;
     case 'chance':
     case 'chest':
@@ -882,12 +962,14 @@ function applyCard(c: Ctx, p: PlayerState, e: CardEffect): void {
       }
       return;
     }
-    case 'collect':
-      p.cash += e.amount;
-      c.ev.push({ t: 'collect', playerId: p.id, amount: e.amount, reason: 'card' });
+    case 'collect': {
+      const amount = fee(s, e.amount);
+      p.cash += amount;
+      c.ev.push({ t: 'collect', playerId: p.id, amount, reason: 'card' });
       return;
+    }
     case 'pay':
-      s.debts.push({ from: p.id, to: 'bank', amount: e.amount, reason: 'card' });
+      s.debts.push({ from: p.id, to: 'bank', amount: fee(s, e.amount), reason: 'card' });
       return;
     case 'jailFree':
       return;
@@ -907,8 +989,8 @@ function applyCard(c: Ctx, p: PlayerState, e: CardEffect): void {
       for (const i of OWNABLE_INDICES) {
         const st = s.properties[i]!;
         if (st.owner !== p.id) continue;
-        if (st.houses === HOTEL_LEVEL) amount += e.perHotel;
-        else amount += st.houses * e.perHouse;
+        if (st.houses === HOTEL_LEVEL) amount += fee(s, e.perHotel);
+        else amount += st.houses * fee(s, e.perHouse);
       }
       if (amount > 0) s.debts.push({ from: p.id, to: 'bank', amount, reason: 'card' });
       return;
@@ -916,13 +998,13 @@ function applyCard(c: Ctx, p: PlayerState, e: CardEffect): void {
     case 'payEach':
       for (const o of alivePlayers(s)) {
         if (o.id !== p.id)
-          s.debts.push({ from: p.id, to: o.id, amount: e.amount, reason: 'payEach' });
+          s.debts.push({ from: p.id, to: o.id, amount: fee(s, e.amount), reason: 'payEach' });
       }
       return;
     case 'collectEach':
       for (const o of alivePlayers(s)) {
         if (o.id !== p.id)
-          s.debts.push({ from: o.id, to: p.id, amount: e.amount, reason: 'collectEach' });
+          s.debts.push({ from: o.id, to: p.id, amount: fee(s, e.amount), reason: 'collectEach' });
       }
       return;
     case 'fire': {
@@ -975,7 +1057,9 @@ function applyCard(c: Ctx, p: PlayerState, e: CardEffect): void {
       return;
     }
     case 'freeProperty': {
-      const free = OWNABLE_INDICES.filter((i) => s.properties[i]!.owner === null);
+      const free = OWNABLE_INDICES.filter(
+        (i) => s.properties[i]!.owner === null && !casinoKindAt(s, i),
+      );
       if (free.length === 0) {
         c.ev.push({ t: 'cardNoEffect', playerId: p.id });
         return;
@@ -1026,6 +1110,242 @@ function finishDraw(c: Ctx): void {
   c.ev.push({ t: 'turnStart', playerId: s.players[0]!.id, turn: 1 });
 }
 
+// ---------------------------------------------------------------------------
+// Freestyle: Sòng Bạc
+// ---------------------------------------------------------------------------
+
+/** Ô Sòng Bạc Tiền / Sòng Bạc Đất (thay EVN / Viettel ở chế độ Freestyle) */
+export const CASINO_CASH_POS = 12;
+export const CASINO_LAND_POS = 28;
+const CASINO_MIN_BET = 10;
+
+export function casinoKindAt(s: GameState, pos: number): CasinoKind | null {
+  if (!isFreestyle(s)) return null;
+  if (pos === CASINO_CASH_POS) return 'cash';
+  if (pos === CASINO_LAND_POS) return 'land';
+  return null;
+}
+
+/** Ô người chơi có thể đặt ở Sòng Bạc Đất: của mình, cả nhóm chưa có nhà */
+export function casinoStakeTargets(s: GameState, pid: PlayerId): number[] {
+  return OWNABLE_INDICES.filter(
+    (i) => s.properties[i]!.owner === pid && !casinoKindAt(s, i) && blockHasNoBuildings(s, i),
+  );
+}
+
+/** Mức cược tối đa của một người ở Sòng Bạc Tiền đang mở */
+export function casinoBetLimit(s: GameState, pid: PlayerId): number {
+  const k = s.casino;
+  if (!k || k.kind !== 'cash') return 0;
+  return Math.max(0, Math.min(k.cap, getPlayer(s, pid).cash));
+}
+
+const sumDice = (d: [number, number]) => d[0] + d[1];
+
+function openCasino(c: Ctx, p: PlayerState, kind: CasinoKind, pos: number): void {
+  const { s } = c;
+  const others = alivePlayers(s).filter((o) => o.id !== p.id);
+  let eligible: PlayerId[];
+  let cap = 0;
+  if (kind === 'cash') {
+    const bettors = others.filter((o) => o.cash >= CASINO_MIN_BET);
+    if (p.cash < CASINO_MIN_BET) {
+      c.ev.push({ t: 'casinoSkip', kind, opener: p.id, reason: 'noCash' });
+      return;
+    }
+    // Nhà cái luôn đủ tiền trả: tiền nhà cái chia đều cho số người có thể cược
+    cap = Math.min(s.rules.casinoMaxBet ?? 500, Math.floor(p.cash / Math.max(1, bettors.length)));
+    eligible = bettors.map((o) => o.id);
+    if (eligible.length === 0 || cap < CASINO_MIN_BET) {
+      c.ev.push({ t: 'casinoSkip', kind, opener: p.id, reason: 'noPlayers' });
+      return;
+    }
+  } else {
+    eligible = alivePlayers(s)
+      .filter((o) => casinoStakeTargets(s, o.id).length > 0)
+      .map((o) => o.id);
+    if (eligible.length < 2) {
+      c.ev.push({ t: 'casinoSkip', kind, opener: p.id, reason: 'noPlayers' });
+      return;
+    }
+  }
+  s.casino = {
+    kind,
+    pos,
+    opener: p.id,
+    stage: 'bet',
+    eligible,
+    bets: {},
+    passed: [],
+    cap,
+    rollers: [],
+    rolls: {},
+    round: 0,
+  };
+  s.phase = { kind: 'casino' };
+  c.ev.push({ t: 'casinoOpen', kind, pos, opener: p.id, cap });
+}
+
+function requireCasinoBet(s: GameState, p: PlayerState) {
+  const k = s.casino;
+  if (s.phase.kind !== 'casino' || !k || k.stage !== 'bet') fail('Bàn cược không mở');
+  if (!k.eligible.includes(p.id)) fail('Bạn không tham gia được bàn này');
+  return k;
+}
+
+function casinoBet(c: Ctx, p: PlayerState, amount: number): void {
+  const k = requireCasinoBet(c.s, p);
+  if (k.kind !== 'cash') fail('Bàn này cược bằng ô đất');
+  if (!Number.isInteger(amount) || amount < CASINO_MIN_BET)
+    fail(`Cược tối thiểu ${CASINO_MIN_BET} tr`);
+  const max = casinoBetLimit(c.s, p.id);
+  if (amount > max) fail(`Cược tối đa ${max} tr`);
+  k.bets[p.id] = amount;
+  k.passed = k.passed.filter((x) => x !== p.id);
+  c.ev.push({ t: 'casinoBet', playerId: p.id, amount });
+  maybeStartRolling(c);
+}
+
+function casinoStake(c: Ctx, p: PlayerState, pos: number): void {
+  const k = requireCasinoBet(c.s, p);
+  if (k.kind !== 'land') fail('Bàn này cược bằng tiền');
+  if (!casinoStakeTargets(c.s, p.id).includes(pos))
+    fail('Chọn một ô của bạn mà cả nhóm chưa có nhà');
+  k.bets[p.id] = pos;
+  k.passed = k.passed.filter((x) => x !== p.id);
+  c.ev.push({ t: 'casinoStake', playerId: p.id, pos });
+  maybeStartRolling(c);
+}
+
+function casinoPass(c: Ctx, p: PlayerState): void {
+  const k = requireCasinoBet(c.s, p);
+  delete k.bets[p.id];
+  if (!k.passed.includes(p.id)) k.passed.push(p.id);
+  c.ev.push({ t: 'casinoPass', playerId: p.id });
+  maybeStartRolling(c);
+}
+
+/** Mọi người đã quyết định → đổ xí ngầu ngay */
+function maybeStartRolling(c: Ctx): void {
+  const k = c.s.casino!;
+  if (k.eligible.every((id) => id in k.bets || k.passed.includes(id))) startRolling(c);
+}
+
+function startRolling(c: Ctx): void {
+  const k = c.s.casino!;
+  const players = Object.keys(k.bets).filter((id) => k.eligible.includes(id));
+  const enough = k.kind === 'cash' ? players.length >= 1 : players.length >= 2;
+  if (!enough) {
+    c.ev.push({ t: 'casinoCancel', kind: k.kind });
+    closeCasino(c);
+    return;
+  }
+  k.stage = 'roll';
+  k.rollers = k.kind === 'cash' ? [k.opener, ...players.filter((id) => id !== k.opener)] : players;
+  k.rolls = {};
+  k.round++;
+  c.ev.push({ t: 'casinoRolling', kind: k.kind, rollers: k.rollers, round: k.round });
+}
+
+function casinoRoll(c: Ctx, p: PlayerState): void {
+  const k = c.s.casino;
+  if (c.s.phase.kind !== 'casino' || !k || k.stage !== 'roll') fail('Chưa tới lúc đổ xí ngầu');
+  if (!k.rollers.includes(p.id)) fail('Bạn không đổ ở vòng này');
+  if (k.rolls[p.id]) fail('Bạn đã đổ rồi');
+  rollFor(c, p.id);
+  if (k.rollers.every((id) => k.rolls[id])) resolveCasino(c);
+}
+
+function rollFor(c: Ctx, id: PlayerId): void {
+  const k = c.s.casino!;
+  const dice = rollDice(c.rng);
+  k.rolls[id] = dice;
+  c.ev.push({ t: 'casinoRoll', playerId: id, dice });
+}
+
+function casinoTimeout(c: Ctx): void {
+  const k = c.s.casino;
+  if (c.s.phase.kind !== 'casino' || !k) fail('Không có bàn cược');
+  if (k.stage === 'bet') {
+    startRolling(c);
+    return;
+  }
+  for (const id of k.rollers) if (!k.rolls[id]) rollFor(c, id);
+  resolveCasino(c);
+}
+
+function resolveCasino(c: Ctx): void {
+  const { s } = c;
+  const k = s.casino!;
+  if (k.kind === 'cash') {
+    const openerDice = k.rolls[k.opener]!;
+    const a = sumDice(openerDice);
+    const results = k.rollers
+      .filter((id) => id !== k.opener)
+      .map((id) => {
+        const dice = k.rolls[id]!;
+        const bet = k.bets[id]!;
+        const b = sumDice(dice);
+        const outcome: 'win' | 'lose' | 'push' = b > a ? 'win' : b < a ? 'lose' : 'push';
+        if (outcome === 'win')
+          s.debts.push({ from: k.opener, to: id, amount: bet, reason: 'casino', pos: k.pos });
+        if (outcome === 'lose')
+          s.debts.push({ from: id, to: k.opener, amount: bet, reason: 'casino', pos: k.pos });
+        return { playerId: id, bet, dice, outcome };
+      });
+    c.ev.push({ t: 'casinoResult', kind: 'cash', opener: k.opener, openerDice, results });
+    closeCasino(c);
+    return;
+  }
+  // Sòng đất: ai cao nhất lấy hết; hoà điểm cao nhất thì những người đó đổ lại
+  const best = Math.max(...k.rollers.map((id) => sumDice(k.rolls[id]!)));
+  const top = k.rollers.filter((id) => sumDice(k.rolls[id]!) === best);
+  if (top.length > 1) {
+    c.ev.push({ t: 'casinoTie', players: top, total: best });
+    k.rollers = top;
+    k.rolls = {};
+    k.round++;
+    c.ev.push({ t: 'casinoRolling', kind: 'land', rollers: top, round: k.round });
+    return;
+  }
+  const winner = getPlayer(s, top[0]!);
+  const won: { pos: number; from: PlayerId }[] = [];
+  for (const [id, pos] of Object.entries(k.bets)) {
+    if (id === winner.id) continue;
+    // Ô phải còn hợp lệ lúc trao (vẫn của người đặt, cả nhóm chưa có nhà)
+    if (!casinoStakeTargets(s, id).includes(pos)) continue;
+    const st = s.properties[pos]!;
+    st.owner = winner.id;
+    s.mortgageChoices = s.mortgageChoices.filter((m) => m.pos !== pos);
+    if (st.mortgaged) {
+      s.debts.push({
+        from: winner.id,
+        to: 'bank',
+        amount: mortgageTransferFee(pos),
+        reason: 'mortgageFee',
+        pos,
+      });
+      s.mortgageChoices.push({ playerId: winner.id, pos });
+    }
+    if (s.buildPass === pos) s.buildPass = null;
+    won.push({ pos, from: id });
+  }
+  c.ev.push({
+    t: 'casinoResult',
+    kind: 'land',
+    winner: winner.id,
+    dice: k.rolls[winner.id]!,
+    won,
+  });
+  closeCasino(c);
+}
+
+function closeCasino(c: Ctx): void {
+  c.s.casino = null;
+  setNeutral(c.s);
+  proceed(c);
+}
+
 /** Ô có nhà của người khác (để đập) */
 export function demolishTargets(s: GameState, pid: PlayerId): number[] {
   return OWNABLE_INDICES.filter((i) => {
@@ -1045,7 +1365,7 @@ export function festivalTargets(s: GameState, pid: PlayerId): number[] {
 function doFestival(c: Ctx, p: PlayerState, pos: number): void {
   const { s } = c;
   if (!festivalTargets(s, p.id).includes(pos)) fail('Hãy chọn một ô đất (không thế chấp) của bạn');
-  const mult = c.rng.int(2, 4);
+  const mult = isFreestyle(s) ? freestyleFestivalMult(c.rng) : c.rng.int(2, 4);
   // Tổ chức lại ở ô đang có lễ hội thì bốc lại hệ số
   const list = activeFestivals(s).filter((f) => f.pos !== pos);
   list.push({ pos, owner: p.id, mult });
@@ -1215,7 +1535,12 @@ function proceed(c: Ctx): void {
       endGame(c, 'lastStanding');
       return;
     }
-    if (s.phase.kind === 'awaitBuy' || s.phase.kind === 'auction' || s.phase.kind === 'cardChoice')
+    if (
+      s.phase.kind === 'awaitBuy' ||
+      s.phase.kind === 'auction' ||
+      s.phase.kind === 'cardChoice' ||
+      s.phase.kind === 'casino'
+    )
       return;
     if (!settle(c)) return;
 
@@ -1713,6 +2038,7 @@ function acceptTrade(c: Ctx, p: PlayerState, id: string): void {
   const t = s.trades.find((x) => x.id === id);
   if (!t || t.to !== p.id) fail('Không tìm thấy đề nghị');
   if (s.phase.kind === 'auction') fail('Đợi đấu giá kết thúc rồi mới chấp nhận giao dịch');
+  if (s.phase.kind === 'casino') fail('Đợi bàn cược Sòng Bạc xong rồi mới chấp nhận giao dịch');
   s.trades = s.trades.filter((x) => x.id !== id);
   const err = validateTrade(s, t);
   if (err) {
@@ -1892,6 +2218,8 @@ export function timeoutAction(s: GameState): TimeoutPlan | null {
       return { by: 'system', action: { type: 'autoChoose' } };
     case 'drawOrder':
       return { by: 'system', action: { type: 'autoDraw' } };
+    case 'casino':
+      return { by: 'system', action: { type: 'casinoTimeout' } };
     default:
       return null;
   }
@@ -1901,6 +2229,7 @@ export function timeoutAction(s: GameState): TimeoutPlan | null {
 export function actingPlayer(s: GameState): PlayerId | null {
   if (s.phase.kind === 'gameOver') return null;
   if (s.phase.kind === 'raiseFunds') return s.phase.debtor;
-  if (s.phase.kind === 'auction' || s.phase.kind === 'drawOrder') return null;
+  if (s.phase.kind === 'auction' || s.phase.kind === 'drawOrder' || s.phase.kind === 'casino')
+    return null;
   return currentPlayer(s).id;
 }

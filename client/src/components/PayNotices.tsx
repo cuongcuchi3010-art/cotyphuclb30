@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { formatMoney, square } from '@cotyphu/shared';
+import { formatMoney } from '@cotyphu/shared';
 import { useStore } from '../store';
-import { nameOf, playerColor, useGame, photoOf } from '../lib';
+import { nameOf, playerColor, useGame, photoOf, squareName } from '../lib';
 import { Avatar } from './Avatar';
 
 const REASON: Record<string, string> = {
@@ -9,6 +9,7 @@ const REASON: Record<string, string> = {
   payEach: 'thẻ Chủ tịch HĐQT',
   collectEach: 'lì xì / quà',
   loan: 'trả nợ vay',
+  casino: 'Sòng Bạc',
 };
 
 /** Thông báo nổi khi người chơi trả tiền cho người khác — cả phòng cùng theo dõi */
@@ -70,7 +71,9 @@ export function PayNotices() {
                 </div>
                 <div className="truncate text-xs text-gray-500">
                   {REASON[n.reason] ?? 'thanh toán'}
-                  {n.pos !== undefined ? ` · ${square(n.pos).name}` : ''}
+                  {n.pos !== undefined && n.reason !== 'casino'
+                    ? ` · ${squareName(game, n.pos)}`
+                    : ''}
                 </div>
               </div>
             </motion.div>

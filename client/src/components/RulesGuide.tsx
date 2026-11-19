@@ -27,6 +27,8 @@ export function RulesButton({ className, label }: { className?: string; label?: 
 export function RulesModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { room, game } = useGame();
   const rules: Rules | undefined = game?.rules ?? room?.rules;
+  const free = rules?.mode === 'freestyle';
+  const go = rules?.goSalary ?? 200;
   return (
     <Modal open={open} onClose={onClose} className="sm:max-w-2xl">
       <div className="mb-3 flex items-center justify-between gap-2">
@@ -37,10 +39,39 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
       </div>
       <LegalNotice className="mb-3" />
       {rules && <ThisGame rules={rules} />}
+      {free && (
+        <div className="mt-3 rounded-2xl bg-[#2a0f3a] p-3 text-sm text-white">
+          <div className="mb-1 font-extrabold text-nghe">🎰 {S.guide.freestyle}</div>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>
+              Tiền thuê ×{String(rules?.rentMult ?? 2).replace('.', ',')}; thuế, tiền phạt và tiền
+              thẻ ×{rules?.feeMult ?? 2}.
+            </li>
+            <li>
+              Dừng ở ô đất của mình, hoặc vừa mua xong, là xây ngay tới 4 nhà (không cần trọn màu).
+              Khách sạn khi ghé lại ô đã có 4 nhà. Kho nhà không giới hạn.
+            </li>
+            <li>Lễ hội nhân tiền thuê ngẫu nhiên ×3 đến ×10 (số nhỏ hay ra hơn).</li>
+            <li>
+              <b>Sòng Bạc Tiền</b> (thay EVN): người dừng ô làm nhà cái; ai muốn thì đặt cược (tối
+              đa {formatMoney(rules?.casinoMaxBet ?? 500)}, không quá tiền nhà cái chia đều). Đổ cao
+              hơn nhà cái thắng tiền cược, thấp hơn thì thua, bằng điểm thì hoà.
+            </li>
+            <li>
+              <b>Sòng Bạc Đất</b> (thay Viettel): mỗi người đặt tối đa 1 ô (cả nhóm chưa có nhà),
+              cần từ 2 người; tất cả cùng đổ, ai cao nhất lấy hết, hoà thì đổ lại.
+            </li>
+            <li>Thẻ “Đi tới tiện ích gần nhất” thành “Đi tới Sòng Bạc gần nhất”.</li>
+          </ul>
+        </div>
+      )}
       <div className="mt-3 space-y-2 text-sm leading-relaxed">
         <Section title="🎲 Một lượt chơi" open>
           <ol className="list-decimal space-y-1 pl-5">
-            <li>Bấm Tung xúc xắc, quân tự đi theo tổng hai xúc xắc. Qua Khởi Hành nhận 200 tr.</li>
+            <li>
+              Bấm Tung xúc xắc, quân tự đi theo tổng hai xúc xắc. Qua Khởi Hành nhận{' '}
+              {formatMoney(go)}.
+            </li>
             <li>
               Ô chưa có chủ: <b>Mua</b> theo giá in trên ô, hoặc không mua thì cả bàn đấu giá (khởi
               điểm 10 tr, mỗi lần trả giá đếm lại 10 giây).
@@ -79,14 +110,14 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
                 key={m}
                 className={cx(
                   'rounded-xl p-2.5',
-                  (rules?.buildRule ?? 'combined') === m
+                  !free && (rules?.buildRule ?? 'combined') === m
                     ? 'bg-son-50 ring-2 ring-son dark:bg-son/20'
                     : 'bg-black/5 dark:bg-white/5',
                 )}
               >
                 <div className="font-bold">
                   {S.lobby.buildRules[m]}
-                  {(rules?.buildRule ?? 'combined') === m && (
+                  {!free && (rules?.buildRule ?? 'combined') === m && (
                     <span className="ml-1 text-xs text-son dark:text-nghe">
                       ({S.guide.current})
                     </span>
@@ -123,12 +154,17 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
         <Section title="🃏 Ô đặc biệt & thẻ">
           <Rows
             rows={[
-              ['Khởi Hành', rules?.doubleGo ? '+200 tr; dừng đúng ô +400 tr' : '+200 tr'],
+              [
+                'Khởi Hành',
+                rules?.doubleGo
+                  ? `+${formatMoney(go)}; dừng đúng ô +${formatMoney(go * 2)}`
+                  : `+${formatMoney(go)}`,
+              ],
               ['Thuế TNCN / TTĐB', '−200 tr / −100 tr'],
               ['Vượt Đèn Đỏ', 'Vào thẳng Tạm Giữ, không qua Khởi Hành'],
               [
                 'Ra Tạm Giữ',
-                'Nộp 50 tr, dùng Thẻ Bảo Lãnh hoặc tung ra đôi; trượt 3 lần thì bắt buộc nộp',
+                `Nộp ${formatMoney(free ? 50 * (rules?.feeMult ?? 2) : 50)}, dùng Thẻ Bảo Lãnh hoặc tung ra đôi; trượt 3 lần thì bắt buộc nộp`,
               ],
               [
                 rules?.festivalSquare ? 'Lễ Hội (ô 20)' : 'Cà Phê Vỉa Hè (ô 20)',
@@ -185,16 +221,31 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 /** Tóm tắt luật đang áp dụng cho ván/phòng này */
 function ThisGame({ rules }: { rules: Rules }) {
   const build: BuildRule = rules.buildRule ?? 'combined';
+  const fs = rules.mode === 'freestyle';
   const items: [string, string][] = [
+    ['Chế độ', rules.mode === 'freestyle' ? '🎰 Freestyle' : 'Cổ điển'],
     ['Tiền khởi đầu', formatMoney(rules.startingCash)],
-    ['Xây nhà', S.lobby.buildRules[build].replace(/ \(.*\)$/, '')],
-    ['Ô 20', rules.festivalSquare ? 'Lễ Hội' : rules.jackpot ? 'Cà Phê + hũ tiền' : 'Cà Phê'],
+    ['Qua Khởi Hành', formatMoney(rules.goSalary ?? 200)],
+    ['Xây nhà', fs ? 'Xây ngay tới 4 nhà' : S.lobby.buildRules[build].replace(/ \(.*\)$/, '')],
+    [
+      'Ô 20',
+      fs
+        ? 'Cà Phê'
+        : rules.festivalSquare
+          ? 'Lễ Hội'
+          : rules.jackpot
+            ? 'Cà Phê + hũ tiền'
+            : 'Cà Phê',
+    ],
     ['Lễ hội tối đa', `${rules.maxFestivals ?? 3} ô`],
     ['Đấu giá', rules.auctions ? 'Có' : 'Tắt'],
     ['Khởi Hành ×2', rules.doubleGo ? 'Bật' : 'Tắt'],
     ['Thời gian ván', rules.timeLimitMinutes ? `${rules.timeLimitMinutes} phút` : 'Không giới hạn'],
     ['Đồng hồ lượt', rules.turnTimerSec ? `${rules.turnTimerSec} giây` : 'Tắt'],
-    ['Kho nhà / khách sạn', `${rules.houseStock ?? 32} / ${rules.hotelStock ?? 12}`],
+    [
+      'Kho nhà / khách sạn',
+      fs ? 'Không giới hạn' : `${rules.houseStock ?? 32} / ${rules.hotelStock ?? 12}`,
+    ],
   ];
   return (
     <div className="rounded-2xl bg-nghe-50 p-3 dark:bg-white/5">

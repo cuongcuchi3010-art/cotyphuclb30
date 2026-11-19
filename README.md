@@ -6,6 +6,7 @@ Chạy hoàn toàn trên **Cloudflare (gói miễn phí)**: không phải thuê 
 - 2–6 người/phòng, có chế độ xem (spectator) khi ván đã bắt đầu.
 - Đủ luật chính thức: mua, đấu giá realtime, xây nhà/khách sạn đều, thế chấp, giao dịch, tạm giữ, gom tiền, phá sản.
 - Luật tuỳ chọn: hũ tiền Cà Phê Vỉa Hè, Khởi Hành ×2, tắt đấu giá, giới hạn thời gian ván, đồng hồ lượt.
+- Hai chế độ: **Cổ điển** và **Freestyle** (tiền to, dừng ô là xây ngay, lễ hội ×3–×10, Sòng Bạc Tiền / Sòng Bạc Đất thay EVN, Viettel; chỉ dùng tiền ảo trong game).
 - Có **tài khoản** (biệt danh + mật khẩu): đăng nhập ở thiết bị nào cũng chơi tiếp được đúng ghế.
 - **Vay ngân hàng / vay người chơi**; tab Chat có cả **chat phòng** và **sảnh Discord** nhúng sẵn.
 - Mất mạng hoặc reload trang thì tự vào lại đúng ghế. Người rời đi quá 3 phút, chủ phòng có thể thay bằng bot.
