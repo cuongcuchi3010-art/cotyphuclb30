@@ -65,7 +65,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
               <b>Sòng Bạc Đất</b> (thay Viettel): mỗi người đặt tối đa 1 ô của mình (nhà, khách sạn
               trên ô đi kèm), cần từ 2 người; tất cả cùng đổ, ai cao nhất lấy hết, hoà thì đổ lại.
             </li>
-            <li>Ô Cà Phê (góc 20) thành ô Cơ Hội: dừng ở đó rút 1 thẻ Cơ Hội.</li>
+            <li>Ô Cà Phê (góc 20) thành ô Lễ Hội: dừng ở đó chọn 1 ô đất của mình mở lễ hội.</li>
             <li>Thẻ “Đi tới tiện ích gần nhất” thành “Đi tới Sòng Bạc gần nhất”.</li>
           </ul>
         </div>
@@ -144,8 +144,8 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
           <ul className="list-disc space-y-1 pl-5">
             <li>
               Mở bằng thẻ Lễ hội
-              {rules?.festivalSquare ? ' hoặc khi dừng ở ô Lễ Hội (góc số 20)' : ''}: chọn 1 ô đất
-              của mình, không thế chấp.
+              {rules?.festivalSquare || free ? ' hoặc khi dừng ở ô Lễ Hội (góc số 20)' : ''}: chọn 1
+              ô đất của mình, không thế chấp.
             </li>
             <li>Tiền thuê ô đó nhân ngẫu nhiên ×2, ×3 hoặc ×4. Ô hiện huy hiệu 🎉×N.</li>
             <li>
@@ -172,18 +172,12 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
                 `Nộp ${formatMoney(free ? 50 * (rules?.feeMult ?? 2) : 50)}, dùng Thẻ Bảo Lãnh hoặc tung ra đôi; trượt 3 lần thì bắt buộc nộp`,
               ],
               [
-                free
-                  ? 'Cơ Hội (ô 20)'
-                  : rules?.festivalSquare
-                    ? 'Lễ Hội (ô 20)'
-                    : 'Cà Phê Vỉa Hè (ô 20)',
-                free
-                  ? 'Rút 1 thẻ Cơ Hội'
-                  : rules?.festivalSquare
-                    ? 'Chọn 1 ô đất của mình mở lễ hội'
-                    : rules?.jackpot
-                      ? 'Nhận hết hũ tiền (thuế và phạt dồn vào hũ)'
-                      : 'Nghỉ chân',
+                free || rules?.festivalSquare ? 'Lễ Hội (ô 20)' : 'Cà Phê Vỉa Hè (ô 20)',
+                free || rules?.festivalSquare
+                  ? 'Chọn 1 ô đất của mình mở lễ hội'
+                  : rules?.jackpot
+                    ? 'Nhận hết hũ tiền (thuế và phạt dồn vào hũ)'
+                    : 'Nghỉ chân',
               ],
               ['Cơ Hội / Khí Vận', 'Rút 1 thẻ và làm theo'],
             ]}
@@ -246,7 +240,7 @@ function ThisGame({ rules }: { rules: Rules }) {
     [
       'Ô 20',
       fs
-        ? 'Cơ Hội'
+        ? 'Lễ Hội'
         : rules.festivalSquare
           ? 'Lễ Hội'
           : rules.jackpot

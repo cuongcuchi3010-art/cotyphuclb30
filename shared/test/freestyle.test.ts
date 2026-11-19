@@ -95,15 +95,17 @@ describe('Freestyle: tiền và xây nhà', () => {
     }
   });
 
-  it('ô Cà Phê (20) thành ô Cơ Hội', () => {
-    let s = mkGame(2, FS);
+  it('ô Cà Phê (20) thành ô Lễ Hội; hũ tiền tắt', () => {
+    let s = mkGame(2, { ...FS, jackpot: true });
+    own(s, 'p1', 39);
     pl(s, 'p1').position = 13;
-    const r = act(s, 'p1', { type: 'roll' }, [3, 4]);
-    expect(r.events).toContainEqual(expect.objectContaining({ t: 'card', deck: 'chance' }));
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
+    expect(s.phase).toEqual({ kind: 'cardChoice', choice: 'festival' });
     s = mkGame(2);
+    own(s, 'p1', 39);
     pl(s, 'p1').position = 13;
-    const r2 = act(s, 'p1', { type: 'roll' }, [3, 4]);
-    expect(r2.events.some((e) => e.t === 'card')).toBe(false);
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
+    expect(s.phase.kind).not.toBe('cardChoice');
   });
 
   it('chế độ Cổ điển: ô 12 vẫn là EVN mua được', () => {

@@ -33,7 +33,7 @@ export function describeEvent(
       : free && i === 28
         ? CASINO_NAMES.land
         : free && i === 20
-          ? 'Cơ Hội'
+          ? 'Lễ Hội'
           : square(i).name;
   const dice = (d: [number, number]) => `${d[0]}+${d[1]}=${d[0] + d[1]}`;
   switch (ev.t) {

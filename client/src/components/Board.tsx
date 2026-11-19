@@ -247,7 +247,6 @@ const CORNER_STYLE: Record<number, { bg: string; fg: string; sub?: string }> = {
   30: { bg: 'linear-gradient(135deg,#FFE1E4,#FFC2C9)', fg: '#B3132B', sub: 'Về tạm giữ' },
 };
 
-const CHANCE_CORNER = { bg: 'linear-gradient(135deg,#FFF4D6,#FDE29A)', fg: '#A35F00', sub: 'x' };
 const FESTIVAL_CORNER = { bg: 'linear-gradient(135deg,#FFE3F1,#FFC4E1)', fg: '#B0186B', sub: 'x' };
 
 /** Tiền thuê hiện tại hiển thị trên ô đã có chủ */
@@ -291,9 +290,9 @@ function SquareCell({ sq }: { sq: Sq }) {
 
   // ---- Ô góc
   if (side === 'corner') {
-    const freeChance = sq.index === 20 && game?.rules.mode === 'freestyle';
-    const fest = !freeChance && sq.index === 20 && !!game?.rules.festivalSquare;
-    const c = freeChance ? CHANCE_CORNER : fest ? FESTIVAL_CORNER : CORNER_STYLE[sq.index]!;
+    const fest =
+      sq.index === 20 && (!!game?.rules.festivalSquare || game?.rules.mode === 'freestyle');
+    const c = fest ? FESTIVAL_CORNER : CORNER_STYLE[sq.index]!;
     return (
       <div
         className="relative flex flex-col items-center justify-center gap-[4%] overflow-hidden rounded-[6px] text-center shadow-sm"
@@ -305,26 +304,26 @@ function SquareCell({ sq }: { sq: Sq }) {
         title={sq.name}
       >
         <span className="upright leading-none drop-shadow-sm" style={{ fontSize: '5.4cqw' }}>
-          {freeChance ? '🎲' : fest ? '🎉' : SPECIAL_ICON[sq.kind]}
+          {fest ? '🎉' : SPECIAL_ICON[sq.kind]}
         </span>
         <span
           className="upright font-extrabold uppercase leading-tight"
           style={{ color: c.fg, fontSize: '1.55cqw' }}
         >
-          {freeChance ? 'Cơ Hội' : fest ? S.festivalSquare.name : (sq.short ?? sq.name)}
+          {fest ? S.festivalSquare.name : (sq.short ?? sq.name)}
         </span>
         {c.sub && (
           <span
             className="font-semibold leading-none opacity-80"
             style={{ color: c.fg, fontSize: '1.1cqw' }}
           >
-            {freeChance
-              ? 'Rút thẻ'
-              : fest
-                ? S.festivalSquare.sub
-                : sq.index === 20 && game && jackpotOn(game)
-                  ? `Hũ: ${formatMoney(game.jackpot)}`
-                  : c.sub}
+            {fest
+              ? game?.rules.mode === 'freestyle'
+                ? 'Thuê ×3–×10'
+                : S.festivalSquare.sub
+              : sq.index === 20 && game && jackpotOn(game)
+                ? `Hũ: ${formatMoney(game.jackpot)}`
+                : c.sub}
           </span>
         )}
       </div>

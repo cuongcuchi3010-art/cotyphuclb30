@@ -886,12 +886,8 @@ function landOn(c: Ctx, p: PlayerState, ctx: RentContext): void {
       sendToJail(c, p, 'square');
       return;
     case 'parking':
-      if (isFreestyle(s) && pos === PARKING_INDEX) {
-        // Freestyle: ô Cà Phê thành ô Cơ Hội
-        drawCard(c, p, 'chance');
-        return;
-      }
-      if (s.rules.festivalSquare && pos === PARKING_INDEX) {
+      // Ô Lễ Hội: bật thay Cà Phê, hoặc luôn có ở Freestyle
+      if ((s.rules.festivalSquare || isFreestyle(s)) && pos === PARKING_INDEX) {
         // Ô Lễ Hội: chọn 1 ô đất của mình để tổ chức (thuê ×2)
         if (festivalTargets(s, p.id).length === 0) return;
         s.phase = { kind: 'cardChoice', choice: 'festival' };
@@ -1487,7 +1483,7 @@ const JACKPOT_REASONS = new Set(['tax', 'card', 'jailFine']);
 
 /** Hũ tiền chỉ chạy khi ô 20 vẫn là Cà Phê (không bật ô Lễ Hội) */
 export function jackpotOn(s: GameState): boolean {
-  return s.rules.jackpot && !s.rules.festivalSquare;
+  return s.rules.jackpot && !s.rules.festivalSquare && !isFreestyle(s);
 }
 
 function payToBank(c: Ctx, p: PlayerState, amount: number, reason: Debt['reason']): void {
