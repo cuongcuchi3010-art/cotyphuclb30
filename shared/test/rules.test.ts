@@ -553,13 +553,13 @@ describe('Gom tiền & phá sản', () => {
     expect(r.events).toContainEqual(expect.objectContaining({ t: 'bankrupt', buyout: true }));
   });
 
-  it('thẻ trúng Vietlott nhận 5 tỷ (Freestyle không nhân hệ số)', () => {
+  it('thẻ trúng Vietlott nhận 3 tỷ (Freestyle không nhân hệ số)', () => {
     const idx = DECKS.chance.findIndex((c) => c.id === 'ch21');
     for (const rules of [{}, { mode: 'freestyle' as const, feeMult: 3 }]) {
       let s = mkGame(2, rules);
       topCard(s, 'chance', idx);
       ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
-      expect(pl(s, 'p1').cash).toBe(1500 + 5000);
+      expect(pl(s, 'p1').cash).toBe(1500 + 3000);
     }
   });
 

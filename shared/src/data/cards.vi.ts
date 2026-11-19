@@ -10,7 +10,7 @@ export type CardEffect =
   | { type: 'nearestTransport' }
   /** Đi tới tiện ích gần nhất phía trước; có chủ thì tung xúc xắc trả 10× */
   | { type: 'nearestUtility' }
-  /** fixed = không nhân hệ số tiền Freestyle (vd. trúng Vietlott 5 tỷ) */
+  /** fixed = không nhân hệ số tiền Freestyle (vd. trúng Vietlott 3 tỷ) */
   | { type: 'collect'; amount: number; fixed?: boolean }
   | { type: 'pay'; amount: number }
   | { type: 'jailFree' }
@@ -167,8 +167,8 @@ export const CHANCE_CARDS: readonly Card[] = [
   {
     id: 'ch21',
     deck: 'chance',
-    text: '🎰 Trúng Vietlott Jackpot! Nhận 5 tỷ.',
-    effect: { type: 'collect', amount: 5000, fixed: true },
+    text: '🎰 Trúng Vietlott Jackpot! Nhận 3 tỷ.',
+    effect: { type: 'collect', amount: 3000, fixed: true },
   },
 ];
 
