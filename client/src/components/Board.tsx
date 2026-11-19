@@ -319,7 +319,7 @@ function SquareCell({ sq }: { sq: Sq }) {
           >
             {fest
               ? game?.rules.mode === 'freestyle'
-                ? 'Thuê ×3–×10'
+                ? 'Thuê ×2–×5'
                 : S.festivalSquare.sub
               : sq.index === 20 && game && jackpotOn(game)
                 ? `Hũ: ${formatMoney(game.jackpot)}`

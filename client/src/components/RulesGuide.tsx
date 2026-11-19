@@ -55,7 +55,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
               ; những lần dừng lại ô của mình sau đó xây tới 4 nhà (không cần trọn màu). Khách sạn
               khi ghé lại ô đã có 4 nhà. Kho nhà không giới hạn.
             </li>
-            <li>Lễ hội nhân tiền thuê ngẫu nhiên ×3 đến ×10 (số nhỏ hay ra hơn).</li>
+            <li>Lễ hội nhân tiền thuê ngẫu nhiên ×2 đến ×5 (số nhỏ hay ra hơn).</li>
             <li>
               <b>Sòng Bạc Tiền</b> (thay EVN): người dừng ô làm nhà cái; ai muốn thì đặt cược (tối
               đa {formatMoney(Math.min(rules?.casinoMaxBet ?? 1000, 1000))}, không quá tiền nhà cái

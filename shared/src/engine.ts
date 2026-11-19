@@ -318,16 +318,12 @@ export function rentFor(s: GameState, pos: number, ctx: RentContext): number {
 /** Freestyle: kho nhà coi như không giới hạn */
 export const FREESTYLE_STOCK = 9999;
 
-/** Freestyle: hệ số lễ hội ×3–×10, nghiêng về số nhỏ (trung bình ≈ ×5,3) */
+/** Freestyle: hệ số lễ hội ×2–×5, nghiêng về số nhỏ (trung bình ≈ ×3,2) */
 export const FREESTYLE_FESTIVAL_WEIGHTS: readonly [number, number][] = [
-  [3, 25],
+  [2, 35],
+  [3, 30],
   [4, 20],
   [5, 15],
-  [6, 12],
-  [7, 10],
-  [8, 8],
-  [9, 6],
-  [10, 4],
 ];
 
 function freestyleFestivalMult(rng: Rng): number {
@@ -336,7 +332,7 @@ function freestyleFestivalMult(rng: Rng): number {
     if (r <= w) return m;
     r -= w;
   }
-  return 3;
+  return 2;
 }
 
 /** Số ô lễ hội tối đa cùng lúc trên bàn (mặc định; chủ phòng chọn 1–5) */

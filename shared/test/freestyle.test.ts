@@ -81,11 +81,12 @@ describe('Freestyle: tiền và xây nhà', () => {
     expect(bankLoanMax(mkGame(2))).toBe(500);
   });
 
-  it('lễ hội ×3–×10', () => {
+  it('lễ hội ×2–×5', () => {
     for (const [r, m] of [
-      [1, 3],
-      [100, 10],
-      [50, 5],
+      [1, 2],
+      [50, 3],
+      [80, 4],
+      [100, 5],
     ] as const) {
       let s = mkGame(2, FS);
       own(s, 'p1', 39);
