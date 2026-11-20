@@ -110,6 +110,7 @@ export const S = {
     feeMult: 'Hệ số tiền phạt, thuế, thẻ',
     casinoMaxBet: 'Cược tối đa ở Sòng Bạc Tiền',
     firstBuildMax: 'Mua xong được xây ngay',
+    mercyRule: 'Quyền ân huệ (chủ ô miễn / giảm 50% tiền thuê, mỗi người 1 lần)',
     bankruptcy: 'Khi phá sản',
     bankruptcyModes: { creditor: 'Chủ nợ nhận hết', bankBuyout: 'Ngân hàng mua lại nhà' },
     bankruptcyInfo: {
@@ -206,6 +207,19 @@ export const S = {
     bankrupt: 'Tuyên bố phá sản',
     other: (name: string) => `${name} đang gom tiền trả nợ…`,
     openAssets: 'Mở Tài sản',
+  },
+
+  mercy: {
+    title: 'Quyền ân huệ',
+    ask: (payer: string, sq: string, amount: string) =>
+      `${payer} dừng ở ${sq}, tiền thuê ${amount}. Bạn có ban ân huệ không?`,
+    once: (payer: string) =>
+      `Mỗi người chơi bạn chỉ ban ân huệ được 1 lần; chọn Thu đủ thì vẫn giữ quyền với ${payer}.`,
+    free: '🙏 Miễn phí',
+    half: (amount: string) => `🤝 Giảm 50% (thu ${amount})`,
+    full: (amount: string) => `💰 Thu đủ ${amount}`,
+    timeout: 'Hết giờ sẽ thu đủ.',
+    waiting: (owner: string) => `🙏 ${owner} đang cân nhắc ban ân huệ…`,
   },
 
   casino: {

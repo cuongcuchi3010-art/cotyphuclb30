@@ -116,6 +116,14 @@ export function describeEvent(
         : ev.choice === 'demolish'
           ? `${name(ev.playerId)} đang chọn nhà để đập…`
           : `${name(ev.playerId)} đang chọn ô đất để tặng…`;
+    case 'mercyAsk':
+      return `🙏 ${name(ev.owner)} đang cân nhắc ban ân huệ cho ${name(ev.payer)} (tiền thuê ${formatMoney(ev.amount)})…`;
+    case 'mercy':
+      return ev.choice === 'free'
+        ? `🙏 ${name(ev.owner)} ban ân huệ: miễn tiền thuê ${sq(ev.pos)} cho ${name(ev.payer)}`
+        : ev.choice === 'half'
+          ? `🙏 ${name(ev.owner)} ban ân huệ: giảm 50%, ${name(ev.payer)} chỉ trả ${formatMoney(ev.amount)}`
+          : null;
     case 'casinoOpen':
       return ev.kind === 'cash'
         ? `🎰 ${name(ev.opener)} mở ${CASINO_NAMES.cash}: mọi người đặt cược (tối đa ${formatMoney(ev.cap)})`

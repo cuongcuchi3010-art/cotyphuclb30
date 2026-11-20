@@ -61,6 +61,8 @@ export interface Rules {
    * - bankBuyout: ngân hàng mua lại hết nhà (50% giá xây), tiền đó cùng tiền mặt trả cho chủ nợ; đất thành đất trống
    */
   bankruptcyMode: BankruptcyMode;
+  /** Quyền ân huệ: chủ ô được miễn / giảm 50% tiền thuê, mỗi người chơi khác 1 lần */
+  mercy: boolean;
 }
 
 export type BankruptcyMode = 'creditor' | 'bankBuyout';
@@ -89,6 +91,7 @@ export const DEFAULT_RULES: Rules = {
   casinoMaxBet: 1000,
   firstBuildMax: 4,
   bankruptcyMode: 'creditor',
+  mercy: true,
 };
 
 export interface PlayerStats {
@@ -219,6 +222,8 @@ export type Phase =
   | { kind: 'raiseFunds'; debtor: PlayerId }
   /** Freestyle: bàn cược Sòng Bạc đang mở (chi tiết ở state.casino) */
   | { kind: 'casino' }
+  /** Chủ ô quyết định ban ân huệ (miễn / giảm 50%) cho người vừa dừng ở ô */
+  | { kind: 'mercy'; pos: number; owner: PlayerId; payer: PlayerId; amount: number }
   | { kind: 'gameOver' };
 
 export interface GameState {
@@ -274,6 +279,8 @@ export interface GameState {
   endReason?: 'lastStanding' | 'timeUp';
   /** Freestyle: bàn cược Sòng Bạc đang mở */
   casino?: Casino | null;
+  /** Quyền ân huệ đã dùng: chủ ô → danh sách người đã được ân huệ */
+  mercyUsed?: Record<PlayerId, PlayerId[]>;
 }
 
 export type CasinoKind = 'cash' | 'land';

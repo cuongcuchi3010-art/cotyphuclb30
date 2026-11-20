@@ -168,6 +168,7 @@ describe('Phòng chơi', () => {
         casinoMaxBet: 500,
         firstBuildMax: 2,
         bankruptcyMode: 'bankBuyout',
+        mercy: false,
       },
     });
     a.msg({ type: 'start' });

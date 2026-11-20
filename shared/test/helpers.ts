@@ -19,7 +19,8 @@ export function mkGame(n = 2, rules: Partial<Rules> = {}): GameState {
       name: `P${i + 1}`,
       token: TOKENS[i]!,
     })),
-    rules,
+    // Test cũ mong tiền thuê thu ngay: mặc định tắt quyền ân huệ (test ân huệ tự bật)
+    { mercy: false, ...rules },
     seededRng(42),
     { drawOrder: false },
   );

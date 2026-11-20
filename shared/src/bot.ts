@@ -46,6 +46,11 @@ export function botDecision(s: GameState, botId: PlayerId): Plan | null {
     return currentPlayer(s).id === botId ? { by: 'system', action: { type: 'autoChoose' } } : null;
   }
   if (ph.kind === 'casino') return botCasino(s, botId);
+  // Bot không ban ân huệ: thu đủ
+  if (ph.kind === 'mercy')
+    return ph.owner === botId
+      ? { by: botId, action: { type: 'mercyChoice', choice: 'full' } }
+      : null;
   if (ph.kind === 'raiseFunds') {
     if (ph.debtor !== botId) return null;
     if (liquidationValue(s, botId) < totalOwed(s, botId))

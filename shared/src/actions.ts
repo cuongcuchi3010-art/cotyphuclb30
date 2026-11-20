@@ -56,7 +56,8 @@ export type PlayerAction =
   | { type: 'casinoBet'; amount: number }
   | { type: 'casinoStake'; pos: number }
   | { type: 'casinoPass' }
-  | { type: 'casinoRoll' };
+  | { type: 'casinoRoll' }
+  | { type: 'mercyChoice'; choice: MercyChoice };
 
 export type SystemAction =
   | { type: 'auctionClose' }
@@ -65,7 +66,10 @@ export type SystemAction =
   | { type: 'timeUp' }
   | { type: 'autoChoose' }
   | { type: 'autoDraw' }
-  | { type: 'casinoTimeout' };
+  | { type: 'casinoTimeout' }
+  | { type: 'mercyTimeout' };
+
+export type MercyChoice = 'free' | 'half' | 'full';
 
 export type Action = PlayerAction | SystemAction;
 export type Actor = PlayerId | 'system';
@@ -130,6 +134,15 @@ export type GameEvent =
   | { t: 'propertyGifted'; from: PlayerId; to: PlayerId; pos: number }
   | { t: 'propertyWon'; playerId: PlayerId; pos: number }
   | { t: 'cardNoEffect'; playerId: PlayerId }
+  | { t: 'mercyAsk'; owner: PlayerId; payer: PlayerId; pos: number; amount: number }
+  | {
+      t: 'mercy';
+      owner: PlayerId;
+      payer: PlayerId;
+      pos: number;
+      choice: MercyChoice;
+      amount: number;
+    }
   | { t: 'casinoOpen'; kind: CasinoKind; pos: number; opener: PlayerId; cap: number }
   | { t: 'casinoSkip'; kind: CasinoKind; opener: PlayerId; reason: 'noPlayers' | 'noCash' }
   | { t: 'casinoBet'; playerId: PlayerId; amount: number }

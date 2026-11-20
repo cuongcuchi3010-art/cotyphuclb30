@@ -19,7 +19,7 @@ import {
 } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
-import { cx, fmtClock, nameOf, playerColor, useGame, useNow, photoOf } from '../lib';
+import { cx, fmtClock, nameOf, playerColor, useGame, useNow, photoOf, squareName } from '../lib';
 import { Btn, Modal } from './ui';
 import { Avatar } from './Avatar';
 import { CasinoPrompt, CasinoResult } from './Casino';
@@ -38,6 +38,7 @@ export function Prompts() {
       <CardChoicePrompt />
       <DrawOrderPrompt />
       <CasinoPrompt />
+      <MercyPrompt />
       <CasinoResult />
       <HostDisconnect />
     </>
@@ -376,6 +377,49 @@ function MortgageChoice() {
             {S.assets.keep}
           </Btn>
         </div>
+      </div>
+    </Modal>
+  );
+}
+
+/** Quyền ân huệ: chủ ô chọn miễn / giảm 50% / thu đủ cho người vừa dừng ở ô mình */
+function MercyPrompt() {
+  const { room, game, me } = useGame();
+  const act = useStore((s) => s.act);
+  const now = useNow(250);
+  const ph = game?.phase;
+  if (!room || !game || ph?.kind !== 'mercy' || ph.owner !== me) return null;
+  const left = room.deadline ? Math.max(0, room.deadline - now) : 0;
+  const half = Math.ceil(ph.amount / 2);
+  const payer = nameOf(room, ph.payer);
+  return (
+    <Modal open>
+      <div className="text-center">
+        <div className="text-sm font-bold uppercase tracking-wider text-son dark:text-nghe">
+          🙏 {S.mercy.title}
+        </div>
+        <div className="mt-2 text-base">
+          {S.mercy.ask(payer, squareName(game, ph.pos), formatMoney(ph.amount))}
+        </div>
+        <div className="mt-1 text-xs text-gray-500">{S.mercy.once(payer)}</div>
+        <div className="mx-auto my-3 h-2 w-full overflow-hidden rounded-full bg-black/10">
+          <div
+            className={cx('h-full transition-all', left < 4000 ? 'bg-son' : 'bg-ngoc')}
+            style={{ width: `${Math.min(100, (left / 12000) * 100)}%` }}
+          />
+        </div>
+        <div className="grid gap-2">
+          <Btn big variant="secondary" onClick={() => act({ type: 'mercyChoice', choice: 'free' })}>
+            {S.mercy.free}
+          </Btn>
+          <Btn big variant="gold" onClick={() => act({ type: 'mercyChoice', choice: 'half' })}>
+            {S.mercy.half(formatMoney(half))}
+          </Btn>
+          <Btn big onClick={() => act({ type: 'mercyChoice', choice: 'full' })}>
+            {S.mercy.full(formatMoney(ph.amount))}
+          </Btn>
+        </div>
+        <div className="mt-2 text-xs text-gray-500">{S.mercy.timeout}</div>
       </div>
     </Modal>
   );

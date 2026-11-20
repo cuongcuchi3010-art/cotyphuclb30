@@ -22,7 +22,7 @@ import {
   type StreetSquare,
 } from './data/board.vi.js';
 import { DECKS, deckIndices, type CardEffect, type DeckId } from './data/cards.vi.js';
-import type { Action, Actor, GameEvent, PlayerAction } from './actions.js';
+import type { Action, Actor, GameEvent, MercyChoice, PlayerAction } from './actions.js';
 import type {
   Creditor,
   Debt,
@@ -499,6 +499,10 @@ function applySystem(c: Ctx, a: Action): void {
     case 'autoChoose':
       autoChoose(c);
       return;
+    case 'mercyTimeout':
+      if (s.phase.kind !== 'mercy') fail('Không có quyết định ân huệ nào');
+      resolveMercy(c, 'full');
+      return;
     case 'casinoTimeout':
       casinoTimeout(c);
       return;
@@ -659,6 +663,12 @@ function applyPlayer(c: Ctx, p: PlayerState, a: PlayerAction): void {
     case 'casinoRoll':
       casinoRoll(c, p);
       return;
+    case 'mercyChoice': {
+      const ph = s.phase;
+      if (ph.kind !== 'mercy' || ph.owner !== p.id) fail('Không có quyết định ân huệ nào');
+      resolveMercy(c, a.choice);
+      return;
+    }
     case 'chooseFestival':
       requireCurrent(c, p);
       if (s.phase.kind !== 'cardChoice' || s.phase.choice !== 'festival')
@@ -861,7 +871,14 @@ function landOn(c: Ctx, p: PlayerState, ctx: RentContext): void {
     const owner = getPlayer(s, st.owner);
     if (owner.bankrupt) return;
     const amount = rentFor(s, pos, ctx);
-    if (amount > 0) s.debts.push({ from: p.id, to: owner.id, amount, reason: 'rent', pos });
+    if (amount <= 0) return;
+    if (canMercy(s, owner.id, p.id)) {
+      // Chủ ô được chọn ban ân huệ (miễn / giảm 50%) trước khi thu
+      s.phase = { kind: 'mercy', pos, owner: owner.id, payer: p.id, amount };
+      c.ev.push({ t: 'mercyAsk', owner: owner.id, payer: p.id, pos, amount });
+      return;
+    }
+    s.debts.push({ from: p.id, to: owner.id, amount, reason: 'rent', pos });
     return;
   }
   switch (sq.kind) {
@@ -1111,6 +1128,39 @@ function finishDraw(c: Ctx): void {
   s.phase = { kind: 'awaitRoll' };
   c.ev.push({ t: 'orderDrawn', order: s.players.map((p) => p.id) });
   c.ev.push({ t: 'turnStart', playerId: s.players[0]!.id, turn: 1 });
+}
+
+// ---------------------------------------------------------------------------
+// Quyền ân huệ
+// ---------------------------------------------------------------------------
+
+/** Chủ ô còn quyền ân huệ với người này không */
+export function canMercy(s: GameState, owner: PlayerId, payer: PlayerId): boolean {
+  if (s.rules.mercy === false || owner === payer) return false;
+  return !(s.mercyUsed?.[owner] ?? []).includes(payer);
+}
+
+function resolveMercy(c: Ctx, choice: MercyChoice): void {
+  const { s } = c;
+  const ph = s.phase;
+  if (ph.kind !== 'mercy') return;
+  const amount = choice === 'free' ? 0 : choice === 'half' ? Math.ceil(ph.amount / 2) : ph.amount;
+  if (choice !== 'full') {
+    s.mercyUsed = { ...(s.mercyUsed ?? {}) };
+    s.mercyUsed[ph.owner] = [...(s.mercyUsed[ph.owner] ?? []), ph.payer];
+  }
+  c.ev.push({
+    t: 'mercy',
+    owner: ph.owner,
+    payer: ph.payer,
+    pos: ph.pos,
+    choice,
+    amount,
+  });
+  if (amount > 0)
+    s.debts.push({ from: ph.payer, to: ph.owner, amount, reason: 'rent', pos: ph.pos });
+  setNeutral(s);
+  proceed(c);
 }
 
 // ---------------------------------------------------------------------------
@@ -1557,7 +1607,8 @@ function proceed(c: Ctx): void {
       s.phase.kind === 'awaitBuy' ||
       s.phase.kind === 'auction' ||
       s.phase.kind === 'cardChoice' ||
-      s.phase.kind === 'casino'
+      s.phase.kind === 'casino' ||
+      s.phase.kind === 'mercy'
     )
       return;
     if (!settle(c)) return;
@@ -2260,6 +2311,8 @@ export function timeoutAction(s: GameState): TimeoutPlan | null {
       return { by: 'system', action: { type: 'autoDraw' } };
     case 'casino':
       return { by: 'system', action: { type: 'casinoTimeout' } };
+    case 'mercy':
+      return { by: 'system', action: { type: 'mercyTimeout' } };
     default:
       return null;
   }
@@ -2269,6 +2322,7 @@ export function timeoutAction(s: GameState): TimeoutPlan | null {
 export function actingPlayer(s: GameState): PlayerId | null {
   if (s.phase.kind === 'gameOver') return null;
   if (s.phase.kind === 'raiseFunds') return s.phase.debtor;
+  if (s.phase.kind === 'mercy') return s.phase.owner;
   if (s.phase.kind === 'auction' || s.phase.kind === 'drawOrder' || s.phase.kind === 'casino')
     return null;
   return currentPlayer(s).id;

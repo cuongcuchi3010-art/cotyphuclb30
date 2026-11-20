@@ -81,6 +81,11 @@ function step(s: GameState, rng: Rng): GameState {
     return applyAction(s, p.id, { type: 'drawLot', card: free[rng.int(0, free.length - 1)]! }, rng)
       .state;
   }
+  if (ph.kind === 'mercy') {
+    const choice = (['free', 'half', 'full'] as const)[rng.int(0, 2)]!;
+    if (rng.int(0, 4) === 0) return applyAction(s, 'system', { type: 'mercyTimeout' }, rng).state;
+    return applyAction(s, ph.owner, { type: 'mercyChoice', choice }, rng).state;
+  }
   if (ph.kind === 'casino') {
     const k = s.casino!;
     if (rng.int(0, 5) === 0) return applyAction(s, 'system', { type: 'casinoTimeout' }, rng).state;
@@ -181,6 +186,7 @@ export function runSimulation(from: number, count: number): { finished: number; 
         goSalary: [200, 500][g % 2]!,
         firstBuildMax: g % 5,
         bankruptcyMode: g % 2 === 0 ? 'bankBuyout' : 'creditor',
+        mercy: g % 4 !== 3,
       },
       rng,
     );

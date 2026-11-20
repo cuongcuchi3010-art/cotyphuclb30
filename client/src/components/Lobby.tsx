@@ -223,6 +223,11 @@ export function Lobby() {
             {S.lobby.bankruptcyInfo[rules.bankruptcyMode ?? 'creditor']}
           </div>
           <Toggle
+            checked={rules.mercy !== false}
+            onChange={(v) => setRules({ mercy: v })}
+            label={S.lobby.mercyRule}
+          />
+          <Toggle
             checked={!!rules.showStandings}
             onChange={(v) => setRules({ showStandings: v })}
             label={S.lobby.showStandings}

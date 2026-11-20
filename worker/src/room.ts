@@ -34,6 +34,8 @@ export const DRAW_MS = 30_000;
 export const CASINO_BET_MS = 20_000;
 export const CASINO_STAKE_MS = 25_000;
 export const CASINO_ROLL_MS = 10_000;
+/** Quyền ân huệ: thời gian chủ ô quyết định (hết giờ thì thu đủ) */
+export const MERCY_MS = 12_000;
 export const RAISE_FUNDS_MS = 120_000;
 export const INACTIVE_MS = 2 * 60 * 60_000;
 const LOG_KEEP = 200;
@@ -519,6 +521,9 @@ export class RoomCore {
       case 'drawOrder':
         // Bốc thăm: luôn giới hạn 30 giây, hết giờ máy bốc hộ
         snap.deadline = now + DRAW_MS;
+        break;
+      case 'mercy':
+        snap.deadline = now + MERCY_MS;
         break;
       case 'casino':
         // Sòng Bạc: luôn có đếm ngược riêng để ván không bị treo

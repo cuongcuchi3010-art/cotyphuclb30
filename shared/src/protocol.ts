@@ -69,6 +69,7 @@ export const playerActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('casinoStake'), pos }),
   z.object({ type: z.literal('casinoPass') }),
   z.object({ type: z.literal('casinoRoll') }),
+  z.object({ type: z.literal('mercyChoice'), choice: z.enum(['free', 'half', 'full']) }),
 ]);
 
 export const rulesSchema = z.object({
@@ -96,6 +97,7 @@ export const rulesSchema = z.object({
   casinoMaxBet: z.number().int().min(50).max(1000).default(1000),
   firstBuildMax: z.number().int().min(0).max(4).default(4),
   bankruptcyMode: z.enum(['creditor', 'bankBuyout']).default('creditor'),
+  mercy: z.boolean().default(true),
 });
 
 /** Biệt danh = tên đăng nhập: chữ (có dấu), số, khoảng trắng, . _ - */

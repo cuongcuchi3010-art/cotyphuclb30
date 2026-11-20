@@ -99,6 +99,12 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
               ['Công ty truyền thông', '25 / 50 / 100 / 200 tr theo số công ty của chủ'],
               ['EVN, Viettel', '4 × tổng xúc xắc; có cả hai thì 10 ×'],
               ['Ô thế chấp', 'Không thu'],
+              [
+                'Quyền ân huệ',
+                rules?.mercy === false
+                  ? 'Tắt'
+                  : 'Chủ ô được miễn hoặc giảm 50% cho người dừng ở ô mình; mỗi người chơi chỉ 1 lần (A cho B 1 lần, cho C 1 lần…); hết 12 giây thì thu đủ',
+              ],
               ['Ô có lễ hội', 'Nhân thêm ×2, ×3 hoặc ×4'],
             ]}
           />
@@ -251,6 +257,7 @@ function ThisGame({ rules }: { rules: Rules }) {
     ],
     ['Lễ hội tối đa', `${rules.maxFestivals ?? 3} ô`],
     ['Đấu giá', rules.auctions ? 'Có' : 'Tắt'],
+    ['Ân huệ', rules.mercy === false ? 'Tắt' : 'Bật'],
     ['Phá sản', rules.bankruptcyMode === 'bankBuyout' ? 'Ngân hàng mua lại' : 'Chủ nợ nhận hết'],
     ['Khởi Hành ×2', rules.doubleGo ? 'Bật' : 'Tắt'],
     ['Thời gian ván', rules.timeLimitMinutes ? `${rules.timeLimitMinutes} phút` : 'Không giới hạn'],

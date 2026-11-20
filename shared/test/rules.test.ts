@@ -1147,3 +1147,58 @@ describe('Ô Lễ Hội thay Cà Phê', () => {
     expect(t.jackpot).toBe(0);
   });
 });
+
+describe('Quyền ân huệ', () => {
+  function landRent(n = 2) {
+    let s = mkGame(n, { mercy: true });
+    own(s, 'p2', 39);
+    pl(s, 'p1').position = 32;
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4])); // → 39 Đồng Khởi (thuê 50)
+    return s;
+  }
+
+  it('chủ ô được chọn miễn, giảm 50% hoặc thu đủ', () => {
+    let s = landRent();
+    expect(s.phase).toEqual({ kind: 'mercy', pos: 39, owner: 'p2', payer: 'p1', amount: 50 });
+    expect(() => act(s, 'p1', { type: 'mercyChoice', choice: 'free' })).toThrow('ân huệ');
+    ({ state: s } = act(s, 'p2', { type: 'mercyChoice', choice: 'half' }));
+    expect(pl(s, 'p1').cash).toBe(1475);
+    expect(pl(s, 'p2').cash).toBe(1525);
+    expect(s.phase.kind).toBe('awaitEnd');
+  });
+
+  it('mỗi người chơi khác chỉ được ân huệ 1 lần; thu đủ thì vẫn còn quyền', () => {
+    let s = landRent();
+    ({ state: s } = act(s, 'p2', { type: 'mercyChoice', choice: 'full' }));
+    expect(pl(s, 'p1').cash).toBe(1450);
+    expect(s.mercyUsed?.p2 ?? []).toEqual([]);
+    // Lần sau vẫn được hỏi; lần này miễn phí
+    s.phase = { kind: 'awaitRoll' };
+    s.rolled = false;
+    pl(s, 'p1').position = 32;
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
+    expect(s.phase.kind).toBe('mercy');
+    ({ state: s } = act(s, 'p2', { type: 'mercyChoice', choice: 'free' }));
+    expect(pl(s, 'p1').cash).toBe(1450);
+    expect(s.mercyUsed?.p2).toEqual(['p1']);
+    // Đã dùng với p1: lần sau thu thẳng
+    s.phase = { kind: 'awaitRoll' };
+    s.rolled = false;
+    pl(s, 'p1').position = 32;
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
+    expect(s.phase.kind).toBe('awaitEnd');
+    expect(pl(s, 'p1').cash).toBe(1400);
+  });
+
+  it('hết giờ thì thu đủ; tắt luật thì thu ngay', () => {
+    let s = landRent();
+    ({ state: s } = act(s, 'system', { type: 'mercyTimeout' }));
+    expect(pl(s, 'p1').cash).toBe(1450);
+    let t = mkGame(2);
+    own(t, 'p2', 39);
+    pl(t, 'p1').position = 32;
+    ({ state: t } = act(t, 'p1', { type: 'roll' }, [3, 4]));
+    expect(t.phase.kind).toBe('awaitEnd');
+    expect(pl(t, 'p1').cash).toBe(1450);
+  });
+});
