@@ -571,14 +571,13 @@ describe('Gom tiền & phá sản', () => {
     expect(o.decks.chest).not.toContain(idx);
   });
 
-  it('thẻ trúng Vietlott nhận 3 tỷ (Freestyle không nhân hệ số)', () => {
+  it('thẻ trúng Vietlott: chỉ có ở Freestyle, nhận 3 tỷ cố định', () => {
     const idx = DECKS.chance.findIndex((c) => c.id === 'ch21');
-    for (const rules of [{}, { mode: 'freestyle' as const, feeMult: 3 }]) {
-      let s = mkGame(2, rules);
-      topCard(s, 'chance', idx);
-      ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
-      expect(pl(s, 'p1').cash).toBe(1500 + 3000);
-    }
+    let s = mkGame(2, { mode: 'freestyle', feeMult: 3 });
+    topCard(s, 'chance', idx);
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
+    expect(pl(s, 'p1').cash).toBe(1500 + 3000);
+    expect(mkGame(2).decks.chance).not.toContain(idx);
   });
 
   it('phá sản về ngân hàng: nhà về kho, ô đem đấu giá đã xoá thế chấp, thẻ về bộ bài', () => {

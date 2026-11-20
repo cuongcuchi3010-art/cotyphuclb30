@@ -171,6 +171,7 @@ export const CHANCE_CARDS: readonly Card[] = [
     deck: 'chance',
     text: '🎰 Trúng Vietlott Jackpot! Nhận 3 tỷ.',
     effect: { type: 'collect', amount: 3000, fixed: true },
+    freestyleOnly: true,
   },
 ];
 
