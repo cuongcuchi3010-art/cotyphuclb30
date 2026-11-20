@@ -39,6 +39,8 @@ export interface Card {
   effect: CardEffect;
   /** Logo thương hiệu tuỳ chọn: client/public/logos/<logo> */
   logo?: string;
+  /** Chỉ có trong bộ bài ở chế độ Freestyle */
+  freestyleOnly?: boolean;
 }
 
 export const DECK_NAMES: Record<DeckId, string> = {
@@ -299,6 +301,7 @@ export const CHEST_CARDS: readonly Card[] = [
     deck: 'chest',
     text: '💸 Đầu tư thua lỗ, trả cho giang hồ 1 tỷ.',
     effect: { type: 'pay', amount: 1000, fixed: true },
+    freestyleOnly: true,
   },
 ];
 
@@ -311,4 +314,9 @@ export function cardById(id: string): Card {
   const c = [...CHANCE_CARDS, ...CHEST_CARDS].find((x) => x.id === id);
   if (!c) throw new Error(`Không có thẻ ${id}`);
   return c;
+}
+
+/** Chỉ số các thẻ dùng trong bộ bài theo chế độ chơi (thẻ chỉ-Freestyle bị bỏ ở Cổ điển) */
+export function deckIndices(deck: DeckId, freestyle: boolean): number[] {
+  return DECKS[deck].map((_, i) => i).filter((i) => freestyle || !DECKS[deck][i]!.freestyleOnly);
 }

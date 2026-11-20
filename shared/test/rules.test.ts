@@ -553,15 +553,22 @@ describe('Gom tiền & phá sản', () => {
     expect(r.events).toContainEqual(expect.objectContaining({ t: 'bankrupt', buyout: true }));
   });
 
-  it('thẻ Khí Vận đầu tư thua lỗ: trả 1 tỷ (Freestyle không nhân hệ số)', () => {
+  it('thẻ Khí Vận đầu tư thua lỗ: chỉ có ở Freestyle, trả 1 tỷ cố định', () => {
     const idx = DECKS.chest.findIndex((c) => c.id === 'kv21');
-    for (const rules of [{}, { mode: 'freestyle' as const, feeMult: 3 }]) {
-      let s = mkGame(2, rules);
-      pl(s, 'p1').cash = 5000;
-      topCard(s, 'chest', idx);
-      ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 1])); // → 2 Khí Vận
-      expect(pl(s, 'p1').cash).toBe(4000);
-    }
+    let s = mkGame(2, { mode: 'freestyle', feeMult: 3 });
+    pl(s, 'p1').cash = 5000;
+    topCard(s, 'chest', idx);
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 1])); // → 2 Khí Vận
+    expect(pl(s, 'p1').cash).toBe(4000);
+    // Cổ điển: thẻ không có trong bộ; ván cũ còn thẻ thì bị bỏ qua
+    const c = mkGame(2);
+    expect(c.decks.chest).not.toContain(idx);
+    let o = mkGame(2);
+    topCard(o, 'chest', idx);
+    const r = act(o, 'p1', { type: 'roll' }, [1, 1]);
+    o = r.state;
+    expect(r.events).not.toContainEqual(expect.objectContaining({ cardId: 'kv21' }));
+    expect(o.decks.chest).not.toContain(idx);
   });
 
   it('thẻ trúng Vietlott nhận 3 tỷ (Freestyle không nhân hệ số)', () => {

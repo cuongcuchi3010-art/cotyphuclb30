@@ -1,5 +1,5 @@
 import {
-  DECKS,
+  deckIndices,
   HOTEL_LEVEL,
   OWNABLE_INDICES,
   actingPlayer,
@@ -65,7 +65,7 @@ function checkInvariants(s: GameState): void {
   }
   for (const deck of ['chance', 'chest'] as const) {
     const held = s.players.reduce((a, p) => a + p.jailCards.filter((d) => d === deck).length, 0);
-    if (s.decks[deck].length + held !== DECKS[deck].length)
+    if (s.decks[deck].length + held !== deckIndices(deck, s.rules.mode === 'freestyle').length)
       throw new Error(`Bộ ${deck} lệch số thẻ`);
   }
 }

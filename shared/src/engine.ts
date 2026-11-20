@@ -21,7 +21,7 @@ import {
   unmortgageCost,
   type StreetSquare,
 } from './data/board.vi.js';
-import { DECKS, type CardEffect, type DeckId } from './data/cards.vi.js';
+import { DECKS, deckIndices, type CardEffect, type DeckId } from './data/cards.vi.js';
 import type { Action, Actor, GameEvent, PlayerAction } from './actions.js';
 import type {
   Creditor,
@@ -143,14 +143,8 @@ export function createGame(
         ? { houses: FREESTYLE_STOCK, hotels: FREESTYLE_STOCK }
         : { houses: rules.houseStock ?? HOUSE_STOCK, hotels: rules.hotelStock ?? HOTEL_STOCK },
     decks: {
-      chance: shuffle(
-        DECKS.chance.map((_, i) => i),
-        rng,
-      ),
-      chest: shuffle(
-        DECKS.chest.map((_, i) => i),
-        rng,
-      ),
+      chance: shuffle(deckIndices('chance', rules.mode === 'freestyle'), rng),
+      chest: shuffle(deckIndices('chest', rules.mode === 'freestyle'), rng),
     },
     jackpot: 0,
     phase: draw ? { kind: 'drawOrder' } : { kind: 'awaitRoll' },
@@ -912,7 +906,10 @@ function returnJailCard(s: GameState, deck: DeckId): void {
 
 function drawCard(c: Ctx, p: PlayerState, deck: DeckId): void {
   const { s } = c;
-  const idx = s.decks[deck].shift();
+  let idx = s.decks[deck].shift();
+  // Ván Cổ điển lưu từ trước có thể còn thẻ chỉ-Freestyle trong bộ: bỏ hẳn thẻ đó
+  while (idx !== undefined && DECKS[deck][idx]!.freestyleOnly && !isFreestyle(s))
+    idx = s.decks[deck].shift();
   if (idx === undefined) return; // không thể xảy ra (bộ bài luôn có ít nhất 15 thẻ)
   const card = DECKS[deck][idx]!;
   c.ev.push({ t: 'card', playerId: p.id, deck, cardId: card.id });
