@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DECKS,
+  deckIndices,
   TOKENS,
   createGame,
   seededRng,
@@ -173,7 +174,7 @@ describe('Thẻ bài', () => {
     ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
     expect(pl(s, 'p1').jailCards).toEqual(['chance']);
     expect(s.decks.chance).not.toContain(CH_JAILFREE);
-    expect(s.decks.chance).toHaveLength(DECKS.chance.length - 1);
+    expect(s.decks.chance).toHaveLength(deckIndices('chance', false).length - 1);
   });
 });
 
