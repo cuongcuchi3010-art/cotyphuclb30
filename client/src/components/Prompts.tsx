@@ -4,6 +4,7 @@ import {
   festivalTargets,
   festivalMult,
   maxFestivals,
+  mercyDebt,
   rentFor,
   giftTargets,
   GROUPS,
@@ -251,6 +252,21 @@ function RaiseFundsBanner() {
         >
           {S.raise.openAssets}
         </Btn>
+        <Btn
+          big
+          variant="ghost"
+          onClick={() => {
+            setTab('loan');
+            setSheet(true);
+          }}
+        >
+          {S.raise.openLoan}
+        </Btn>
+        {mercyDebt(game, me!) && (
+          <Btn big variant="gold" onClick={() => act({ type: 'mercyRequest' })}>
+            {S.mercy.request(nameOf(room, debt.to))}
+          </Btn>
+        )}
         {canBankrupt && (
           <Btn big variant="danger" onClick={() => act({ type: 'declareBankruptcy' })}>
             {S.raise.bankrupt}
@@ -382,7 +398,7 @@ function MortgageChoice() {
   );
 }
 
-/** Quyền ân huệ: chủ ô chọn miễn / giảm 50% / thu đủ cho người vừa dừng ở ô mình */
+/** Quyền ân huệ: người thiếu tiền đã xin; chủ ô chọn giảm 100% / 50% / từ chối */
 function MercyPrompt() {
   const { room, game, me } = useGame();
   const act = useStore((s) => s.act);
@@ -392,6 +408,7 @@ function MercyPrompt() {
   const left = room.deadline ? Math.max(0, room.deadline - now) : 0;
   const half = Math.ceil(ph.amount / 2);
   const payer = nameOf(room, ph.payer);
+  const money = formatMoney(ph.amount);
   return (
     <Modal open>
       <div className="text-center">
@@ -399,9 +416,9 @@ function MercyPrompt() {
           🙏 {S.mercy.title}
         </div>
         <div className="mt-2 text-base">
-          {S.mercy.ask(payer, squareName(game, ph.pos), formatMoney(ph.amount))}
+          {S.mercy.ownerAsk(payer, squareName(game, ph.pos), money)}
         </div>
-        <div className="mt-1 text-xs text-gray-500">{S.mercy.once(payer)}</div>
+        <div className="mt-1 text-xs text-gray-500">{S.mercy.ownerOnce(payer)}</div>
         <div className="mx-auto my-3 h-2 w-full overflow-hidden rounded-full bg-black/10">
           <div
             className={cx('h-full transition-all', left < 4000 ? 'bg-son' : 'bg-ngoc')}
@@ -416,10 +433,10 @@ function MercyPrompt() {
             {S.mercy.half(formatMoney(half))}
           </Btn>
           <Btn big onClick={() => act({ type: 'mercyChoice', choice: 'full' })}>
-            {S.mercy.full(formatMoney(ph.amount))}
+            {S.mercy.refuse(money)}
           </Btn>
         </div>
-        <div className="mt-2 text-xs text-gray-500">{S.mercy.timeout}</div>
+        <div className="mt-2 text-xs text-gray-500">{S.mercy.timeoutOwner}</div>
       </div>
     </Modal>
   );

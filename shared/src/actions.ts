@@ -57,6 +57,9 @@ export type PlayerAction =
   | { type: 'casinoStake'; pos: number }
   | { type: 'casinoPass' }
   | { type: 'casinoRoll' }
+  /** Người thiếu tiền trả thuê (đang Gom tiền) xin chủ ô ban ân huệ */
+  | { type: 'mercyRequest' }
+  /** Chủ ô: free = giảm 100%, half = giảm 50%, full = từ chối */
   | { type: 'mercyChoice'; choice: MercyChoice };
 
 export type SystemAction =
@@ -134,7 +137,7 @@ export type GameEvent =
   | { t: 'propertyGifted'; from: PlayerId; to: PlayerId; pos: number }
   | { t: 'propertyWon'; playerId: PlayerId; pos: number }
   | { t: 'cardNoEffect'; playerId: PlayerId }
-  | { t: 'mercyAsk'; owner: PlayerId; payer: PlayerId; pos: number; amount: number }
+  | { t: 'mercyRequested'; owner: PlayerId; payer: PlayerId; amount: number }
   | {
       t: 'mercy';
       owner: PlayerId;

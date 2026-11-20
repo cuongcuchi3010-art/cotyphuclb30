@@ -134,6 +134,8 @@ export interface Debt {
   reason: DebtReason;
   /** Ô liên quan (thuê) */
   pos?: number;
+  /** Đã xin ân huệ cho khoản này (bị từ chối thì không xin lại) */
+  mercyAsked?: boolean;
 }
 
 export type DebtReason =
@@ -222,7 +224,7 @@ export type Phase =
   | { kind: 'raiseFunds'; debtor: PlayerId }
   /** Freestyle: bàn cược Sòng Bạc đang mở (chi tiết ở state.casino) */
   | { kind: 'casino' }
-  /** Chủ ô quyết định ban ân huệ (miễn / giảm 50%) cho người vừa dừng ở ô */
+  /** Quyền ân huệ: người thiếu tiền trả thuê đã xin, chủ ô chọn giảm 100% / 50% / từ chối */
   | { kind: 'mercy'; pos: number; owner: PlayerId; payer: PlayerId; amount: number }
   | { kind: 'gameOver' };
 

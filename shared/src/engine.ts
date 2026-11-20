@@ -501,6 +501,7 @@ function applySystem(c: Ctx, a: Action): void {
       return;
     case 'mercyTimeout':
       if (s.phase.kind !== 'mercy') fail('Không có quyết định ân huệ nào');
+      // Hết giờ: chủ ô chưa trả lời → coi như từ chối
       resolveMercy(c, 'full');
       return;
     case 'casinoTimeout':
@@ -663,9 +664,24 @@ function applyPlayer(c: Ctx, p: PlayerState, a: PlayerAction): void {
     case 'casinoRoll':
       casinoRoll(c, p);
       return;
+    case 'mercyRequest': {
+      const d = mercyDebt(s, p.id);
+      if (!d) fail('Chỉ xin ân huệ được khi không đủ tiền trả tiền thuê');
+      d.mercyAsked = true;
+      s.phase = {
+        kind: 'mercy',
+        pos: d.pos!,
+        owner: d.to as PlayerId,
+        payer: p.id,
+        amount: d.amount,
+      };
+      c.ev.push({ t: 'mercyRequested', owner: d.to as PlayerId, payer: p.id, amount: d.amount });
+      return;
+    }
     case 'mercyChoice': {
       const ph = s.phase;
-      if (ph.kind !== 'mercy' || ph.owner !== p.id) fail('Không có quyết định ân huệ nào');
+      if (ph.kind !== 'mercy' || ph.owner !== p.id)
+        fail('Không có lời xin ân huệ nào để quyết định');
       resolveMercy(c, a.choice);
       return;
     }
@@ -871,14 +887,7 @@ function landOn(c: Ctx, p: PlayerState, ctx: RentContext): void {
     const owner = getPlayer(s, st.owner);
     if (owner.bankrupt) return;
     const amount = rentFor(s, pos, ctx);
-    if (amount <= 0) return;
-    if (canMercy(s, owner.id, p.id)) {
-      // Chủ ô được chọn ban ân huệ (miễn / giảm 50%) trước khi thu
-      s.phase = { kind: 'mercy', pos, owner: owner.id, payer: p.id, amount };
-      c.ev.push({ t: 'mercyAsk', owner: owner.id, payer: p.id, pos, amount });
-      return;
-    }
-    s.debts.push({ from: p.id, to: owner.id, amount, reason: 'rent', pos });
+    if (amount > 0) s.debts.push({ from: p.id, to: owner.id, amount, reason: 'rent', pos });
     return;
   }
   switch (sq.kind) {
@@ -1140,6 +1149,15 @@ export function canMercy(s: GameState, owner: PlayerId, payer: PlayerId): boolea
   return !(s.mercyUsed?.[owner] ?? []).includes(payer);
 }
 
+/** Khoản thuê đang chặn (người này thiếu tiền) mà còn xin ân huệ được */
+export function mercyDebt(s: GameState, pid: PlayerId): Debt | null {
+  if (s.phase.kind !== 'raiseFunds' || s.phase.debtor !== pid) return null;
+  const d = s.debts[0];
+  if (!d || d.from !== pid || d.reason !== 'rent' || d.to === 'bank' || d.mercyAsked) return null;
+  if (getPlayer(s, pid).cash >= d.amount) return null;
+  return canMercy(s, d.to, pid) ? d : null;
+}
+
 function resolveMercy(c: Ctx, choice: MercyChoice): void {
   const { s } = c;
   const ph = s.phase;
@@ -1149,17 +1167,16 @@ function resolveMercy(c: Ctx, choice: MercyChoice): void {
     s.mercyUsed = { ...(s.mercyUsed ?? {}) };
     s.mercyUsed[ph.owner] = [...(s.mercyUsed[ph.owner] ?? []), ph.payer];
   }
-  c.ev.push({
-    t: 'mercy',
-    owner: ph.owner,
-    payer: ph.payer,
-    pos: ph.pos,
-    choice,
-    amount,
-  });
-  if (amount > 0)
-    s.debts.push({ from: ph.payer, to: ph.owner, amount, reason: 'rent', pos: ph.pos });
-  setNeutral(s);
+  const d = s.debts.find(
+    (x) => x.from === ph.payer && x.to === ph.owner && x.reason === 'rent' && x.pos === ph.pos,
+  );
+  if (d) {
+    if (amount > 0) d.amount = amount;
+    else s.debts.splice(s.debts.indexOf(d), 1);
+  }
+  c.ev.push({ t: 'mercy', owner: ph.owner, payer: ph.payer, pos: ph.pos, choice, amount });
+  // Quay lại Gom tiền / trả nợ: đủ tiền thì trả luôn và đi tiếp
+  s.phase = { kind: 'raiseFunds', debtor: ph.payer };
   proceed(c);
 }
 

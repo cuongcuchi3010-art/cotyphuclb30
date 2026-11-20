@@ -1149,56 +1149,72 @@ describe('Ô Lễ Hội thay Cà Phê', () => {
 });
 
 describe('Quyền ân huệ', () => {
-  function landRent(n = 2) {
+  /** p1 (còn `cash`) dừng ở Đồng Khởi của p2 (thuê 50) */
+  function landRent(cash: number, n = 2) {
     let s = mkGame(n, { mercy: true });
     own(s, 'p2', 39);
+    pl(s, 'p1').cash = cash;
     pl(s, 'p1').position = 32;
-    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4])); // → 39 Đồng Khởi (thuê 50)
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
     return s;
   }
 
-  it('chủ ô được chọn miễn, giảm 50% hoặc thu đủ', () => {
-    let s = landRent();
+  it('đủ tiền thì trả ngay, không xin được ân huệ', () => {
+    const s = landRent(1500);
+    expect(s.phase.kind).toBe('awaitEnd');
+    expect(pl(s, 'p1').cash).toBe(1450);
+    expect(() => act(s, 'p1', { type: 'mercyRequest' })).toThrow('không đủ tiền');
+  });
+
+  it('thiếu tiền: xin ân huệ trong lúc Gom tiền, chủ ô giảm 50% thì trả luôn', () => {
+    let s = landRent(30);
+    expect(s.phase).toEqual({ kind: 'raiseFunds', debtor: 'p1' });
+    ({ state: s } = act(s, 'p1', { type: 'mercyRequest' }));
     expect(s.phase).toEqual({ kind: 'mercy', pos: 39, owner: 'p2', payer: 'p1', amount: 50 });
     expect(() => act(s, 'p1', { type: 'mercyChoice', choice: 'free' })).toThrow('ân huệ');
     ({ state: s } = act(s, 'p2', { type: 'mercyChoice', choice: 'half' }));
-    expect(pl(s, 'p1').cash).toBe(1475);
+    expect(pl(s, 'p1').cash).toBe(5);
     expect(pl(s, 'p2').cash).toBe(1525);
     expect(s.phase.kind).toBe('awaitEnd');
-  });
-
-  it('mỗi người chơi khác chỉ được ân huệ 1 lần; thu đủ thì vẫn còn quyền', () => {
-    let s = landRent();
-    ({ state: s } = act(s, 'p2', { type: 'mercyChoice', choice: 'full' }));
-    expect(pl(s, 'p1').cash).toBe(1450);
-    expect(s.mercyUsed?.p2 ?? []).toEqual([]);
-    // Lần sau vẫn được hỏi; lần này miễn phí
-    s.phase = { kind: 'awaitRoll' };
-    s.rolled = false;
-    pl(s, 'p1').position = 32;
-    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
-    expect(s.phase.kind).toBe('mercy');
-    ({ state: s } = act(s, 'p2', { type: 'mercyChoice', choice: 'free' }));
-    expect(pl(s, 'p1').cash).toBe(1450);
     expect(s.mercyUsed?.p2).toEqual(['p1']);
-    // Đã dùng với p1: lần sau thu thẳng
+  });
+
+  it('giảm 100% thì xoá khoản thuê; từ chối thì quay lại Gom tiền, không xin lại khoản đó', () => {
+    let s = landRent(30);
+    ({ state: s } = act(s, 'p1', { type: 'mercyRequest' }));
+    ({ state: s } = act(s, 'p2', { type: 'mercyChoice', choice: 'free' }));
+    expect(pl(s, 'p1').cash).toBe(30);
+    expect(s.debts).toEqual([]);
+    s = landRent(30);
+    ({ state: s } = act(s, 'p1', { type: 'mercyRequest' }));
+    ({ state: s } = act(s, 'p2', { type: 'mercyChoice', choice: 'full' }));
+    expect(s.phase).toEqual({ kind: 'raiseFunds', debtor: 'p1' });
+    expect(s.mercyUsed?.p2 ?? []).toEqual([]);
+    expect(() => act(s, 'p1', { type: 'mercyRequest' })).toThrow('không đủ tiền');
+  });
+
+  it('mỗi chủ ô chỉ ban ân huệ cho mỗi người 1 lần', () => {
+    let s = landRent(30);
+    ({ state: s } = act(s, 'p1', { type: 'mercyRequest' }));
+    ({ state: s } = act(s, 'p2', { type: 'mercyChoice', choice: 'free' }));
     s.phase = { kind: 'awaitRoll' };
     s.rolled = false;
     pl(s, 'p1').position = 32;
     ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4]));
-    expect(s.phase.kind).toBe('awaitEnd');
-    expect(pl(s, 'p1').cash).toBe(1400);
+    expect(s.phase).toEqual({ kind: 'raiseFunds', debtor: 'p1' });
+    expect(() => act(s, 'p1', { type: 'mercyRequest' })).toThrow('không đủ tiền');
   });
 
-  it('hết giờ thì thu đủ; tắt luật thì thu ngay', () => {
-    let s = landRent();
+  it('chủ ô hết giờ chưa trả lời thì coi như từ chối; tắt luật thì không xin được', () => {
+    let s = landRent(30);
+    ({ state: s } = act(s, 'p1', { type: 'mercyRequest' }));
     ({ state: s } = act(s, 'system', { type: 'mercyTimeout' }));
-    expect(pl(s, 'p1').cash).toBe(1450);
+    expect(s.phase).toEqual({ kind: 'raiseFunds', debtor: 'p1' });
     let t = mkGame(2);
     own(t, 'p2', 39);
+    pl(t, 'p1').cash = 30;
     pl(t, 'p1').position = 32;
     ({ state: t } = act(t, 'p1', { type: 'roll' }, [3, 4]));
-    expect(t.phase.kind).toBe('awaitEnd');
-    expect(pl(t, 'p1').cash).toBe(1450);
+    expect(() => act(t, 'p1', { type: 'mercyRequest' })).toThrow('không đủ tiền');
   });
 });

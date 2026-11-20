@@ -110,7 +110,7 @@ export const S = {
     feeMult: 'Hệ số tiền phạt, thuế, thẻ',
     casinoMaxBet: 'Cược tối đa ở Sòng Bạc Tiền',
     firstBuildMax: 'Mua xong được xây ngay',
-    mercyRule: 'Quyền ân huệ (chủ ô miễn / giảm 50% tiền thuê, mỗi người 1 lần)',
+    mercyRule: 'Quyền ân huệ (thiếu tiền trả thuê được xin chủ ô giảm 100% / 50%; mỗi người 1 lần)',
     bankruptcy: 'Khi phá sản',
     bankruptcyModes: { creditor: 'Chủ nợ nhận hết', bankBuyout: 'Ngân hàng mua lại nhà' },
     bankruptcyInfo: {
@@ -207,19 +207,21 @@ export const S = {
     bankrupt: 'Tuyên bố phá sản',
     other: (name: string) => `${name} đang gom tiền trả nợ…`,
     openAssets: 'Mở Tài sản',
+    openLoan: 'Vay tiền',
   },
 
   mercy: {
     title: 'Quyền ân huệ',
-    ask: (payer: string, sq: string, amount: string) =>
-      `${payer} dừng ở ${sq}, tiền thuê ${amount}. Bạn có ban ân huệ không?`,
-    once: (payer: string) =>
-      `Mỗi người chơi bạn chỉ ban ân huệ được 1 lần; chọn Thu đủ thì vẫn giữ quyền với ${payer}.`,
-    free: '🙏 Miễn phí',
+    request: (owner: string) => `🙏 Xin ${owner} ân huệ`,
+    ownerAsk: (payer: string, sq: string, amount: string) =>
+      `${payer} không đủ tiền trả thuê ${sq} (${amount}) và xin bạn ban ân huệ.`,
+    ownerOnce: (payer: string) =>
+      `Mỗi người chơi bạn chỉ ban ân huệ được 1 lần; từ chối thì vẫn giữ quyền với ${payer}.`,
+    free: '🙏 Giảm 100% (miễn phí)',
     half: (amount: string) => `🤝 Giảm 50% (thu ${amount})`,
-    full: (amount: string) => `💰 Thu đủ ${amount}`,
-    timeout: 'Hết giờ sẽ thu đủ.',
-    waiting: (owner: string) => `🙏 ${owner} đang cân nhắc ban ân huệ…`,
+    refuse: (amount: string) => `✋ Từ chối (thu đủ ${amount})`,
+    timeoutOwner: 'Hết giờ coi như từ chối.',
+    waitingOwner: (owner: string, payer: string) => `🙏 ${payer} đang xin ${owner} ban ân huệ…`,
   },
 
   casino: {

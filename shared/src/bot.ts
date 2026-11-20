@@ -46,7 +46,7 @@ export function botDecision(s: GameState, botId: PlayerId): Plan | null {
     return currentPlayer(s).id === botId ? { by: 'system', action: { type: 'autoChoose' } } : null;
   }
   if (ph.kind === 'casino') return botCasino(s, botId);
-  // Bot không ban ân huệ: thu đủ
+  // Bot không ban ân huệ (từ chối)
   if (ph.kind === 'mercy')
     return ph.owner === botId
       ? { by: botId, action: { type: 'mercyChoice', choice: 'full' } }

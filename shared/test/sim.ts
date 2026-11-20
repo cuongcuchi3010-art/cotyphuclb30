@@ -8,6 +8,7 @@ import {
   candidateActions,
   casinoBetLimit,
   casinoStakeTargets,
+  mercyDebt,
   FREESTYLE_STOCK,
   createGame,
   seededRng,
@@ -82,10 +83,12 @@ function step(s: GameState, rng: Rng): GameState {
       .state;
   }
   if (ph.kind === 'mercy') {
-    const choice = (['free', 'half', 'full'] as const)[rng.int(0, 2)]!;
     if (rng.int(0, 4) === 0) return applyAction(s, 'system', { type: 'mercyTimeout' }, rng).state;
+    const choice = (['free', 'half', 'full'] as const)[rng.int(0, 2)]!;
     return applyAction(s, ph.owner, { type: 'mercyChoice', choice }, rng).state;
   }
+  if (ph.kind === 'raiseFunds' && mercyDebt(s, ph.debtor) && rng.int(0, 1) === 0)
+    return applyAction(s, ph.debtor, { type: 'mercyRequest' }, rng).state;
   if (ph.kind === 'casino') {
     const k = s.casino!;
     if (rng.int(0, 5) === 0) return applyAction(s, 'system', { type: 'casinoTimeout' }, rng).state;

@@ -30,7 +30,11 @@ export function ActionBar() {
   if (meP.bankrupt) return <div className={note}>{S.game.bankrupt}</div>;
   if (ph.kind === 'drawOrder') return <div className={note}>{S.draw.spectate}</div>;
   if (ph.kind === 'mercy' && ph.owner !== me)
-    return <div className={note}>{S.mercy.waiting(nameOf(room, ph.owner))}</div>;
+    return (
+      <div className={note}>
+        {S.mercy.waitingOwner(nameOf(room, ph.owner), nameOf(room, ph.payer))}
+      </div>
+    );
   if (ph.kind === 'casino' && game.casino)
     return <div className={note}>{S.casino.waiting(CASINO_NAMES[game.casino.kind])}</div>;
   if (ph.kind === 'cardChoice') {

@@ -103,7 +103,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
                 'Quyền ân huệ',
                 rules?.mercy === false
                   ? 'Tắt'
-                  : 'Chủ ô được miễn hoặc giảm 50% cho người dừng ở ô mình; mỗi người chơi chỉ 1 lần (A cho B 1 lần, cho C 1 lần…); hết 12 giây thì thu đủ',
+                  : 'Không đủ tiền mặt trả tiền thuê thì trong bước Gom tiền có nút Xin ân huệ; chủ ô chọn giảm 100%, giảm 50% hoặc từ chối (12 giây). Mỗi chủ ô chỉ ban ân huệ cho mỗi người 1 lần (A cho B 1 lần, cho C 1 lần…); bị từ chối thì không mất quyền nhưng không xin lại khoản đó',
               ],
               ['Ô có lễ hội', 'Nhân thêm ×2, ×3 hoặc ×4'],
             ]}
