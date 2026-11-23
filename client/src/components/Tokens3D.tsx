@@ -3,7 +3,7 @@ import type { TokenId } from '@cotyphu/shared';
 /**
  * Quân cờ 3D kiểu đồ chơi lắp ghép: mô phỏng đúng biểu tượng quân cờ của game
  * (xe máy, nón lá, bánh mì, cà phê sữa đá, con trâu, xích lô, hoa sen, áo dài),
- * đứng trên đế tròn màu người chơi có núm như gạch LEGO.
+ * đứng thẳng trên mặt ô (không có đế).
  * Gốc toạ độ ở tâm đáy; cao khoảng 0,8; mặt trước hướng +z.
  */
 
@@ -15,35 +15,6 @@ function P({ c, rough = 0.35 }: { c: string; rough?: number }) {
 const BLACK = '#1f2937';
 const WHITE = '#F8FAFC';
 const GOLD = '#F2C94C';
-
-function Base({ color }: { color: string }) {
-  return (
-    <group>
-      <mesh position={[0, 0.045, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.3, 0.32, 0.09, 40]} />
-        <P c={color} rough={0.3} />
-      </mesh>
-      <mesh position={[0, 0.012, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.318, 0.018, 10, 40]} />
-        <meshStandardMaterial color={GOLD} metalness={0.8} roughness={0.25} />
-      </mesh>
-      {/* Núm kiểu gạch lắp ghép */}
-      {(
-        [
-          [-0.17, -0.17],
-          [0.17, -0.17],
-          [-0.17, 0.17],
-          [0.17, 0.17],
-        ] as const
-      ).map(([x, z]) => (
-        <mesh key={`${x}${z}`} position={[x, 0.105, z]} castShadow>
-          <cylinderGeometry args={[0.045, 0.045, 0.035, 16]} />
-          <P c={color} rough={0.3} />
-        </mesh>
-      ))}
-    </group>
-  );
-}
 
 function Wheel({
   x,
@@ -365,8 +336,8 @@ function AoDai() {
 
 export function TokenModel({ token, color }: { token: TokenId; color: string }) {
   return (
-    <group>
-      <Base color={color} />
+    // Không còn đế: hạ mô hình xuống sát mặt ô (các mẫu được dựng cao hơn 0,12 cho đế cũ)
+    <group position={[0, -0.12, 0]}>
       {token === 'xe-may' && <XeMay color={color} />}
       {token === 'non-la' && <NonLa />}
       {token === 'banh-mi' && <BanhMi />}

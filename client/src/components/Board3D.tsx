@@ -358,7 +358,7 @@ function Pawn({
   return (
     <>
       <group ref={ref}>
-        <group scale={0.85}>
+        <group scale={1.05}>
           <TokenModel token={token} color={color} />
         </group>
       </group>
