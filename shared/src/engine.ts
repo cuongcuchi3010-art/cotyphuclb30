@@ -1145,12 +1145,13 @@ function applyCard(c: Ctx, p: PlayerState, e: CardEffect): void {
       return;
     }
     case 'swapAssets': {
-      if (alivePlayers(s).length < 2) {
+      // Hoán đổi với một người chơi khác chọn NGẪU NHIÊN (không được chọn)
+      const others = alivePlayers(s).filter((o) => o.id !== p.id);
+      if (others.length === 0) {
         c.ev.push({ t: 'cardNoEffect', playerId: p.id });
         return;
       }
-      s.phase = { kind: 'cardChoice', choice: 'swap' };
-      c.ev.push({ t: 'choosing', playerId: p.id, choice: 'swap' });
+      doSwap(c, p, others[c.rng.int(0, others.length - 1)]!.id);
       return;
     }
     case 'teleport': {

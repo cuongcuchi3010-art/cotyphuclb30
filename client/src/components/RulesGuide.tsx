@@ -70,9 +70,10 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
             {rules?.devilCards && (
               <li>
                 <b>😈 Bộ thẻ Ác Quỷ</b>: Khí Vận <i>Hoán đổi số phận</i> (đổi toàn bộ tiền, đất, nhà
-                với người bạn chọn); Cơ Hội <i>Băng giá</i> (mọi ô đất đóng băng 3 vòng: không thu
-                thuê, không xây), <i>Thiên Lôi</i> (phá sập hết nhà trên 3 ô có nhà ngẫu nhiên),{' '}
-                <i>Dịch chuyển</i> (chọn 1 ô bất kỳ để đi tới).
+                với một người chơi ngẫu nhiên); Cơ Hội <i>Băng giá</i> (nhà đất của người rút thẻ
+                đóng băng 3 vòng: ai dừng ở ô đó không trả thuê, chủ không được xây),{' '}
+                <i>Thiên Lôi</i> (phá sập hết nhà trên 3 ô có nhà ngẫu nhiên), <i>Dịch chuyển</i>{' '}
+                (chọn 1 ô bất kỳ để đi tới).
               </li>
             )}
           </ul>

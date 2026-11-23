@@ -338,7 +338,7 @@ export const CHEST_CARDS: readonly Card[] = [
   {
     id: 'kv22',
     deck: 'chest',
-    text: '😈 Ác Quỷ · Hoán đổi số phận! Đổi toàn bộ tài sản (tiền, đất, nhà) của bạn với một người chơi bạn chọn.',
+    text: '😈 Ác Quỷ · Hoán đổi số phận! Đổi toàn bộ tài sản (tiền, đất, nhà) của bạn với một người chơi khác được chọn ngẫu nhiên.',
     effect: { type: 'swapAssets' },
     devil: true,
   },

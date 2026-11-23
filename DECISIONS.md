@@ -346,3 +346,4 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 ## 3D12 — Băng giá theo người, quân cờ 2D mượt hơn
 - Thẻ Băng giá (ch22) chỉ đóng băng nhà đất của NGƯỜI RÚT THẺ trong 3 vòng: ai dừng ở ô của họ không trả thuê, họ không được xây. State `frozen: Record<PlayerId, turn>` thay `freezeUntil`; `isFrozen(s, ownerId)`, `frozenLeft`.
 - Quân cờ 2D di chuyển bằng transform (lớp phủ kín bàn, dịch theo %) thay left/top; độ lệch khi chung ô tách lớp riêng nên không làm quân đi lại từ đầu; lớp nhịp đập tách khỏi lớp xoay `upright` của bàn thoi.
+- Thẻ Hoán đổi số phận (kv22): đổi với một người chơi khác chọn NGẪU NHIÊN, không còn pha chọn người.

@@ -309,16 +309,16 @@ describe('Bộ thẻ Ác Quỷ', () => {
     expect(mkGame(2, { devilCards: true }).decks.chance).not.toContain(ch);
   });
 
-  it('Hoán đổi số phận: đổi tiền, đất, nhà với người được chọn', () => {
+  it('Hoán đổi số phận: đổi tiền, đất, nhà với một người ngẫu nhiên', () => {
     let s = mkGame(3, DV);
+    pl(s, 'p2').bankrupt = true; // chỉ còn p3 để ngẫu nhiên trúng
     own(s, 'p1', 1);
     own(s, 'p3', 39);
     s.properties[39]!.houses = 3;
     pl(s, 'p3').cash = 4000;
     topCard(s, 'chest', idx('chest', 'kv22'));
     ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 1])); // → 2 Khí Vận
-    expect(s.phase).toEqual({ kind: 'cardChoice', choice: 'swap' });
-    ({ state: s } = act(s, 'p1', { type: 'chooseSwap', to: 'p3' }));
+    expect(s.phase.kind).not.toBe('cardChoice');
     expect(pl(s, 'p1').cash).toBe(4000);
     expect(pl(s, 'p3').cash).toBe(1500);
     expect(s.properties[39]).toEqual({ owner: 'p1', houses: 3, mortgaged: false });
