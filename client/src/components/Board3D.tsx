@@ -15,6 +15,7 @@ import {
   type GameEvent,
   type GameState,
   type Square,
+  type TokenId,
 } from '@cotyphu/shared';
 import { useStore } from '../store';
 import { BOARD_UNITS, boardXZ, cx, fmtClock, playerColor, sideOf, useGame, useNow } from '../lib';
@@ -23,6 +24,7 @@ import { useMoneyFx, useRollInfo, RollBubble, EventTicker } from './BoardFx';
 import { ActionBar } from './ActionBar';
 import { Avatar } from './Avatar';
 import { CardReveal } from './Board';
+import { TokenModel } from './Tokens3D';
 
 const HALF = BOARD_UNITS / 2;
 const TILE_H = 0.16;
@@ -280,23 +282,6 @@ function Buildings({ houses }: { houses: number }) {
   );
 }
 
-const PAWN = new THREE.LatheGeometry(
-  [
-    [0, 0],
-    [0.24, 0],
-    [0.24, 0.05],
-    [0.17, 0.1],
-    [0.1, 0.3],
-    [0.08, 0.42],
-    [0.14, 0.46],
-    [0.08, 0.5],
-    [0.13, 0.6],
-    [0.11, 0.7],
-    [0, 0.73],
-  ].map(([x, y]) => new THREE.Vector2(x!, y!)),
-  24,
-);
-
 function buildPath(from: number, events: GameEvent[], pid: string): number[] | null {
   const path = [from];
   let cur = from;
@@ -320,7 +305,7 @@ function buildPath(from: number, events: GameEvent[], pid: string): number[] | n
 /** Vị trí đặt quân trên ô (lệch nhau khi nhiều quân cùng ô) */
 function slot(pos: number, k: number, n: number): THREE.Vector3 {
   const [x, z] = boardXZ(pos);
-  const off = n > 1 ? (k - (n - 1) / 2) * 0.28 : 0;
+  const off = n > 1 ? (k - (n - 1) / 2) * 0.3 : 0;
   const along = sideOf(pos) === 'left' || sideOf(pos) === 'right';
   return new THREE.Vector3(x + (along ? 0 : off), TOP, z + (along ? off : 0));
 }
@@ -328,6 +313,8 @@ function slot(pos: number, k: number, n: number): THREE.Vector3 {
 function Pawn({
   id,
   color,
+  token,
+  active,
   slotIndex,
   slotCount,
   pathRef,
@@ -335,12 +322,15 @@ function Pawn({
 }: {
   id: string;
   color: string;
+  token: TokenId;
+  active: boolean;
   slotIndex: number;
   slotCount: number;
   pathRef: React.MutableRefObject<Record<string, { path: number[]; t0: number }>>;
   onPos: (id: string, v: THREE.Vector3) => void;
 }) {
   const ref = useRef<THREE.Group>(null);
+  const glow = useRef<THREE.Mesh>(null);
   useFrame(() => {
     const g = ref.current;
     const anim = pathRef.current[id];
@@ -353,16 +343,32 @@ function Pawn({
     const a = slot(anim.path[k]!, k >= last ? slotIndex : 0, k >= last ? slotCount : 1);
     const b = slot(anim.path[Math.min(last, k + 1)]!, 0, 1);
     const p = a.clone().lerp(b, f);
+    const now = performance.now() / 1000;
     p.y += Math.sin(f * Math.PI) * 0.35; // nhảy từng ô
+    // Người đang tới lượt: nhún nhẹ, vòng sáng dưới chân
+    if (active && k >= last) p.y += 0.04 + Math.sin(now * 3.2) * 0.04;
     g.position.copy(p);
+    if (glow.current) {
+      glow.current.position.set(p.x, TOP + 0.015, p.z);
+      const s = 1 + Math.sin(now * 4) * 0.1;
+      glow.current.scale.set(s, s, s);
+    }
     onPos(id, p);
   });
   return (
-    <group ref={ref}>
-      <mesh geometry={PAWN} castShadow>
-        <meshStandardMaterial color={color} roughness={0.35} metalness={0.1} />
-      </mesh>
-    </group>
+    <>
+      <group ref={ref}>
+        <group scale={0.85}>
+          <TokenModel token={token} color={color} />
+        </group>
+      </group>
+      {active && (
+        <mesh ref={glow} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.3, 0.4, 40]} />
+          <meshBasicMaterial color={color} transparent opacity={0.8} />
+        </mesh>
+      )}
+    </>
   );
 }
 
@@ -406,6 +412,8 @@ function Pawns({ follow }: { follow: React.MutableRefObject<THREE.Vector3 | null
               key={p.id}
               id={p.id}
               color={playerColor(room, p.id)}
+              token={p.token}
+              active={p.id === cur}
               slotIndex={st.indexOf(p.id)}
               slotCount={st.length}
               pathRef={pathRef}
