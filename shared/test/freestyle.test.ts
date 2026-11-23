@@ -360,17 +360,10 @@ describe('Bộ thẻ Ác Quỷ', () => {
 });
 
 describe('Tung canh lực', () => {
-  it('lực 1–100 ứng với tổng 2–12, lệch tối đa ±2', () => {
-    for (const [power, lo, hi] of [
-      [1, 2, 4],
-      [50, 5, 9],
-      [100, 10, 12],
-    ] as const) {
-      for (let k = 0; k < 30; k++) {
-        const [a, b] = rollWithPower(seededRng(k * 7 + power), power);
-        expect(a + b).toBeGreaterThanOrEqual(lo);
-        expect(a + b).toBeLessThanOrEqual(hi);
-      }
+  it('lực chỉ là hiệu ứng: kết quả giống hệt tung ngẫu nhiên', () => {
+    for (let k = 0; k < 20; k++) {
+      expect(rollWithPower(seededRng(k), 100)).toEqual(rollWithPower(seededRng(k)));
+      expect(rollWithPower(seededRng(k), 1)).toEqual(rollWithPower(seededRng(k)));
     }
   });
 

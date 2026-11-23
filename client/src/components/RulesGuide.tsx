@@ -83,8 +83,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
           <ol className="list-decimal space-y-1 pl-5">
             <li>
               Nút Tung xúc xắc: <b>nhấn giữ để canh lực</b> (thanh chạy 0 → 100% trong 2 giây rồi
-              chạy ngược lại; buông tay để tung). Lực càng cao tổng điểm càng lớn (lệch ±2). Chạm
-              nhẹ, hoặc giữ tới khi thanh về 0, thì tung ngẫu nhiên.
+              chạy ngược lại; buông tay để tung). Lực chỉ để cho vui, kết quả luôn ngẫu nhiên.
             </li>
             <li>
               Bấm Tung xúc xắc, quân tự đi theo tổng hai xúc xắc. Qua Khởi Hành nhận{' '}

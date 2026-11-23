@@ -88,21 +88,12 @@ function rollDice(rng: Rng): [number, number] {
   return [rng.int(1, 6), rng.int(1, 6)];
 }
 
-/** Mọi cặp xí ngầu, nhóm theo tổng */
-const DICE_PAIRS: [number, number][] = [];
-for (let a = 1; a <= 6; a++) for (let b = 1; b <= 6; b++) DICE_PAIRS.push([a, b]);
-
 /**
- * Tung có canh lực (nhấn giữ): lực 1–100 ứng với tổng mục tiêu 2–12;
- * kết quả là một cặp xí ngầu ngẫu nhiên có tổng trong khoảng mục tiêu ±2.
- * Không có lực → tung ngẫu nhiên như thường.
+ * Tung khi nhấn giữ canh lực: lực chỉ là hiệu ứng (ghi vào nhật ký),
+ * kết quả luôn ngẫu nhiên như tung thường.
  */
-export function rollWithPower(rng: Rng, power?: number): [number, number] {
-  if (power === undefined) return rollDice(rng);
-  const target = 2 + Math.round(((Math.min(100, Math.max(1, power)) - 1) / 99) * 10);
-  const pool = DICE_PAIRS.filter(([a, b]) => Math.abs(a + b - target) <= 2);
-  const [a, b] = pool[rng.int(0, pool.length - 1)]!;
-  return [a, b];
+export function rollWithPower(rng: Rng, _power?: number): [number, number] {
+  return rollDice(rng);
 }
 
 export interface CreateOptions {
