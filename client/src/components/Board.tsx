@@ -39,7 +39,7 @@ const SPECIAL_ICON: Partial<Record<Sq['kind'], string>> = {
 
 const Board3D = lazy(() => import('./Board3D'));
 
-export function Board() {
+export function Board({ fill }: { fill?: boolean } = {}) {
   const shape = useStore((s) => s.boardShape);
   if (shape === '3d')
     return (
@@ -50,7 +50,7 @@ export function Board() {
           </div>
         }
       >
-        <Board3D />
+        <Board3D fill={fill} />
       </Suspense>
     );
   if (shape !== 'diamond')

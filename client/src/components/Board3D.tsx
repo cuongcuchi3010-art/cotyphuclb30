@@ -60,7 +60,15 @@ function tileSize(i: number): [number, number] {
 // Hình in trên mặt ô (vẽ bằng canvas)
 // ---------------------------------------------------------------------------
 
-const PX = 160; // px trên 1 đơn vị
+/** Màn hình lớn (Full HD trở lên tính theo điểm ảnh thật): vẽ chữ trên ô nét hơn */
+const SCREEN_PX =
+  typeof window === 'undefined'
+    ? 1920
+    : Math.max(window.screen.width, window.screen.height) * (window.devicePixelRatio || 1);
+const HI_RES = SCREEN_PX >= 2500;
+const PX = HI_RES ? 256 : 160; // px trên 1 đơn vị
+/** Giới hạn số điểm ảnh vẽ mỗi khung hình (giữ 2K / 4K vẫn mượt) */
+const PIXEL_BUDGET = HI_RES ? 5_500_000 : 3_500_000;
 
 function wrap(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
   const words = text.split(' ');
@@ -202,7 +210,7 @@ function drawTile(look: TileLook, w: number, d: number): THREE.CanvasTexture {
   }
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 4;
+  t.anisotropy = 8;
   return t;
 }
 
@@ -303,12 +311,15 @@ function buildPath(from: number, events: GameEvent[], pid: string): number[] | n
 }
 
 /** Vị trí đặt quân trên ô (lệch nhau khi nhiều quân cùng ô) */
-function slot(pos: number, k: number, n: number): THREE.Vector3 {
+function slot(pos: number, k: number, n: number, out: THREE.Vector3): THREE.Vector3 {
   const [x, z] = boardXZ(pos);
   const off = n > 1 ? (k - (n - 1) / 2) * 0.3 : 0;
   const along = sideOf(pos) === 'left' || sideOf(pos) === 'right';
-  return new THREE.Vector3(x + (along ? 0 : off), TOP, z + (along ? off : 0));
+  return out.set(x + (along ? 0 : off), TOP, z + (along ? off : 0));
 }
+
+/** Mượt đầu – cuối mỗi bước */
+const smooth = (t: number) => t * t * (3 - 2 * t);
 
 function Pawn({
   id,
@@ -331,23 +342,37 @@ function Pawn({
 }) {
   const ref = useRef<THREE.Group>(null);
   const glow = useRef<THREE.Mesh>(null);
-  useFrame(() => {
+  // Vector dùng lại mỗi khung hình (tránh tạo rác → khựng)
+  const va = useMemo(() => new THREE.Vector3(), []);
+  const vb = useMemo(() => new THREE.Vector3(), []);
+  const p = useMemo(() => new THREE.Vector3(), []);
+  const placed = useRef(false);
+  useFrame((_, dt) => {
     const g = ref.current;
     const anim = pathRef.current[id];
     if (!g || !anim) return;
-    const STEP = 0.22; // giây mỗi ô
+    // Đường dài thì đi nhanh hơn chút để không chờ lâu
+    const STEP = anim.path.length > 8 ? 0.17 : 0.23; // giây mỗi ô
     const t = (performance.now() - anim.t0) / 1000 / STEP;
     const last = anim.path.length - 1;
     const k = Math.min(last, Math.floor(t));
     const f = k >= last ? 0 : t - k;
-    const a = slot(anim.path[k]!, k >= last ? slotIndex : 0, k >= last ? slotCount : 1);
-    const b = slot(anim.path[Math.min(last, k + 1)]!, 0, 1);
-    const p = a.clone().lerp(b, f);
+    slot(anim.path[k]!, k >= last ? slotIndex : 0, k >= last ? slotCount : 1, va);
+    slot(anim.path[Math.min(last, k + 1)]!, 0, 1, vb);
+    p.copy(va).lerp(vb, smooth(f));
     const now = performance.now() / 1000;
-    p.y += Math.sin(f * Math.PI) * 0.35; // nhảy từng ô
+    p.y += Math.sin(f * Math.PI) * 0.32; // nhảy từng ô
+    // Đứng yên: trượt mượt về chỗ đứng (khi nhiều quân cùng ô thì dàn ra)
+    if (k >= last && placed.current) {
+      const cur = g.position;
+      const kk = 1 - Math.exp(-dt * 12);
+      p.x = cur.x + (p.x - cur.x) * kk;
+      p.z = cur.z + (p.z - cur.z) * kk;
+    }
     // Người đang tới lượt: nhún nhẹ, vòng sáng dưới chân
     if (active && k >= last) p.y += 0.04 + Math.sin(now * 3.2) * 0.04;
     g.position.copy(p);
+    placed.current = true;
     if (glow.current) {
       glow.current.position.set(p.x, TOP + 0.015, p.z);
       const s = 1 + Math.sin(now * 4) * 0.1;
@@ -417,7 +442,11 @@ function Pawns({ follow }: { follow: React.MutableRefObject<THREE.Vector3 | null
               slotIndex={st.indexOf(p.id)}
               slotCount={st.length}
               pathRef={pathRef}
-              onPos={(id, v) => (positions.current[id] = v.clone())}
+              onPos={(id, v) => {
+                const cur = positions.current[id];
+                if (cur) cur.copy(v);
+                else positions.current[id] = v.clone();
+              }}
             />
           );
         })}
@@ -822,11 +851,11 @@ function City({ lite }: { lite: boolean }) {
       })}
       {trees.map(([x, z, s], k) => (
         <group key={k} position={[x, 0, z]} scale={s}>
-          <mesh position={[0, 0.35, 0]} castShadow>
+          <mesh position={[0, 0.35, 0]}>
             <cylinderGeometry args={[0.08, 0.1, 0.7, 6]} />
             <meshStandardMaterial color="#7C4A22" />
           </mesh>
-          <mesh position={[0, 0.95, 0]} castShadow>
+          <mesh position={[0, 0.95, 0]}>
             <icosahedronGeometry args={[0.5, 0]} />
             <meshStandardMaterial color={k % 2 ? '#22A04B' : '#2FB35A'} flatShading />
           </mesh>
@@ -877,13 +906,16 @@ function Controls({ follow }: { follow: React.MutableRefObject<THREE.Vector3 | n
   useEffect(() => {
     auto.current = true;
   }, [game?.turn]);
-  useFrame(() => {
+  const want = useMemo(() => new THREE.Vector3(), []);
+  useFrame((_, dt) => {
     if (auto.current && follow.current) {
-      const want = follow.current.clone().multiplyScalar(0.3);
+      want.copy(follow.current).multiplyScalar(0.3);
       want.y = 0;
-      const delta = want.sub(controls.target).multiplyScalar(0.04);
-      controls.target.add(delta);
-      camera.position.add(delta);
+      // Giảm chấn theo thời gian thực: mượt như nhau ở 30, 60 hay 144 khung hình/giây
+      const k = 1 - Math.exp(-Math.min(dt, 0.1) * 2.2);
+      want.sub(controls.target).multiplyScalar(k);
+      controls.target.add(want);
+      camera.position.add(want);
     }
     controls.update();
   });
@@ -905,7 +937,7 @@ function Scene({ lite }: { lite: boolean }) {
         position={[8, 14, 6]}
         intensity={1.5}
         castShadow={!lite}
-        shadow-mapSize={[1024, 1024]}
+        shadow-mapSize={HI_RES ? [2048, 2048] : [1024, 1024]}
         shadow-camera-left={-12}
         shadow-camera-right={12}
         shadow-camera-top={12}
@@ -938,7 +970,7 @@ function Hud() {
   const actor = game.players.find((p) => p.id === actorId) ?? cur;
   const left = room.deadline ? room.deadline - now : null;
   return (
-    <div className="pointer-events-auto mx-auto w-[min(92%,520px)] rounded-2xl bg-white/90 p-[1.6cqw] shadow-card backdrop-blur dark:bg-black/70">
+    <div className="pointer-events-auto w-full rounded-2xl bg-white/90 p-[1.6cqw] shadow-card backdrop-blur dark:bg-black/70">
       {ph.kind !== 'gameOver' && (
         <div
           className="mb-[1cqw] flex items-center justify-center gap-[1cqw]"
@@ -970,11 +1002,59 @@ class GlBoundary extends Component<{ children: ReactNode; fallback: ReactNode },
   }
 }
 
-export default function Board3D() {
+/**
+ * Theo dõi thời gian vẽ mỗi khung: chậm (dưới ~45 khung/giây) thì hạ độ nét 15%,
+ * nhanh trở lại (trên ~57 khung/giây) thì nâng dần, để chuyển động luôn mượt.
+ */
+function PerfGuard({ onQuality }: { onQuality: (f: (q: number) => number) => void }) {
+  const acc = useRef({ t: 0, n: 0, warm: 0 });
+  useFrame((_, dt) => {
+    const a = acc.current;
+    a.warm += dt;
+    if (a.warm < 2) return; // bỏ qua lúc mới tải
+    a.t += dt;
+    a.n++;
+    if (a.t < 1.2) return;
+    const avg = a.t / a.n;
+    a.t = 0;
+    a.n = 0;
+    if (avg > 1 / 45) onQuality((q) => Math.max(0.55, q * 0.85));
+    else if (avg < 1 / 57) onQuality((q) => Math.min(1, q * 1.08));
+  });
+  return null;
+}
+
+/** Độ phân giải vẽ: theo màn hình nhưng không vượt ngân sách điểm ảnh */
+function useAdaptiveDpr(lite: boolean): [React.RefObject<HTMLDivElement>, number] {
+  const ref = useRef<HTMLDivElement>(null);
+  const [dpr, setDpr] = useState(1);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    const update = () => {
+      const r = el.getBoundingClientRect();
+      const area = Math.max(1, r.width * r.height);
+      const device = Math.min(window.devicePixelRatio || 1, lite ? 1.25 : 2);
+      const fit = Math.sqrt((lite ? 1_200_000 : PIXEL_BUDGET) / area);
+      setDpr(Math.max(0.75, Math.min(device, fit)));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [lite]);
+  return [ref, dpr];
+}
+
+export default function Board3D({ fill }: { fill?: boolean }) {
   const setShape = useStore((s) => s.setBoardShape);
   const lite =
     typeof window !== 'undefined' &&
-    (window.innerWidth < 700 || navigator.hardwareConcurrency <= 4);
+    (window.innerWidth < 700 || (navigator.hardwareConcurrency || 8) <= 2);
+  const [box, baseDpr] = useAdaptiveDpr(lite);
+  // Chất lượng tự điều chỉnh theo tốc độ khung hình thực tế
+  const [quality, setQuality] = useState(1);
+  const dpr = Math.max(0.6, baseDpr * quality);
   const fallback = (
     <div className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-2xl bg-white/80 p-4 text-center">
       <div>{S.shape.no3d}</div>
@@ -989,26 +1069,32 @@ export default function Board3D() {
   );
   return (
     <GlBoundary fallback={fallback}>
-      <div className="relative aspect-square w-full overflow-hidden rounded-2xl shadow-card [container-type:inline-size]">
+      <div
+        ref={box}
+        className={cx(
+          'relative w-full overflow-hidden rounded-2xl shadow-card',
+          fill ? 'h-full' : 'aspect-square',
+        )}
+      >
         <Canvas
           shadows={!lite}
-          dpr={[1, lite ? 1.25 : 1.75]}
-          camera={{ position: [0, 15.5, 13.5], fov: 42 }}
+          dpr={dpr}
+          camera={{ position: [0, 15.5, 13.5], fov: fill ? 38 : 42 }}
           gl={{ antialias: !lite, powerPreference: 'high-performance' }}
         >
           <Scene lite={lite} />
+          <PerfGuard onQuality={setQuality} />
         </Canvas>
         <EventTicker />
-        <div className="pointer-events-none absolute inset-0">
+        {/* Lớp phẳng: giữ kích thước vừa phải dù màn hình rất rộng (2K / 4K) */}
+        <div className="pointer-events-none absolute inset-y-0 left-1/2 w-[min(100%,880px)] -translate-x-1/2 [container-type:inline-size]">
           <RollBubble />
-        </div>
-        <div className="pointer-events-none absolute inset-x-0 bottom-[2%]">
-          <Hud />
-        </div>
-        <div className="pointer-events-none absolute inset-0">
           <div className="pointer-events-auto">
             <CardReveal />
           </div>
+        </div>
+        <div className="pointer-events-none absolute bottom-[2%] left-1/2 w-[clamp(19rem,46%,38rem)] -translate-x-1/2 [container-type:inline-size]">
+          <Hud />
         </div>
       </div>
     </GlBoundary>

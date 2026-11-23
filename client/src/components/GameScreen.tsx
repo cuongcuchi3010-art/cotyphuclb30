@@ -25,7 +25,9 @@ export function GameScreen() {
   const sheetOpen = useStore((s) => s.sheetOpen);
   const setSheet = useStore((s) => s.setSheet);
   const { w, h } = useViewport();
-  const diamond = useStore((s) => s.boardShape) === 'diamond';
+  const shape = useStore((s) => s.boardShape);
+  const diamond = shape === 'diamond';
+  const is3d = shape === '3d';
   const [belowRef, belowH] = useMeasuredHeight<HTMLDivElement>();
   const [barRef, barH] = useMeasuredHeight<HTMLDivElement>();
   const railsRef = useRef(false);
@@ -63,6 +65,34 @@ export function GameScreen() {
   );
 
   // ---- Bàn cờ trái + panel phải: máy tính, điện thoại nằm ngang, máy gập mở ngang
+  // ---- 3D trên màn hình ngang (máy tính Full HD / 2K / 4K): khung 3D lấp đầy phần còn lại
+  if (L.mode === 'side' && is3d) {
+    // Màn hình rất rộng: bảng bên to theo cỡ chữ gốc (16 → 20 → 26px)
+    const ui = w >= 3200 ? 26 / 16 : w >= 2400 ? 20 / 16 : 1;
+    const panel = Math.round(Math.min(440 * ui, Math.max(300, w * 0.22)));
+    return (
+      <div className="flex gap-3 p-2" style={{ height: '100dvh' }}>
+        <div className="min-w-0 flex-1">
+          <Board fill />
+        </div>
+        <aside className="flex min-w-0 shrink-0 flex-col gap-2" style={{ width: panel }}>
+          <TopBar />
+          <div className="max-h-[34%] shrink-0 overflow-y-auto">
+            <PlayerList compact={h < 800} cols={1} />
+          </div>
+          <div className="flex min-h-0 flex-1 flex-col rounded-2xl bg-white/90 p-2 shadow-card dark:bg-[#211d16]">
+            <TabBar />
+            <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
+              <TabContent />
+            </div>
+          </div>
+          <LegalNotice compact className="shrink-0" />
+        </aside>
+        {overlays}
+      </div>
+    );
+  }
+
   if (L.mode === 'side') {
     return (
       <div

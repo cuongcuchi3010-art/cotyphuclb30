@@ -5,6 +5,17 @@
 :root {
   color-scheme: light dark;
 }
+/* Màn hình rất rộng (2K / 4K ở tỉ lệ 100%): phóng to chữ, nút, khoảng cách (Tailwind dùng rem) */
+@media (min-width: 2400px) {
+  html {
+    font-size: 20px;
+  }
+}
+@media (min-width: 3200px) {
+  html {
+    font-size: 26px;
+  }
+}
 html,
 body {
   @apply bg-giay text-gray-900 antialiased dark:bg-giay-dark dark:text-gray-100;
