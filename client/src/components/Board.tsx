@@ -55,9 +55,9 @@ export function Board({ fill }: { fill?: boolean } = {}) {
     );
   if (shape !== 'diamond')
     return (
+      // Bàn vuông 2D đã có nhật ký giữa bàn, không hiện thêm dòng sự kiện đè lên góc ô
       <div className="relative w-full">
         <BoardGrid diamond={false} />
-        <EventTicker />
       </div>
     );
   // Bàn hình thoi: xoay 45° (vẫn 2D); người chơi ở 4 góc

@@ -69,13 +69,19 @@ export function GameScreen() {
   if (L.mode === 'side' && is3d) {
     // Màn hình rất rộng: bảng bên to theo cỡ chữ gốc (16 → 20 → 26px)
     const ui = w >= 3200 ? 26 / 16 : w >= 2400 ? 20 / 16 : 1;
-    const panel = Math.round(Math.min(440 * ui, Math.max(300, w * 0.22)));
+    // Bảng chức năng chiếm ~30% bề ngang để giao dịch / vay / tài sản dễ thao tác;
+    // màn Full HD phóng chữ trong bảng thêm ~15% (2K/4K đã phóng theo cỡ chữ gốc)
+    const panel = Math.round(Math.min(620 * ui, Math.max(340, w * 0.3)));
+    const zoom = ui === 1 && w >= 1500 ? 1.15 : ui === 1 && w >= 1200 ? 1.08 : 1;
     return (
       <div className="flex gap-3 p-2" style={{ height: '100dvh' }}>
         <div className="min-w-0 flex-1">
           <Board fill />
         </div>
-        <aside className="flex min-w-0 shrink-0 flex-col gap-2" style={{ width: panel }}>
+        <aside
+          className="flex min-w-0 shrink-0 flex-col gap-2"
+          style={{ width: panel / zoom, height: `${100 / zoom}%`, zoom }}
+        >
           <TopBar />
           <div className="max-h-[34%] shrink-0 overflow-y-auto">
             <PlayerList compact={h < 800} cols={1} />

@@ -66,9 +66,9 @@ const SCREEN_PX =
     ? 1920
     : Math.max(window.screen.width, window.screen.height) * (window.devicePixelRatio || 1);
 const HI_RES = SCREEN_PX >= 2500;
-const PX = HI_RES ? 256 : 160; // px trên 1 đơn vị
+const PX = HI_RES ? 320 : 256; // px trên 1 đơn vị (Full HD cũng vẽ nét)
 /** Giới hạn số điểm ảnh vẽ mỗi khung hình (giữ 2K / 4K vẫn mượt) */
-const PIXEL_BUDGET = HI_RES ? 5_500_000 : 3_500_000;
+const PIXEL_BUDGET = HI_RES ? 6_000_000 : 4_500_000;
 
 function wrap(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
   const words = text.split(' ');
@@ -210,7 +210,7 @@ function drawTile(look: TileLook, w: number, d: number): THREE.CanvasTexture {
   }
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 8;
+  t.anisotropy = 16;
   return t;
 }
 
@@ -505,6 +505,7 @@ function pipTexture(n: number): THREE.CanvasTexture {
   }
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 16;
   return t;
 }
 
@@ -593,6 +594,7 @@ function labelTexture(text: string, bg: string): [THREE.CanvasTexture, number] {
   g.fillText(text, w / 2, 45);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 16;
   return [t, w / 84];
 }
 
@@ -681,8 +683,9 @@ function TargetRing({ pos }: { pos: number }) {
 function centerTexture(fontsReady: boolean): THREE.CanvasTexture {
   void fontsReady;
   const c = document.createElement('canvas');
-  c.width = c.height = 1024;
+  c.width = c.height = 2048;
   const g = c.getContext('2d')!;
+  g.scale(2, 2);
   g.fillStyle = '#F4EEDC';
   g.fillRect(0, 0, 1024, 1024);
   g.strokeStyle = '#E3B5B5';
@@ -735,6 +738,7 @@ function centerTexture(fontsReady: boolean): THREE.CanvasTexture {
   bill(600, 820, 0.2, '#38BDF8');
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 16;
   return t;
 }
 
@@ -1036,7 +1040,7 @@ function useAdaptiveDpr(lite: boolean): [React.RefObject<HTMLDivElement>, number
       const area = Math.max(1, r.width * r.height);
       const device = Math.min(window.devicePixelRatio || 1, lite ? 1.25 : 2);
       const fit = Math.sqrt((lite ? 1_200_000 : PIXEL_BUDGET) / area);
-      setDpr(Math.max(0.75, Math.min(device, fit)));
+      setDpr(Math.max(lite ? 0.75 : 1, Math.min(device, fit)));
     };
     update();
     const ro = new ResizeObserver(update);
@@ -1054,7 +1058,9 @@ export default function Board3D({ fill }: { fill?: boolean }) {
   const [box, baseDpr] = useAdaptiveDpr(lite);
   // Chất lượng tự điều chỉnh theo tốc độ khung hình thực tế
   const [quality, setQuality] = useState(1);
-  const dpr = Math.max(0.6, baseDpr * quality);
+  // Khi máy chậm chỉ hạ phần vượt độ nét gốc của màn hình, không vẽ thấp hơn 1:1 (tránh mờ)
+  const floor = lite ? 0.75 : Math.min(1, baseDpr);
+  const dpr = Math.max(floor, baseDpr * quality);
   const fallback = (
     <div className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-2xl bg-white/80 p-4 text-center">
       <div>{S.shape.no3d}</div>
