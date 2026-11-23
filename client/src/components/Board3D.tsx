@@ -229,6 +229,8 @@ function Tile({ sq, fontsReady }: { sq: Square; fontsReady: boolean }) {
   useEffect(() => () => tex.dispose(), [tex]);
   const [x, z] = boardXZ(sq.index);
   const houses = game?.properties[sq.index]?.houses ?? 0;
+  const ownerId = game?.properties[sq.index]?.owner;
+  const owner = ownerId ? playerColor(room, ownerId) : null;
   const clickable = 'price' in sq && !(game && casinoKindAt(game, sq.index));
   return (
     <group position={[x, BASE_H, z]} rotation={[0, sideAngle(sq.index), 0]}>
@@ -251,23 +253,37 @@ function Tile({ sq, fontsReady }: { sq: Square; fontsReady: boolean }) {
         <meshStandardMaterial attach="material-4" color="#e7e1d3" />
         <meshStandardMaterial attach="material-5" color="#e7e1d3" />
       </mesh>
-      {houses > 0 && <Buildings houses={houses} />}
+      {houses > 0 && <Buildings houses={houses} color={owner ?? '#1E9E5A'} />}
     </group>
   );
 }
 
 /** Nhà / khách sạn đặt ở mép trong ô (phía giữa bàn) */
-function Buildings({ houses }: { houses: number }) {
+/** Tông màu nhà theo chủ ô: tường nhạt, mái / viền đậm cùng màu người chơi */
+function ownerShades(color: string): { wall: string; roof: string; trim: string } {
+  const base = new THREE.Color(color);
+  const wall = base.clone().lerp(new THREE.Color('#ffffff'), 0.55);
+  const trim = base.clone().lerp(new THREE.Color('#000000'), 0.3);
+  return { wall: `#${wall.getHexString()}`, roof: color, trim: `#${trim.getHexString()}` };
+}
+
+function Buildings({ houses, color }: { houses: number; color: string }) {
+  const c = useMemo(() => ownerShades(color), [color]);
   if (houses >= 5)
     return (
       <group position={[0, TILE_H, -0.5]}>
+        {/* Khách sạn: thân màu chủ ô, mái + viền đậm */}
         <mesh position={[0, 0.22, 0]} castShadow>
           <boxGeometry args={[0.7, 0.44, 0.32]} />
-          <meshStandardMaterial color="#C8102E" />
+          <meshStandardMaterial color={c.roof} />
+        </mesh>
+        <mesh position={[0, 0.22, 0.161]}>
+          <boxGeometry args={[0.56, 0.3, 0.005]} />
+          <meshStandardMaterial color={c.wall} />
         </mesh>
         <mesh position={[0, 0.5, 0]} castShadow>
-          <boxGeometry args={[0.74, 0.08, 0.36]} />
-          <meshStandardMaterial color="#F2A900" />
+          <boxGeometry args={[0.76, 0.09, 0.38]} />
+          <meshStandardMaterial color={c.trim} />
         </mesh>
       </group>
     );
@@ -278,11 +294,16 @@ function Buildings({ houses }: { houses: number }) {
         <group key={hx} position={[hx, 0, 0]}>
           <mesh position={[0, 0.1, 0]} castShadow>
             <boxGeometry args={[0.17, 0.2, 0.2]} />
-            <meshStandardMaterial color="#1E9E5A" />
+            <meshStandardMaterial color={c.wall} />
           </mesh>
           <mesh position={[0, 0.26, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
             <coneGeometry args={[0.15, 0.13, 4]} />
-            <meshStandardMaterial color="#B91C1C" />
+            <meshStandardMaterial color={c.roof} />
+          </mesh>
+          {/* Khung mái */}
+          <mesh position={[0, 0.205, 0]}>
+            <boxGeometry args={[0.2, 0.02, 0.23]} />
+            <meshStandardMaterial color={c.trim} />
           </mesh>
         </group>
       ))}

@@ -351,3 +351,6 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 ## 3D13 — Sửa bố cục giật qua lại (Windows)
 - `useViewport` đọc `innerWidth/innerHeight` (tính cả thanh cuộn) thay `visualViewport` (trừ thanh cuộn). Trước đây trang tràn vài px → thanh cuộn hiện → bề ngang giảm → bàn cờ nhỏ lại → hết tràn → thanh cuộn ẩn → lặp vô hạn.
 - Bố cục ngang: bàn cờ chừa thêm 4px dọc/20px ngang cho làm tròn điểm ảnh, khung gốc `overflow-hidden`. Bố cục dọc trên máy có chuột chừa 18px cho thanh cuộn.
+
+## 3D14 — Nhà / khách sạn 3D theo màu chủ ô
+- Nhà: tường màu chủ ô pha trắng 55%, mái màu chủ ô, khung mái (viền) màu chủ ô đậm 30%. Khách sạn: thân màu chủ ô, mặt tiền nhạt, mái đậm.
