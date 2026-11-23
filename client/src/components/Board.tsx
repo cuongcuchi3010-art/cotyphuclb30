@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BOARD,
   DECK_NAMES,
@@ -37,8 +37,22 @@ const SPECIAL_ICON: Partial<Record<Sq['kind'], string>> = {
   go: '🏁',
 };
 
+const Board3D = lazy(() => import('./Board3D'));
+
 export function Board() {
   const shape = useStore((s) => s.boardShape);
+  if (shape === '3d')
+    return (
+      <Suspense
+        fallback={
+          <div className="flex aspect-square w-full items-center justify-center rounded-2xl bg-white/70 text-sm text-gray-500">
+            {S.shape.loading3d}
+          </div>
+        }
+      >
+        <Board3D />
+      </Suspense>
+    );
   if (shape !== 'diamond')
     return (
       <div className="relative w-full">
@@ -613,7 +627,7 @@ function Tokens() {
 // Thẻ bài lật khi rút
 // ---------------------------------------------------------------------------
 
-function CardReveal() {
+export function CardReveal() {
   const events = useStore((s) => s.events);
   const { room, game } = useGame();
   const [card, setCard] = useState<{

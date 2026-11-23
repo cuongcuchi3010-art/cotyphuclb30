@@ -93,8 +93,8 @@ export interface Toast {
 
 interface Store {
   /** Hình bàn cờ: thoi (người chơi ở 4 góc) hoặc vuông */
-  boardShape: 'diamond' | 'square';
-  setBoardShape(v: 'diamond' | 'square'): void;
+  boardShape: 'diamond' | 'square' | '3d';
+  setBoardShape(v: 'diamond' | 'square' | '3d'): void;
   /** Đã báo danh (null = đang kiểm tra) */
   gate: boolean | null;
   auth: Auth | null;
@@ -163,7 +163,7 @@ export const useStore = create<Store>((set, get) => ({
   boardShape: (() => {
     try {
       const v = localStorage.getItem('cotyphu:shape');
-      if (v === 'square' || v === 'diamond') return v;
+      if (v === 'square' || v === 'diamond' || v === '3d') return v;
     } catch {
       /* bỏ qua */
     }

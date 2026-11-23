@@ -188,7 +188,7 @@ function ShapeButton({ className, vertical }: { className?: string; vertical?: b
       role="group"
       aria-label={S.shape.label}
     >
-      {(['diamond', 'square'] as const).map((v) => (
+      {(['diamond', 'square', '3d'] as const).map((v) => (
         <button
           key={v}
           type="button"
@@ -200,7 +200,11 @@ function ShapeButton({ className, vertical }: { className?: string; vertical?: b
               : 'text-gray-500',
           )}
         >
-          {v === 'diamond' ? `◆ ${S.shape.diamond}` : `■ ${S.shape.square}`}
+          {v === 'diamond'
+            ? `◆ ${S.shape.diamond}`
+            : v === 'square'
+              ? `■ ${S.shape.square}`
+              : `🧊 ${S.shape.threeD}`}
         </button>
       ))}
     </div>

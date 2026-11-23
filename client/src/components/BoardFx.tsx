@@ -30,7 +30,7 @@ function rollInfo(list: GameEvent[], key: number): RollInfo | null {
   };
 }
 
-function useRollInfo(ms: number): RollInfo | null {
+export function useRollInfo(ms: number): RollInfo | null {
   const events = useStore((s) => s.events);
   const [info, setInfo] = useState<RollInfo | null>(null);
   useEffect(() => {
@@ -75,10 +75,10 @@ export function RollBubble() {
 }
 
 /** Ô đích sáng viền + nhãn tên ô; tiền +/− bay lên trên ô (đặt trong lưới bàn cờ) */
-export function BoardFx() {
+/** Các khoản tiền +/− vừa phát sinh, gộp theo ô; mỗi khoản tự biến mất sau 2,6 giây */
+export function useMoneyFx(): { key: string; pos: number; amount: number }[] {
   const { game } = useGame();
   const events = useStore((s) => s.events);
-  const info = useRollInfo(3200);
   const [money, setMoney] = useState<{ key: string; pos: number; amount: number }[]>([]);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -101,7 +101,6 @@ export function BoardFx() {
       .filter(([, v]) => v !== 0)
       .map(([pos, amount]) => ({ key: `${events.id}-${pos}`, pos, amount }));
     setMoney((m) => [...m, ...items]);
-    // Mỗi nhãn tự biến mất sau 2,6 giây (không huỷ khi có sự kiện mới)
     timers.current.push(
       setTimeout(() => setMoney((m) => m.filter((x) => !items.some((i) => i.key === x.key))), 2600),
     );
@@ -109,6 +108,13 @@ export function BoardFx() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [events.id]);
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  return money;
+}
+
+export function BoardFx() {
+  const { game } = useGame();
+  const info = useRollInfo(3200);
+  const money = useMoneyFx();
 
   if (!game) return null;
   const target = info && !info.stay && info.to !== null ? info.to : null;

@@ -406,6 +406,10 @@ export const S = {
     label: 'Kiểu bàn cờ',
     diamond: 'Thoi',
     square: 'Vuông',
+    threeD: '3D',
+    no3d: 'Máy này chưa hiển thị được bàn 3D.',
+    back2d: 'Quay lại bàn 2D',
+    loading3d: 'Đang tải bàn 3D…',
   },
 
   draw: {

@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { cx } from '../lib';
 
 type Variant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'gold';
@@ -41,7 +42,8 @@ export function Modal({
   children: ReactNode;
   className?: string;
 }) {
-  return (
+  // Luôn gắn vào <body>: tránh bị bó trong khung có transform / backdrop-filter (bàn thoi, bàn 3D)
+  const node = (
     <AnimatePresence>
       {open && (
         <motion.div
@@ -68,6 +70,7 @@ export function Modal({
       )}
     </AnimatePresence>
   );
+  return typeof document === 'undefined' ? node : createPortal(node, document.body);
 }
 
 export function Panel({ children, className }: { children: ReactNode; className?: string }) {

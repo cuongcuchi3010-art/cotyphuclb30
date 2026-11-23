@@ -13,14 +13,17 @@
   "dependencies": {
     "@cotyphu/shared": "workspace:*",
     "@fontsource/be-vietnam-pro": "^5.1.1",
+    "@react-three/fiber": "8.17.10",
     "framer-motion": "^11.15.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "three": "0.170.0",
     "zustand": "^5.0.2"
   },
   "devDependencies": {
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
+    "@types/three": "0.170.0",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",

@@ -35,6 +35,15 @@ function axisCenter(k: number): number {
   if (k === 11) return TOTAL - CORNER / 2;
   return CORNER + (k - 2) + 0.5;
 }
+/** Cạnh bàn cờ theo đơn vị ô thường (ô góc = 1,6) */
+export const BOARD_UNITS = TOTAL;
+
+/** Toạ độ 3D (x, z) của tâm ô, gốc ở giữa bàn; hàng dưới (ô 0–10) ở phía +z */
+export function boardXZ(index: number): [number, number] {
+  const [r, c] = cellOf(index);
+  return [axisCenter(c) - TOTAL / 2, axisCenter(r) - TOTAL / 2];
+}
+
 /** Tâm ô theo % chiều rộng/cao bàn cờ */
 export function centerPct(index: number): { x: number; y: number } {
   const [r, c] = cellOf(index);
