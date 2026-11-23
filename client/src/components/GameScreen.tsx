@@ -74,7 +74,7 @@ export function GameScreen() {
     const panel = Math.round(Math.min(620 * ui, Math.max(340, w * 0.3)));
     const zoom = ui === 1 && w >= 1500 ? 1.15 : ui === 1 && w >= 1200 ? 1.08 : 1;
     return (
-      <div className="flex gap-3 p-2" style={{ height: '100dvh' }}>
+      <div className="flex gap-3 overflow-hidden p-2" style={{ height: '100dvh' }}>
         <div className="min-w-0 flex-1">
           <Board fill />
         </div>
@@ -102,7 +102,7 @@ export function GameScreen() {
   if (L.mode === 'side') {
     return (
       <div
-        className="mx-auto flex justify-center gap-3 p-2"
+        className="mx-auto flex justify-center gap-3 overflow-hidden p-2"
         style={{ height: '100dvh', maxWidth: L.board + L.panel + 48 }}
       >
         <div className="shrink-0 self-center" style={{ width: L.board }}>

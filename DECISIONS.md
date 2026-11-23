@@ -347,3 +347,7 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 - Thẻ Băng giá (ch22) chỉ đóng băng nhà đất của NGƯỜI RÚT THẺ trong 3 vòng: ai dừng ở ô của họ không trả thuê, họ không được xây. State `frozen: Record<PlayerId, turn>` thay `freezeUntil`; `isFrozen(s, ownerId)`, `frozenLeft`.
 - Quân cờ 2D di chuyển bằng transform (lớp phủ kín bàn, dịch theo %) thay left/top; độ lệch khi chung ô tách lớp riêng nên không làm quân đi lại từ đầu; lớp nhịp đập tách khỏi lớp xoay `upright` của bàn thoi.
 - Thẻ Hoán đổi số phận (kv22): đổi với một người chơi khác chọn NGẪU NHIÊN, không còn pha chọn người.
+
+## 3D13 — Sửa bố cục giật qua lại (Windows)
+- `useViewport` đọc `innerWidth/innerHeight` (tính cả thanh cuộn) thay `visualViewport` (trừ thanh cuộn). Trước đây trang tràn vài px → thanh cuộn hiện → bề ngang giảm → bàn cờ nhỏ lại → hết tràn → thanh cuộn ẩn → lặp vô hạn.
+- Bố cục ngang: bàn cờ chừa thêm 4px dọc/20px ngang cho làm tròn điểm ảnh, khung gốc `overflow-hidden`. Bố cục dọc trên máy có chuột chừa 18px cho thanh cuộn.

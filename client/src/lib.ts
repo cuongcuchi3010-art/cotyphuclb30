@@ -114,9 +114,11 @@ function typing(): boolean {
  * ô nhập bị dựng lại, mất focus và bàn phím tắt ngay.
  */
 export function useViewport(): { w: number; h: number } {
+  // innerWidth/innerHeight tính cả thanh cuộn: nếu dùng visualViewport (trừ thanh cuộn) thì
+  // trên Windows thanh cuộn hiện/ẩn làm bố cục đổi qua lại liên tục (giật qua lại)
   const read = () => ({
-    w: Math.round(window.visualViewport?.width ?? window.innerWidth),
-    h: Math.round(window.visualViewport?.height ?? window.innerHeight),
+    w: Math.round(window.innerWidth),
+    h: Math.round(window.innerHeight),
   });
   const [vp, setVp] = useState(read);
   useEffect(() => {
@@ -160,11 +162,15 @@ export function computeLayout(w: number, h: number, reserved = 226, sideW = 0): 
   const pad = 16;
   if (w / h >= 1.15 && w >= 560) {
     const panel = Math.round(Math.min(400, Math.max(260, w * 0.36)));
-    const board = Math.floor(Math.max(240, Math.min(h - pad, w - panel - pad * 2, 900)));
+    // Chừa thêm vài px để làm tròn điểm ảnh (Windows phóng 125%/150%) không gây tràn trang
+    const board = Math.floor(Math.max(240, Math.min(h - pad - 4, w - panel - pad * 2 - 20, 900)));
     return { mode: 'side', board, panel, compact: h < 640 };
   }
   // Dọc: chừa đúng chiều cao thật của phần dưới bàn cờ (thanh trên, người chơi, thanh tab)
-  const board = Math.floor(Math.max(240, Math.min(w - pad - sideW, h - reserved, 900)));
+  // Chuột (máy tính): trang dọc có thể có thanh cuộn ~17px, chừa sẵn để không tràn ngang
+  const bar =
+    typeof window !== 'undefined' && window.matchMedia?.('(pointer: fine)').matches ? 18 : 0;
+  const board = Math.floor(Math.max(240, Math.min(w - pad - bar - sideW, h - reserved, 900)));
   return { mode: 'stack', board, panel: 0, compact: true };
 }
 
