@@ -919,7 +919,7 @@ function landOn(c: Ctx, p: PlayerState, ctx: RentContext): void {
     if (st.owner === p.id || st.mortgaged) return;
     const owner = getPlayer(s, st.owner);
     if (owner.bankrupt) return;
-    if (isFrozen(s)) {
+    if (isFrozen(s, owner.id)) {
       c.ev.push({ t: 'frozenRent', playerId: p.id, pos });
       return;
     }
@@ -1123,8 +1123,10 @@ function applyCard(c: Ctx, p: PlayerState, e: CardEffect): void {
       return;
     }
     case 'freeze': {
-      s.freezeUntil = s.turn + e.rounds * alivePlayers(s).length;
-      c.ev.push({ t: 'frozen', playerId: p.id, until: s.freezeUntil });
+      // Đóng băng toàn bộ nhà đất của người rút thẻ
+      const until = s.turn + e.rounds * alivePlayers(s).length;
+      s.frozen = { ...(s.frozen ?? {}), [p.id]: until };
+      c.ev.push({ t: 'frozen', playerId: p.id, until });
       return;
     }
     case 'thunder': {
@@ -1592,9 +1594,15 @@ function doTeleport(c: Ctx, p: PlayerState, pos: number): void {
   landOn(c, p, { diceTotal: diceTotal(c.s) });
 }
 
-/** Thẻ Băng giá còn hiệu lực */
-export function isFrozen(s: GameState): boolean {
-  return s.freezeUntil != null && s.turn < s.freezeUntil;
+/** Nhà đất của người chơi này đang bị Băng giá */
+export function isFrozen(s: GameState, ownerId: PlayerId | null | undefined): boolean {
+  const until = ownerId ? s.frozen?.[ownerId] : undefined;
+  return until != null && s.turn < until;
+}
+
+/** Số lượt còn đóng băng của người chơi (0 nếu không) */
+export function frozenLeft(s: GameState, ownerId: PlayerId): number {
+  return isFrozen(s, ownerId) ? s.frozen![ownerId]! - s.turn : 0;
 }
 
 /** Các ô người chơi hiện tại có thể chọn ở pha cardChoice */
@@ -1919,7 +1927,7 @@ export function canBuild(s: GameState, p: PlayerState, pos: number): string | nu
   if (sq.kind !== 'street') return 'Chỉ xây nhà trên ô đất';
   const st = s.properties[pos]!;
   if (st.owner !== p.id) return 'Ô này không phải của bạn';
-  if (isFrozen(s)) return 'Đất đang bị đóng băng';
+  if (isFrozen(s, p.id)) return 'Đất của bạn đang bị đóng băng';
   const rule = buildRuleOf(s);
   if (rule !== 'landing') {
     if (!ownsWholeGroup(s, p.id, pos)) return 'Cần sở hữu trọn nhóm màu';

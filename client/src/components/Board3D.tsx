@@ -145,7 +145,7 @@ function tileLook(
     bottom,
     owner: st?.owner ? playerColor(room, st.owner) : null,
     mortgaged: !!st?.mortgaged,
-    frozen: !!game && isFrozen(game) && price !== null && !ck,
+    frozen: !!game && !!st?.owner && isFrozen(game, st.owner) && price !== null && !ck,
     fest: game && isFestival(game, i) ? festivalMult(game, i) : 0,
     casino: !!ck,
     corner: sideOf(i) === 'corner',

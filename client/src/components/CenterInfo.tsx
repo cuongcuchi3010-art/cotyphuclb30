@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect, useRef } from 'react';
-import { formatMoney, isFrozen, jackpotOn, square } from '@cotyphu/shared';
+import { formatMoney, frozenLeft, jackpotOn, square } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
 import { cx, fmtClock, nameOf, playerColor, useGame, useNow, photoOf } from '../lib';
@@ -108,11 +108,13 @@ export function CenterInfo() {
             {game.rules.hotelStock ?? 12}
           </span>
         )}
-        {isFrozen(game) && (
-          <span className="font-bold text-sky-600 dark:text-sky-300">
-            ❄️ Đóng băng: còn {(game.freezeUntil ?? 0) - game.turn} lượt
-          </span>
-        )}
+        {game.players
+          .filter((p) => !p.bankrupt && frozenLeft(game, p.id) > 0)
+          .map((p) => (
+            <span key={p.id} className="font-bold text-sky-600 dark:text-sky-300">
+              ❄️ Đất của {p.name} đóng băng: còn {frozenLeft(game, p.id)} lượt
+            </span>
+          ))}
         {jackpotOn(game) && (
           <span>
             ☕ {S.game.jackpot}: <b>{formatMoney(game.jackpot)}</b>

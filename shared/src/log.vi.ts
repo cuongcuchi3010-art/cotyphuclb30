@@ -123,7 +123,7 @@ export function describeEvent(
     case 'assetsSwapped':
       return `😈 ${name(ev.a)} hoán đổi toàn bộ tài sản với ${name(ev.b)}!`;
     case 'frozen':
-      return `❄️ Băng giá! Mọi ô đất bị đóng băng tới lượt ${ev.until}: không thu thuê, không xây nhà`;
+      return `❄️ Băng giá! Nhà đất của ${name(ev.playerId)} bị đóng băng tới lượt ${ev.until}: không thu thuê, không xây nhà`;
     case 'frozenRent':
       return `❄️ ${name(ev.playerId)} dừng ở ${sq(ev.pos)} đang đóng băng: không phải trả thuê`;
     case 'thunder':

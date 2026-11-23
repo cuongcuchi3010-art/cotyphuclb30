@@ -594,27 +594,36 @@ function Tokens() {
         const ox = n > 1 ? (k - (n - 1) / 2) * 1.6 : 0;
         const oy = n > 1 ? (k % 2 === 0 ? -0.8 : 0.8) : 0;
         const anim = paths[p.id] ?? { key: 0, path: [p.position] };
-        const xs = anim.path.map((i) => `${centerPct(i).x + ox}%`);
-        const ys = anim.path.map((i) => `${centerPct(i).y + oy + (p.inJail ? -1.5 : 0)}%`);
+        // Lớp phủ kín bàn cờ: dịch theo % của chính nó = % bàn cờ (chỉ dùng transform, mượt hơn)
+        const xs = anim.path.map((i) => `${centerPct(i).x}%`);
+        const ys = anim.path.map((i) => `${centerPct(i).y + (p.inJail ? -1.5 : 0)}%`);
         const color = playerColor(room, p.id);
         const isCur = game.players[game.current]?.id === p.id;
         return (
           <motion.div
             key={`${p.id}-${anim.key}`}
-            className="absolute"
-            initial={{ left: xs[0], top: ys[0] }}
-            animate={{ left: xs, top: ys }}
+            className="absolute inset-0 will-change-transform"
+            initial={{ x: xs[0], y: ys[0] }}
+            animate={{ x: xs, y: ys }}
             transition={{ duration: Math.max(0.2, (xs.length - 1) * STEP_S), ease: 'linear' }}
-            style={{ translateX: '-50%', translateY: '-50%' }}
           >
-            <div className={cx('upright rounded-full shadow-md', isCur && 'animate-pulse-soft')}>
-              <Avatar
-                token={p.token}
-                color={color}
-                size="4.6cqw"
-                ring={isCur}
-                photo={photoOf(room, p.id)}
-              />
+            {/* Lệch khi nhiều quân chung ô: tách riêng để không làm quân đi lại từ đầu */}
+            <div
+              className="absolute left-0 top-0 transition-transform duration-300"
+              style={{ transform: `translate(-50%, -50%) translate(${ox}cqw, ${oy}cqw)` }}
+            >
+              {/* Tách lớp xoay (bàn thoi) và lớp nhịp đập để hai transform không đè nhau */}
+              <div className="upright">
+                <div className={cx('rounded-full shadow-md', isCur && 'animate-pulse-soft')}>
+                  <Avatar
+                    token={p.token}
+                    color={color}
+                    size="4.6cqw"
+                    ring={isCur}
+                    photo={photoOf(room, p.id)}
+                  />
+                </div>
+              </div>
             </div>
           </motion.div>
         );

@@ -325,22 +325,34 @@ describe('Bộ thẻ Ác Quỷ', () => {
     expect(s.properties[1]!.owner).toBe('p3');
   });
 
-  it('Băng giá: 3 vòng không thu thuê, không xây nhà', () => {
+  it('Băng giá: nhà đất của người rút thẻ 3 vòng không thu thuê, không xây nhà', () => {
     let s = mkGame(2, DV);
-    own(s, 'p2', 39);
+    own(s, 'p1', 39);
+    own(s, 'p2', 37);
     topCard(s, 'chance', idx('chance', 'ch22'));
     ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4])); // → 7 Cơ Hội
-    expect(s.freezeUntil).toBe(s.turn + 6);
-    s.phase = { kind: 'awaitRoll' };
-    s.rolled = false;
-    pl(s, 'p1').position = 32;
-    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4])); // → 39 của p2
-    expect(pl(s, 'p1').cash).toBe(1500);
+    expect(s.frozen?.p1).toBe(s.turn + 6);
+    expect(isFrozen(s, 'p1')).toBe(true);
+    expect(isFrozen(s, 'p2')).toBe(false);
     own(s, 'p1', 6);
     s.buildPass = 6;
     expect(() => act(s, 'p1', { type: 'build', pos: 6 })).toThrow('đóng băng');
-    s.turn = s.freezeUntil!;
-    expect(isFrozen(s)).toBe(false);
+    // p2 dừng ở ô của p1: không trả thuê
+    s.phase = { kind: 'awaitRoll' };
+    s.rolled = false;
+    s.current = 1;
+    pl(s, 'p2').position = 32;
+    ({ state: s } = act(s, 'p2', { type: 'roll' }, [3, 4])); // → 39 của p1
+    expect(pl(s, 'p2').cash).toBe(1500);
+    // Đất của p2 vẫn thu thuê bình thường
+    s.phase = { kind: 'awaitRoll' };
+    s.rolled = false;
+    s.current = 0;
+    pl(s, 'p1').position = 32;
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [2, 3])); // → 37 của p2
+    expect(s.debts.length + (pl(s, 'p1').cash < 1500 ? 1 : 0)).toBeGreaterThan(0);
+    s.turn = s.frozen!.p1!;
+    expect(isFrozen(s, 'p1')).toBe(false);
   });
 
   it('Thiên Lôi: phá sập hết nhà trên 3 ô có nhà ngẫu nhiên', () => {

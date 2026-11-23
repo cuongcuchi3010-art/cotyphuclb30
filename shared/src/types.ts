@@ -287,8 +287,8 @@ export interface GameState {
   endReason?: 'lastStanding' | 'timeUp';
   /** Freestyle: bàn cược Sòng Bạc đang mở */
   casino?: Casino | null;
-  /** Thẻ Băng giá: tới lượt số này thì hết đóng băng (không thu thuê, không xây) */
-  freezeUntil?: number | null;
+  /** Thẻ Băng giá: chủ đất → lượt hết đóng băng (đất của người đó không thu thuê, không xây) */
+  frozen?: Record<PlayerId, number>;
   /** Quyền ân huệ đã dùng: chủ ô → danh sách người đã được ân huệ */
   mercyUsed?: Record<PlayerId, PlayerId[]>;
 }

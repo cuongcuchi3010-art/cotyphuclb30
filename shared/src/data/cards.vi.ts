@@ -186,7 +186,7 @@ export const CHANCE_CARDS: readonly Card[] = [
   {
     id: 'ch22',
     deck: 'chance',
-    text: '😈 Ác Quỷ · Băng giá! Mọi ô đất trên bàn bị đóng băng 3 vòng: không ai thu tiền thuê, không ai xây nhà.',
+    text: '😈 Ác Quỷ · Băng giá! Toàn bộ nhà đất của bạn bị đóng băng 3 vòng: ai dừng ở ô của bạn không phải trả tiền thuê, bạn cũng không được xây nhà.',
     effect: { type: 'freeze', rounds: 3 },
     devil: true,
   },
