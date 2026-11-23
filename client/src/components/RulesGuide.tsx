@@ -57,6 +57,10 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
             </li>
             <li>Lễ hội nhân tiền thuê ngẫu nhiên ×2 đến ×5 (số nhỏ hay ra hơn).</li>
             <li>
+              Vay ngân hàng tối đa {formatMoney(500 * 5 * (rules?.rentMult ?? 2))} (500 tr × 5 × hệ
+              số tiền thuê).
+            </li>
+            <li>
               <b>Sòng Bạc Tiền</b> (thay EVN): người dừng ô làm nhà cái; ai muốn thì đặt cược (không
               giới hạn, tối đa bằng tiền mặt của mình; nhà cái thua mà thiếu tiền thì phải gom tiền
               như trả nợ). Đổ cao hơn nhà cái thắng tiền cược, thấp hơn thì thua, bằng điểm thì hoà.

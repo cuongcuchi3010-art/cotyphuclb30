@@ -357,3 +357,6 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 
 ## C9 — Sòng Bạc Tiền cược không giới hạn
 - Bỏ mức trần 1 tỷ và trần "tiền nhà cái chia đều": mỗi người cược tối đa bằng tiền mặt của mình (`cap = 0` nghĩa là không giới hạn). Nhà cái thua mà thiếu tiền thì khoản nợ `casino` đi qua pha gom tiền / phá sản như nợ thường. Bỏ tuỳ chọn "Cược tối đa" ở sảnh (`rules.casinoMaxBet` giữ lại, mặc định 0, không còn dùng).
+
+## F12 — Hạn mức vay Freestyle gấp 5 lần hệ số tiền thuê
+- `bankLoanMax` Freestyle = 500 tr × 5 × hệ số tiền thuê (×1 → 2,5 tỷ; ×2 → 5 tỷ; ×5 → 12,5 tỷ). Cổ điển giữ 500 tr. Luật trong phòng ghi rõ hạn mức.
