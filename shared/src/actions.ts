@@ -18,7 +18,8 @@ export type PlayerAction =
   | { type: 'buy' }
   | { type: 'decline' }
   | { type: 'bid'; amount: number }
-  | { type: 'build'; pos: number }
+  /** count: xây liền nhiều cấp (mặc định 1) */
+  | { type: 'build'; pos: number; count?: number }
   | { type: 'sell'; pos: number }
   | { type: 'mortgage'; pos: number }
   | { type: 'unmortgage'; pos: number }

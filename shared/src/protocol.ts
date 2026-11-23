@@ -29,7 +29,7 @@ export const playerActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('buy') }),
   z.object({ type: z.literal('decline') }),
   z.object({ type: z.literal('bid'), amount: money }),
-  z.object({ type: z.literal('build'), pos }),
+  z.object({ type: z.literal('build'), pos, count: z.number().int().min(1).max(5).optional() }),
   z.object({ type: z.literal('sell'), pos }),
   z.object({ type: z.literal('mortgage'), pos }),
   z.object({ type: z.literal('unmortgage'), pos }),

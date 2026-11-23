@@ -69,6 +69,16 @@ describe('Freestyle: tiền và xây nhà', () => {
     expect(z.buildPass ?? null).toBeNull();
   });
 
+  it('xây nhiều nhà một lần; vượt mức thì không xây gì', () => {
+    let s = mkGame(2, FS);
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [2, 4]));
+    ({ state: s } = act(s, 'p1', { type: 'buy' }));
+    expect(() => act(s, 'p1', { type: 'build', pos: 6, count: 5 })).toThrow();
+    expect(s.properties[6]!.houses).toBe(0);
+    ({ state: s } = act(s, 'p1', { type: 'build', pos: 6, count: 3 }));
+    expect(s.properties[6]!.houses).toBe(3);
+  });
+
   it('dừng ở ô của mình (chưa trọn màu) là xây được', () => {
     let s = mkGame(2, FS);
     own(s, 'p1', 6);

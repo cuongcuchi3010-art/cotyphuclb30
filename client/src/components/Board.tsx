@@ -25,6 +25,7 @@ import { cardText, cellOf, centerPct, cx, playerColor, sideOf, useGame, photoOf 
 import { BrandLogo } from './BrandLogo';
 import { Avatar } from './Avatar';
 import { CenterInfo } from './CenterInfo';
+import { BoardFx, EventTicker, RollBubble } from './BoardFx';
 
 const SPECIAL_ICON: Partial<Record<Sq['kind'], string>> = {
   chest: '🧧',
@@ -38,7 +39,13 @@ const SPECIAL_ICON: Partial<Record<Sq['kind'], string>> = {
 
 export function Board() {
   const shape = useStore((s) => s.boardShape);
-  if (shape !== 'diamond') return <BoardGrid diamond={false} />;
+  if (shape !== 'diamond')
+    return (
+      <div className="relative w-full">
+        <BoardGrid diamond={false} />
+        <EventTicker />
+      </div>
+    );
   // Bàn hình thoi: xoay 45° (vẫn 2D); người chơi ở 4 góc
   return (
     <div className="relative aspect-square w-full select-none [container-type:inline-size]">
@@ -49,6 +56,7 @@ export function Board() {
         <BoardGrid diamond />
       </div>
       <PlayerCorners />
+      <EventTicker diamond />
     </div>
   );
 }
@@ -82,16 +90,19 @@ function BoardGrid({ diamond }: { diamond: boolean }) {
             style={{ transform: 'translate(-50%, -50%) rotate(-45deg)' }}
           >
             <CenterInfo />
+            <RollBubble />
             <CardReveal />
           </div>
         ) : (
           <>
             <CenterInfo />
+            <RollBubble />
             <CardReveal />
           </>
         )}
       </div>
       <Tokens />
+      <BoardFx />
     </div>
   );
 }

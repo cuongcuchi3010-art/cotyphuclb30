@@ -610,7 +610,12 @@ function applyPlayer(c: Ctx, p: PlayerState, a: PlayerAction): void {
       return;
     case 'build':
       if (!canManage(s, p, 'build')) fail('Chỉ được xây nhà trong lượt của mình');
-      build(c, p, a.pos);
+      {
+        const n = a.count ?? 1;
+        if (!Number.isInteger(n) || n < 1 || n > 5) fail('Số nhà không hợp lệ');
+        // Xây liền n cấp: cấp nào không hợp lệ thì dừng cả lệnh (không xây dở dang)
+        for (let k = 0; k < n; k++) build(c, p, a.pos);
+      }
       return;
     case 'sell':
       if (!canManage(s, p, 'sell')) fail('Không thể bán nhà lúc này');

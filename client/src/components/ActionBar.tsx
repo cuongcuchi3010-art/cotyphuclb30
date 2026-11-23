@@ -9,9 +9,12 @@ import {
 } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { PowerRollButton } from './PowerRoll';
+import { BuildPicker } from './BuildPicker';
+import { Avatar } from './Avatar';
 import { useStore } from '../store';
-import { nameOf, useGame } from '../lib';
+import { cx, nameOf, photoOf, playerColor, useGame } from '../lib';
 import { Btn } from './ui';
+import { useState } from 'react';
 
 const B = '!min-h-[max(34px,5.2cqw)] !px-2 !text-[max(12px,1.8cqw)]';
 
@@ -58,9 +61,31 @@ export function ActionBar() {
     );
   }
   if (!myTurn) {
+    const who = ph.kind === 'raiseFunds' ? ph.debtor : cur.id;
+    const doing =
+      ph.kind === 'awaitRoll'
+        ? S.wait.roll
+        : ph.kind === 'awaitBuy'
+          ? S.wait.buy
+          : ph.kind === 'raiseFunds'
+            ? S.wait.raise
+            : ph.kind === 'auction'
+              ? S.wait.auction
+              : S.wait.think;
+    const wp = game.players.find((p) => p.id === who);
     return (
-      <div className={note}>
-        {S.game.turnOf(nameOf(room, ph.kind === 'raiseFunds' ? ph.debtor : cur.id))} · {S.game.wait}
+      <div className={cx(note, 'flex items-center justify-center gap-1.5')}>
+        {wp && (
+          <Avatar
+            token={wp.token}
+            color={playerColor(room, who)}
+            size={22}
+            photo={photoOf(room, who)}
+          />
+        )}
+        <span>
+          ⏳ <b>{nameOf(room, who)}</b> {doing}
+        </span>
       </div>
     );
   }
@@ -68,16 +93,7 @@ export function ActionBar() {
   const pass = game.buildPass ?? null;
   const buildBtn =
     pass !== null && canBuild(game, meP, pass) === null ? (
-      <Btn
-        className={`${B} mb-1.5 w-full`}
-        variant="gold"
-        onClick={() => act({ type: 'build', pos: pass })}
-      >
-        {S.game.buildHere(
-          square(pass).short ?? square(pass).name,
-          formatMoney((square(pass) as { houseCost: number }).houseCost),
-        )}
-      </Btn>
+      <BuildHereButton pos={pass} className={`${B} mb-1.5 w-full`} />
     ) : null;
   if (ph.kind === 'awaitRoll' && meP.inJail) {
     return (
@@ -153,4 +169,20 @@ export function ActionBar() {
     );
   }
   return null;
+}
+
+/** Nút "Xây tại đây…" mở hộp chọn số nhà */
+function BuildHereButton({ pos, className }: { pos: number; className: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Btn className={className} variant="gold" onClick={() => setOpen(true)}>
+        {S.game.buildHere(
+          square(pos).short ?? square(pos).name,
+          formatMoney((square(pos) as { houseCost: number }).houseCost),
+        )}
+      </Btn>
+      <BuildPicker pos={pos} open={open} onClose={() => setOpen(false)} />
+    </>
+  );
 }

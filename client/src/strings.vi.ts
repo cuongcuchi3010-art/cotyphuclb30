@@ -211,6 +211,31 @@ export const S = {
     openLoan: 'Vay tiền',
   },
 
+  build: {
+    title: 'Xây mấy nhà?',
+    landed: 'Bạn được xây ở ô của mình',
+    now: (state: string, cost: string, cash: string) =>
+      `Đang có: ${state} · mỗi nhà ${cost} · bạn có ${cash}`,
+    empty: 'đất trống',
+    hotel: 'Khách sạn',
+    rent: 'thuê',
+    none: 'Không xây thêm được (thiếu tiền hoặc chưa đủ điều kiện).',
+    later: 'Thôi, để sau',
+  },
+
+  wait: {
+    roll: 'chuẩn bị đổ xúc xắc…',
+    buy: 'đang cân nhắc mua…',
+    raise: 'đang gom tiền…',
+    auction: 'đang đấu giá…',
+    think: 'đang tính toán…',
+  },
+
+  fx: {
+    stayJail: '→ ở lại Tạm Giữ',
+    hideTicker: 'Ẩn dòng sự kiện',
+  },
+
   power: {
     label: 'Lực',
     hint: 'Nhấn giữ để canh lực · chạm nhẹ: ngẫu nhiên',
