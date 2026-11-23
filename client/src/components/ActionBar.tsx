@@ -8,6 +8,7 @@ import {
   square,
 } from '@cotyphu/shared';
 import { S } from '../strings.vi';
+import { PowerRollButton } from './PowerRoll';
 import { useStore } from '../store';
 import { nameOf, useGame } from '../lib';
 import { Btn } from './ui';
@@ -41,7 +42,17 @@ export function ActionBar() {
     return (
       <div className={note}>
         {myTurn
-          ? `👆 ${ph.choice === 'demolish' ? S.choice.demolishHint : ph.choice === 'festival' ? S.choice.festivalHint(maxFestivals(game)) : S.choice.giftHint}`
+          ? `👆 ${
+              ph.choice === 'demolish'
+                ? S.choice.demolishHint
+                : ph.choice === 'festival'
+                  ? S.choice.festivalHint(maxFestivals(game))
+                  : ph.choice === 'swap'
+                    ? S.choice.swapHint
+                    : ph.choice === 'teleport'
+                      ? S.choice.teleportHint
+                      : S.choice.giftHint
+            }`
           : S.choice.waiting(cur.name)}
       </div>
     );
@@ -90,9 +101,13 @@ export function ActionBar() {
           >
             🎫 Thẻ
           </Btn>
-          <Btn className={B} variant="secondary" onClick={() => act({ type: 'roll' })}>
+          <PowerRollButton
+            className={B}
+            variant="secondary"
+            onRoll={(power) => act({ type: 'roll', power })}
+          >
             🎲 {S.game.rollDoubles}
-          </Btn>
+          </PowerRollButton>
         </div>
       </div>
     );
@@ -101,12 +116,12 @@ export function ActionBar() {
     return (
       <div className="w-full">
         {buildBtn}
-        <Btn
+        <PowerRollButton
           className={`${B} w-full animate-glow !text-[max(13px,2.1cqw)]`}
-          onClick={() => act({ type: 'roll' })}
+          onRoll={(power) => act({ type: 'roll', power })}
         >
           🎲 {game.doublesCount > 0 ? S.game.rollAgain : S.game.roll}
-        </Btn>
+        </PowerRollButton>
       </div>
     );
   }

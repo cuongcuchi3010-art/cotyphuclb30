@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect, useRef } from 'react';
-import { formatMoney, jackpotOn, square } from '@cotyphu/shared';
+import { formatMoney, isFrozen, jackpotOn, square } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
 import { cx, fmtClock, nameOf, playerColor, useGame, useNow, photoOf } from '../lib';
@@ -106,6 +106,11 @@ export function CenterInfo() {
           <span>
             🏠 {game.bank.houses}/{game.rules.houseStock ?? 32} · 🏨 {game.bank.hotels}/
             {game.rules.hotelStock ?? 12}
+          </span>
+        )}
+        {isFrozen(game) && (
+          <span className="font-bold text-sky-600 dark:text-sky-300">
+            ❄️ Đóng băng: còn {(game.freezeUntil ?? 0) - game.turn} lượt
           </span>
         )}
         {jackpotOn(game) && (

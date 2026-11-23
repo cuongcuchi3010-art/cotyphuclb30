@@ -23,7 +23,7 @@ const tradeSide = z.object({
 });
 
 export const playerActionSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('roll') }),
+  z.object({ type: z.literal('roll'), power: z.number().int().min(1).max(100).optional() }),
   z.object({ type: z.literal('payBail') }),
   z.object({ type: z.literal('useJailCard') }),
   z.object({ type: z.literal('buy') }),
@@ -51,6 +51,8 @@ export const playerActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('drawLot'), card: z.number().int().min(0).max(5) }),
   z.object({ type: z.literal('chooseDemolish'), pos }),
   z.object({ type: z.literal('chooseFestival'), pos }),
+  z.object({ type: z.literal('chooseSwap'), to: z.string().min(1).max(40) }),
+  z.object({ type: z.literal('chooseTeleport'), pos }),
   z.object({ type: z.literal('chooseGift'), pos, to: z.string().min(1).max(40) }),
   z.object({ type: z.literal('bankLoan'), amount: money }),
   z.object({ type: z.literal('repayLoan'), id: z.string().max(20) }),
@@ -99,6 +101,7 @@ export const rulesSchema = z.object({
   firstBuildMax: z.number().int().min(0).max(4).default(4),
   bankruptcyMode: z.enum(['creditor', 'bankBuyout']).default('creditor'),
   mercy: z.boolean().default(true),
+  devilCards: z.boolean().default(false),
 });
 
 /** Biệt danh = tên đăng nhập: chữ (có dấu), số, khoảng trắng, . _ - */

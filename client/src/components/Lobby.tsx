@@ -161,6 +161,11 @@ export function Lobby() {
                 format={(v) => `×${v}`}
                 onChange={(v) => setRules({ feeMult: v })}
               />
+              <Toggle
+                checked={!!rules.devilCards}
+                onChange={(v) => setRules({ devilCards: v })}
+                label={S.lobby.devilCards}
+              />
               <Sel
                 label={S.lobby.firstBuildMax}
                 value={rules.firstBuildMax ?? 4}

@@ -21,7 +21,7 @@ import {
   unmortgageCost,
   type StreetSquare,
 } from './data/board.vi.js';
-import { DECKS, deckIndices, type CardEffect, type DeckId } from './data/cards.vi.js';
+import { DECKS, cardEnabled, deckIndices, type CardEffect, type DeckId } from './data/cards.vi.js';
 import type { Action, Actor, GameEvent, MercyChoice, PlayerAction } from './actions.js';
 import type {
   Creditor,
@@ -32,6 +32,7 @@ import type {
   PlayerState,
   PropertyState,
   BuildRule,
+  CardChoiceKind,
   Casino,
   CasinoKind,
   Rng,
@@ -85,6 +86,23 @@ export function shuffle<T>(arr: T[], rng: Rng): T[] {
 
 function rollDice(rng: Rng): [number, number] {
   return [rng.int(1, 6), rng.int(1, 6)];
+}
+
+/** Mọi cặp xí ngầu, nhóm theo tổng */
+const DICE_PAIRS: [number, number][] = [];
+for (let a = 1; a <= 6; a++) for (let b = 1; b <= 6; b++) DICE_PAIRS.push([a, b]);
+
+/**
+ * Tung có canh lực (nhấn giữ): lực 1–100 ứng với tổng mục tiêu 2–12;
+ * kết quả là một cặp xí ngầu ngẫu nhiên có tổng trong khoảng mục tiêu ±2.
+ * Không có lực → tung ngẫu nhiên như thường.
+ */
+export function rollWithPower(rng: Rng, power?: number): [number, number] {
+  if (power === undefined) return rollDice(rng);
+  const target = 2 + Math.round(((Math.min(100, Math.max(1, power)) - 1) / 99) * 10);
+  const pool = DICE_PAIRS.filter(([a, b]) => Math.abs(a + b - target) <= 2);
+  const [a, b] = pool[rng.int(0, pool.length - 1)]!;
+  return [a, b];
 }
 
 export interface CreateOptions {
@@ -143,8 +161,8 @@ export function createGame(
         ? { houses: FREESTYLE_STOCK, hotels: FREESTYLE_STOCK }
         : { houses: rules.houseStock ?? HOUSE_STOCK, hotels: rules.hotelStock ?? HOTEL_STOCK },
     decks: {
-      chance: shuffle(deckIndices('chance', rules.mode === 'freestyle'), rng),
-      chest: shuffle(deckIndices('chest', rules.mode === 'freestyle'), rng),
+      chance: shuffle(deckIndices('chance', rules.mode === 'freestyle', rules.devilCards), rng),
+      chest: shuffle(deckIndices('chest', rules.mode === 'freestyle', rules.devilCards), rng),
     },
     jackpot: 0,
     phase: draw ? { kind: 'drawOrder' } : { kind: 'awaitRoll' },
@@ -549,7 +567,7 @@ function applyPlayer(c: Ctx, p: PlayerState, a: PlayerAction): void {
     case 'roll':
       requireCurrent(c, p);
       requirePhase(c, 'awaitRoll');
-      doRoll(c, p);
+      doRoll(c, p, a.power);
       return;
     case 'payBail':
       requireCurrent(c, p);
@@ -693,6 +711,23 @@ function applyPlayer(c: Ctx, p: PlayerState, a: PlayerAction): void {
       setNeutral(s);
       proceed(c);
       return;
+    case 'chooseSwap':
+      requireCurrent(c, p);
+      if (s.phase.kind !== 'cardChoice' || s.phase.choice !== 'swap') fail('Không có gì để chọn');
+      doSwap(c, p, a.to);
+      setNeutral(s);
+      proceed(c);
+      return;
+    case 'chooseTeleport':
+      requireCurrent(c, p);
+      if (s.phase.kind !== 'cardChoice' || s.phase.choice !== 'teleport')
+        fail('Không có gì để chọn');
+      if (!Number.isInteger(a.pos) || a.pos < 0 || a.pos >= BOARD_SIZE || a.pos === p.position)
+        fail('Hãy chọn một ô khác ô đang đứng');
+      setNeutral(s);
+      doTeleport(c, p, a.pos);
+      proceed(c);
+      return;
     case 'chooseGift':
       requireCurrent(c, p);
       if (s.phase.kind !== 'cardChoice' || s.phase.choice !== 'gift') fail('Không có gì để chọn');
@@ -760,9 +795,11 @@ function setNeutral(s: GameState): void {
 // Tung xúc xắc, di chuyển, tạm giữ
 // ---------------------------------------------------------------------------
 
-function doRoll(c: Ctx, p: PlayerState): void {
+function doRoll(c: Ctx, p: PlayerState, power?: number): void {
   const { s, rng } = c;
-  const dice = rollDice(rng);
+  if (power !== undefined && (!Number.isInteger(power) || power < 1 || power > 100))
+    fail('Lực tung không hợp lệ');
+  const dice = rollWithPower(rng, power);
   const doubles = dice[0] === dice[1];
   const total = dice[0] + dice[1];
   s.lastDice = dice;
@@ -770,7 +807,7 @@ function doRoll(c: Ctx, p: PlayerState): void {
   if (doubles) p.stats.doubles++;
 
   if (p.inJail) {
-    c.ev.push({ t: 'roll', playerId: p.id, dice, doubles, purpose: 'jail' });
+    c.ev.push({ t: 'roll', playerId: p.id, dice, doubles, purpose: 'jail', power });
     if (doubles) {
       p.inJail = false;
       p.jailAttempts = 0;
@@ -800,7 +837,7 @@ function doRoll(c: Ctx, p: PlayerState): void {
     return;
   }
 
-  c.ev.push({ t: 'roll', playerId: p.id, dice, doubles, purpose: 'move' });
+  c.ev.push({ t: 'roll', playerId: p.id, dice, doubles, purpose: 'move', power });
   if (doubles) {
     s.doublesCount++;
     if (s.doublesCount >= 3) {
@@ -886,6 +923,10 @@ function landOn(c: Ctx, p: PlayerState, ctx: RentContext): void {
     if (st.owner === p.id || st.mortgaged) return;
     const owner = getPlayer(s, st.owner);
     if (owner.bankrupt) return;
+    if (isFrozen(s)) {
+      c.ev.push({ t: 'frozenRent', playerId: p.id, pos });
+      return;
+    }
     const amount = rentFor(s, pos, ctx);
     if (amount > 0) s.debts.push({ from: p.id, to: owner.id, amount, reason: 'rent', pos });
     return;
@@ -934,7 +975,7 @@ function drawCard(c: Ctx, p: PlayerState, deck: DeckId): void {
   const { s } = c;
   let idx = s.decks[deck].shift();
   // Ván Cổ điển lưu từ trước có thể còn thẻ chỉ-Freestyle trong bộ: bỏ hẳn thẻ đó
-  while (idx !== undefined && DECKS[deck][idx]!.freestyleOnly && !isFreestyle(s))
+  while (idx !== undefined && !cardEnabled(DECKS[deck][idx]!, isFreestyle(s), !!s.rules.devilCards))
     idx = s.decks[deck].shift();
   if (idx === undefined) return; // không thể xảy ra (bộ bài luôn có ít nhất 15 thẻ)
   const card = DECKS[deck][idx]!;
@@ -1083,6 +1124,40 @@ function applyCard(c: Ctx, p: PlayerState, e: CardEffect): void {
       }
       s.phase = { kind: 'cardChoice', choice: 'gift' };
       c.ev.push({ t: 'choosing', playerId: p.id, choice: 'gift' });
+      return;
+    }
+    case 'freeze': {
+      s.freezeUntil = s.turn + e.rounds * alivePlayers(s).length;
+      c.ev.push({ t: 'frozen', playerId: p.id, until: s.freezeUntil });
+      return;
+    }
+    case 'thunder': {
+      const built = OWNABLE_INDICES.filter((i) => (s.properties[i]?.houses ?? 0) > 0);
+      const hits: { pos: number; owner: PlayerId; houses: number }[] = [];
+      for (let k = 0; k < e.count && built.length > 0; k++) {
+        const pos = built.splice(c.rng.int(0, built.length - 1), 1)[0]!;
+        const st = s.properties[pos]!;
+        hits.push({ pos, owner: st.owner!, houses: st.houses });
+        if (st.houses === HOTEL_LEVEL) s.bank.hotels++;
+        else s.bank.houses += st.houses;
+        st.houses = 0;
+      }
+      if (hits.length === 0) c.ev.push({ t: 'cardNoEffect', playerId: p.id });
+      else c.ev.push({ t: 'thunder', playerId: p.id, hits });
+      return;
+    }
+    case 'swapAssets': {
+      if (alivePlayers(s).length < 2) {
+        c.ev.push({ t: 'cardNoEffect', playerId: p.id });
+        return;
+      }
+      s.phase = { kind: 'cardChoice', choice: 'swap' };
+      c.ev.push({ t: 'choosing', playerId: p.id, choice: 'swap' });
+      return;
+    }
+    case 'teleport': {
+      s.phase = { kind: 'cardChoice', choice: 'teleport' };
+      c.ev.push({ t: 'choosing', playerId: p.id, choice: 'teleport' });
       return;
     }
     case 'freeProperty': {
@@ -1492,9 +1567,48 @@ function doGift(c: Ctx, p: PlayerState, pos: number, to: PlayerId): void {
   c.ev.push({ t: 'propertyGifted', from: p.id, to: rcv.id, pos });
 }
 
+/** Ác Quỷ: hoán đổi toàn bộ tài sản (tiền, đất + nhà, Thẻ Bảo Lãnh) giữa hai người */
+function doSwap(c: Ctx, p: PlayerState, to: PlayerId): void {
+  const { s } = c;
+  const q = s.players.find((x) => x.id === to);
+  if (!q || q.bankrupt || q.id === p.id) fail('Hãy chọn một người chơi khác');
+  [p.cash, q.cash] = [q.cash, p.cash];
+  [p.jailCards, q.jailCards] = [q.jailCards, p.jailCards];
+  for (const i of OWNABLE_INDICES) {
+    const st = s.properties[i]!;
+    if (st.owner === p.id) st.owner = q.id;
+    else if (st.owner === q.id) st.owner = p.id;
+  }
+  // Lễ hội đi theo ô
+  if (s.festivals)
+    s.festivals = s.festivals.map((f) =>
+      f.owner === p.id ? { ...f, owner: q.id } : f.owner === q.id ? { ...f, owner: p.id } : f,
+    );
+  s.mortgageChoices = s.mortgageChoices.filter((m) => m.playerId !== p.id && m.playerId !== q.id);
+  s.buildPass = null;
+  c.ev.push({ t: 'assetsSwapped', a: p.id, b: q.id });
+}
+
+/** Ác Quỷ: đi thẳng tới ô đã chọn (luôn đi tiến, qua Khởi Hành nhận lương) */
+function doTeleport(c: Ctx, p: PlayerState, pos: number): void {
+  c.ev.push({ t: 'teleport', playerId: p.id, pos });
+  moveToForward(c, p, pos);
+  landOn(c, p, { diceTotal: diceTotal(c.s) });
+}
+
+/** Thẻ Băng giá còn hiệu lực */
+export function isFrozen(s: GameState): boolean {
+  return s.freezeUntil != null && s.turn < s.freezeUntil;
+}
+
 /** Các ô người chơi hiện tại có thể chọn ở pha cardChoice */
-function choiceTargets(s: GameState, choice: 'demolish' | 'gift' | 'festival'): number[] {
+function choiceTargets(s: GameState, choice: CardChoiceKind): number[] {
   const id = currentPlayer(s).id;
+  if (choice === 'swap')
+    return alivePlayers(s)
+      .filter((x) => x.id !== id)
+      .map((_, k) => k);
+  if (choice === 'teleport') return [0];
   if (choice === 'festival') return festivalTargets(s, id);
   if (choice === 'demolish') return demolishTargets(s, id);
   return s.players.some((p) => !p.bankrupt && p.id !== id) ? giftTargets(s, id) : [];
@@ -1512,6 +1626,16 @@ function autoChoose(c: Ctx): void {
     const t = festivalTargets(s, p.id).sort((a, b) => ownable(b).price - ownable(a).price);
     if (t.length) doFestival(c, p, t[0]!);
     else c.ev.push({ t: 'cardNoEffect', playerId: p.id });
+  } else if (ph.choice === 'swap') {
+    // Tự chọn: người có nhiều tài sản nhất
+    const others = alivePlayers(s)
+      .filter((o) => o.id !== p.id)
+      .sort((a, b) => netWorth(s, b.id) - netWorth(s, a.id));
+    if (others[0]) doSwap(c, p, others[0].id);
+    else c.ev.push({ t: 'cardNoEffect', playerId: p.id });
+  } else if (ph.choice === 'teleport') {
+    // Tự chọn: về Khởi Hành
+    doTeleport(c, p, p.position === 0 ? 1 : 0);
   } else if (ph.choice === 'demolish') {
     const t = demolishTargets(s, p.id);
     if (t.length) doDemolish(c, p, t[c.rng.int(0, t.length - 1)]!);
@@ -1799,6 +1923,7 @@ export function canBuild(s: GameState, p: PlayerState, pos: number): string | nu
   if (sq.kind !== 'street') return 'Chỉ xây nhà trên ô đất';
   const st = s.properties[pos]!;
   if (st.owner !== p.id) return 'Ô này không phải của bạn';
+  if (isFrozen(s)) return 'Đất đang bị đóng băng';
   const rule = buildRuleOf(s);
   if (rule !== 'landing') {
     if (!ownsWholeGroup(s, p.id, pos)) return 'Cần sở hữu trọn nhóm màu';

@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DECKS,
   FREESTYLE_STOCK,
+  isFrozen,
+  rollWithPower,
+  seededRng,
   bankLoanMax,
   casinoBetLimit,
   festivalMult,
   rentFor,
 } from '../src/index.js';
-import { act, mkGame, own, pl } from './helpers.js';
+import { act, mkGame, own, pl, topCard } from './helpers.js';
 
 const FS = { mode: 'freestyle' as const, goSalary: 500, rentMult: 2, feeMult: 2 };
 
@@ -281,5 +285,101 @@ describe('Sòng Bạc Đất', () => {
     expect(s.properties[3]!.houses).toBe(4);
     expect(s.properties[9]!.owner).toBe('p2');
     expect(pl(s, 'p2').cash).toBe(1500 - 6); // phí 10% của 60 tr thế chấp
+  });
+});
+
+describe('Bộ thẻ Ác Quỷ', () => {
+  const DV = { ...FS, devilCards: true };
+  const idx = (deck: 'chance' | 'chest', id: string) => DECKS[deck].findIndex((c) => c.id === id);
+
+  it('chỉ có trong bộ bài khi Freestyle bật Bộ thẻ Ác Quỷ', () => {
+    const ch = idx('chance', 'ch22');
+    expect(mkGame(2, DV).decks.chance).toContain(ch);
+    expect(mkGame(2, FS).decks.chance).not.toContain(ch);
+    expect(mkGame(2, { devilCards: true }).decks.chance).not.toContain(ch);
+  });
+
+  it('Hoán đổi số phận: đổi tiền, đất, nhà với người được chọn', () => {
+    let s = mkGame(3, DV);
+    own(s, 'p1', 1);
+    own(s, 'p3', 39);
+    s.properties[39]!.houses = 3;
+    pl(s, 'p3').cash = 4000;
+    topCard(s, 'chest', idx('chest', 'kv22'));
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 1])); // → 2 Khí Vận
+    expect(s.phase).toEqual({ kind: 'cardChoice', choice: 'swap' });
+    ({ state: s } = act(s, 'p1', { type: 'chooseSwap', to: 'p3' }));
+    expect(pl(s, 'p1').cash).toBe(4000);
+    expect(pl(s, 'p3').cash).toBe(1500);
+    expect(s.properties[39]).toEqual({ owner: 'p1', houses: 3, mortgaged: false });
+    expect(s.properties[1]!.owner).toBe('p3');
+  });
+
+  it('Băng giá: 3 vòng không thu thuê, không xây nhà', () => {
+    let s = mkGame(2, DV);
+    own(s, 'p2', 39);
+    topCard(s, 'chance', idx('chance', 'ch22'));
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4])); // → 7 Cơ Hội
+    expect(s.freezeUntil).toBe(s.turn + 6);
+    s.phase = { kind: 'awaitRoll' };
+    s.rolled = false;
+    pl(s, 'p1').position = 32;
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [3, 4])); // → 39 của p2
+    expect(pl(s, 'p1').cash).toBe(1500);
+    own(s, 'p1', 6);
+    s.buildPass = 6;
+    expect(() => act(s, 'p1', { type: 'build', pos: 6 })).toThrow('đóng băng');
+    s.turn = s.freezeUntil!;
+    expect(isFrozen(s)).toBe(false);
+  });
+
+  it('Thiên Lôi: phá sập hết nhà trên 3 ô có nhà ngẫu nhiên', () => {
+    let s = mkGame(2, DV);
+    own(s, 'p2', 1, 3, 6, 39);
+    for (const i of [1, 3, 6, 39]) s.properties[i]!.houses = 2;
+    topCard(s, 'chance', idx('chance', 'ch23'));
+    const r = act(s, 'p1', { type: 'roll' }, [3, 4]);
+    s = r.state;
+    const left = [1, 3, 6, 39].filter((i) => s.properties[i]!.houses > 0);
+    expect(left).toHaveLength(1);
+    expect(r.events).toContainEqual(expect.objectContaining({ t: 'thunder' }));
+  });
+
+  it('Dịch chuyển: chọn ô bất kỳ để đi tới, qua Khởi Hành nhận lương', () => {
+    let s = mkGame(2, DV);
+    pl(s, 'p1').position = 33;
+    topCard(s, 'chance', idx('chance', 'ch24'));
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 2])); // → 36 Cơ Hội
+    expect(s.phase).toEqual({ kind: 'cardChoice', choice: 'teleport' });
+    expect(() => act(s, 'p1', { type: 'chooseTeleport', pos: 36 })).toThrow('ô khác');
+    ({ state: s } = act(s, 'p1', { type: 'chooseTeleport', pos: 6 }));
+    expect(pl(s, 'p1').position).toBe(6);
+    expect(pl(s, 'p1').cash).toBe(1500 + 500);
+    expect(s.phase).toEqual({ kind: 'awaitBuy', pos: 6 });
+  });
+});
+
+describe('Tung canh lực', () => {
+  it('lực 1–100 ứng với tổng 2–12, lệch tối đa ±2', () => {
+    for (const [power, lo, hi] of [
+      [1, 2, 4],
+      [50, 5, 9],
+      [100, 10, 12],
+    ] as const) {
+      for (let k = 0; k < 30; k++) {
+        const [a, b] = rollWithPower(seededRng(k * 7 + power), power);
+        expect(a + b).toBeGreaterThanOrEqual(lo);
+        expect(a + b).toBeLessThanOrEqual(hi);
+      }
+    }
+  });
+
+  it('lực không hợp lệ bị từ chối; không có lực thì tung ngẫu nhiên', () => {
+    const s = mkGame(2);
+    expect(() => act(s, 'p1', { type: 'roll', power: 0 })).toThrow('Lực');
+    expect(() => act(s, 'p1', { type: 'roll', power: 101 })).toThrow('Lực');
+    const r = act(s, 'p1', { type: 'roll', power: 100 });
+    const ev = r.events.find((e) => e.t === 'roll');
+    expect(ev && ev.t === 'roll' && ev.power).toBe(100);
   });
 });

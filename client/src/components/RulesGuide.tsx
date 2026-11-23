@@ -67,12 +67,25 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
             </li>
             <li>Ô Cà Phê (góc 20) thành ô Lễ Hội: dừng ở đó chọn 1 ô đất của mình mở lễ hội.</li>
             <li>Thẻ “Đi tới tiện ích gần nhất” thành “Đi tới Sòng Bạc gần nhất”.</li>
+            {rules?.devilCards && (
+              <li>
+                <b>😈 Bộ thẻ Ác Quỷ</b>: Khí Vận <i>Hoán đổi số phận</i> (đổi toàn bộ tiền, đất, nhà
+                với người bạn chọn); Cơ Hội <i>Băng giá</i> (mọi ô đất đóng băng 3 vòng: không thu
+                thuê, không xây), <i>Thiên Lôi</i> (phá sập hết nhà trên 3 ô có nhà ngẫu nhiên),{' '}
+                <i>Dịch chuyển</i> (chọn 1 ô bất kỳ để đi tới).
+              </li>
+            )}
           </ul>
         </div>
       )}
       <div className="mt-3 space-y-2 text-sm leading-relaxed">
         <Section title="🎲 Một lượt chơi" open>
           <ol className="list-decimal space-y-1 pl-5">
+            <li>
+              Nút Tung xúc xắc: <b>nhấn giữ để canh lực</b> (thanh chạy 0 → 100% trong 2 giây rồi
+              chạy ngược lại; buông tay để tung). Lực càng cao tổng điểm càng lớn (lệch ±2). Chạm
+              nhẹ, hoặc giữ tới khi thanh về 0, thì tung ngẫu nhiên.
+            </li>
             <li>
               Bấm Tung xúc xắc, quân tự đi theo tổng hai xúc xắc. Qua Khởi Hành nhận{' '}
               {formatMoney(go)}.

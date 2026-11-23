@@ -110,6 +110,7 @@ export const S = {
     feeMult: 'Hệ số tiền phạt, thuế, thẻ',
     casinoMaxBet: 'Cược tối đa ở Sòng Bạc Tiền',
     firstBuildMax: 'Mua xong được xây ngay',
+    devilCards: '😈 Bộ thẻ Ác Quỷ (hoán đổi tài sản, băng giá, Thiên Lôi, dịch chuyển)',
     mercyRule: 'Quyền ân huệ (thiếu tiền trả thuê được xin chủ ô giảm 100% / 50%; mỗi người 1 lần)',
     bankruptcy: 'Khi phá sản',
     bankruptcyModes: { creditor: 'Chủ nợ nhận hết', bankBuyout: 'Ngân hàng mua lại nhà' },
@@ -208,6 +209,11 @@ export const S = {
     other: (name: string) => `${name} đang gom tiền trả nợ…`,
     openAssets: 'Mở Tài sản',
     openLoan: 'Vay tiền',
+  },
+
+  power: {
+    label: 'Lực',
+    hint: 'Nhấn giữ để canh lực · chạm nhẹ: ngẫu nhiên',
   },
 
   mercy: {
@@ -392,6 +398,14 @@ export const S = {
     festivalTitle: '🎉 Tổ chức Lễ hội',
     festivalHint: (max: number) =>
       `Chọn 1 ô đất của bạn: tiền thuê tăng ngẫu nhiên ×2 đến ×4. Bàn có tối đa ${max} lễ hội, quá ${max} thì lễ hội cũ nhất kết thúc.`,
+    swapTitle: '😈 Hoán đổi số phận',
+    swapHint:
+      'Chọn 1 người chơi để đổi toàn bộ tài sản (tiền, đất, nhà, Thẻ Bảo Lãnh). Hết giờ máy chọn người giàu nhất.',
+    netWorth: 'Tài sản',
+    yours: (v: string) => `Tài sản của bạn: ${v}`,
+    teleportTitle: '😈 Dịch chuyển',
+    teleportHint:
+      'Chọn 1 ô bất kỳ để đi tới (luôn đi tiến, qua Khởi Hành vẫn nhận lương). Hết giờ máy đưa bạn về Khởi Hành.',
     giftTitle: '🎁 Làm từ thiện bắt buộc',
     giftHint: 'Chọn 1 ô đất của bạn (nhóm chưa có nhà) và người nhận.',
     to: 'Tặng cho',

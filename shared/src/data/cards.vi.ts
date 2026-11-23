@@ -28,7 +28,15 @@ export type CardEffect =
   /** Nhận miễn phí 1 ô đất ngẫu nhiên còn thuộc ngân hàng */
   | { type: 'freeProperty' }
   /** Tổ chức lễ hội: chọn 1 ô của mình, tiền thuê ô đó ×2 (thay lễ hội cũ) */
-  | { type: 'festival' };
+  | { type: 'festival' }
+  /** Ác Quỷ: hoán đổi toàn bộ tài sản với người chơi tự chọn */
+  | { type: 'swapAssets' }
+  /** Ác Quỷ: đóng băng mọi ô đất trên bàn (không thu thuê, không xây) trong `rounds` vòng */
+  | { type: 'freeze'; rounds: number }
+  /** Ác Quỷ: Thiên Lôi phá sập hết nhà trên `count` ô có nhà ngẫu nhiên */
+  | { type: 'thunder'; count: number }
+  /** Ác Quỷ: chọn 1 ô bất kỳ để đi tới */
+  | { type: 'teleport' };
 
 export type DeckId = 'chance' | 'chest';
 
@@ -41,6 +49,8 @@ export interface Card {
   logo?: string;
   /** Chỉ có trong bộ bài ở chế độ Freestyle */
   freestyleOnly?: boolean;
+  /** Bộ thẻ Ác Quỷ: chỉ có khi Freestyle bật tuỳ chọn Bộ thẻ Ác Quỷ */
+  devil?: boolean;
 }
 
 export const DECK_NAMES: Record<DeckId, string> = {
@@ -173,6 +183,27 @@ export const CHANCE_CARDS: readonly Card[] = [
     effect: { type: 'collect', amount: 3000, fixed: true },
     freestyleOnly: true,
   },
+  {
+    id: 'ch22',
+    deck: 'chance',
+    text: '😈 Ác Quỷ · Băng giá! Mọi ô đất trên bàn bị đóng băng 3 vòng: không ai thu tiền thuê, không ai xây nhà.',
+    effect: { type: 'freeze', rounds: 3 },
+    devil: true,
+  },
+  {
+    id: 'ch23',
+    deck: 'chance',
+    text: '😈 Ác Quỷ · Thiên Lôi đánh xuống! 3 ô có nhà ngẫu nhiên trên bàn bị phá sập hết nhà.',
+    effect: { type: 'thunder', count: 3 },
+    devil: true,
+  },
+  {
+    id: 'ch24',
+    deck: 'chance',
+    text: '😈 Ác Quỷ · Dịch chuyển! Chọn 1 ô bất kỳ trên bàn cờ để đi tới (qua Khởi Hành vẫn nhận lương).',
+    effect: { type: 'teleport' },
+    devil: true,
+  },
 ];
 
 export const CHEST_CARDS: readonly Card[] = [
@@ -304,6 +335,13 @@ export const CHEST_CARDS: readonly Card[] = [
     effect: { type: 'pay', amount: 1000, fixed: true },
     freestyleOnly: true,
   },
+  {
+    id: 'kv22',
+    deck: 'chest',
+    text: '😈 Ác Quỷ · Hoán đổi số phận! Đổi toàn bộ tài sản (tiền, đất, nhà) của bạn với một người chơi bạn chọn.',
+    effect: { type: 'swapAssets' },
+    devil: true,
+  },
 ];
 
 export const DECKS: Record<DeckId, readonly Card[]> = {
@@ -317,7 +355,13 @@ export function cardById(id: string): Card {
   return c;
 }
 
-/** Chỉ số các thẻ dùng trong bộ bài theo chế độ chơi (thẻ chỉ-Freestyle bị bỏ ở Cổ điển) */
-export function deckIndices(deck: DeckId, freestyle: boolean): number[] {
-  return DECKS[deck].map((_, i) => i).filter((i) => freestyle || !DECKS[deck][i]!.freestyleOnly);
+/** Thẻ có dùng trong ván này không (thẻ chỉ-Freestyle, thẻ Ác Quỷ) */
+export function cardEnabled(card: Card, freestyle: boolean, devil = false): boolean {
+  if (card.devil) return freestyle && devil;
+  return freestyle || !card.freestyleOnly;
+}
+
+/** Chỉ số các thẻ dùng trong bộ bài theo chế độ chơi */
+export function deckIndices(deck: DeckId, freestyle: boolean, devil = false): number[] {
+  return DECKS[deck].map((_, i) => i).filter((i) => cardEnabled(DECKS[deck][i]!, freestyle, devil));
 }

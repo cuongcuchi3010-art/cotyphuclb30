@@ -101,6 +101,7 @@ export function candidateActions(s: GameState, id: PlayerId, rng: Rng): PlayerAc
     { type: 'roll' },
     { type: 'payBail' },
     { type: 'useJailCard' },
+    { type: 'roll', power: rng.int(1, 100) },
     { type: 'buy' },
     { type: 'decline' },
     { type: 'endTurn' },
@@ -112,6 +113,9 @@ export function candidateActions(s: GameState, id: PlayerId, rng: Rng): PlayerAc
   if (s.phase.kind === 'cardChoice') {
     for (const pos of demolishTargets(s, id).slice(0, 4)) out.push({ type: 'chooseDemolish', pos });
     for (const pos of festivalTargets(s, id).slice(0, 4)) out.push({ type: 'chooseFestival', pos });
+    for (const o of s.players.filter((x) => !x.bankrupt && x.id !== id))
+      out.push({ type: 'chooseSwap', to: o.id });
+    out.push({ type: 'chooseTeleport', pos: rng.int(0, 39) });
     const others = s.players.filter((p) => !p.bankrupt && p.id !== id);
     for (const pos of giftTargets(s, id).slice(0, 4))
       for (const o of others.slice(0, 2)) out.push({ type: 'chooseGift', pos, to: o.id });

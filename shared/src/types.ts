@@ -63,9 +63,14 @@ export interface Rules {
   bankruptcyMode: BankruptcyMode;
   /** Quyền ân huệ: chủ ô được miễn / giảm 50% tiền thuê, mỗi người chơi khác 1 lần */
   mercy: boolean;
+  /** Freestyle: thêm Bộ thẻ Ác Quỷ (hoán đổi tài sản, băng giá, Thiên Lôi, dịch chuyển) */
+  devilCards: boolean;
 }
 
 export type BankruptcyMode = 'creditor' | 'bankBuyout';
+
+/** Thẻ cho người rút tự chọn */
+export type CardChoiceKind = 'demolish' | 'gift' | 'festival' | 'swap' | 'teleport';
 
 export type GameMode = 'classic' | 'freestyle';
 
@@ -92,6 +97,7 @@ export const DEFAULT_RULES: Rules = {
   firstBuildMax: 4,
   bankruptcyMode: 'creditor',
   mercy: true,
+  devilCards: false,
 };
 
 export interface PlayerStats {
@@ -220,7 +226,7 @@ export type Phase =
   /** Bốc thăm thứ tự xuất phát (đầu ván) */
   | { kind: 'drawOrder' }
   /** Thẻ cho người rút tự chọn: đập nhà người khác / tặng ô đất */
-  | { kind: 'cardChoice'; choice: 'demolish' | 'gift' | 'festival' }
+  | { kind: 'cardChoice'; choice: CardChoiceKind }
   | { kind: 'raiseFunds'; debtor: PlayerId }
   /** Freestyle: bàn cược Sòng Bạc đang mở (chi tiết ở state.casino) */
   | { kind: 'casino' }
@@ -281,6 +287,8 @@ export interface GameState {
   endReason?: 'lastStanding' | 'timeUp';
   /** Freestyle: bàn cược Sòng Bạc đang mở */
   casino?: Casino | null;
+  /** Thẻ Băng giá: tới lượt số này thì hết đóng băng (không thu thuê, không xây) */
+  freezeUntil?: number | null;
   /** Quyền ân huệ đã dùng: chủ ô → danh sách người đã được ân huệ */
   mercyUsed?: Record<PlayerId, PlayerId[]>;
 }

@@ -50,7 +50,7 @@ export function describeEvent(
     case 'roll':
       if (ev.purpose === 'utility')
         return `${name(ev.playerId)} tung ${ev.dice[0]}+${ev.dice[1]} để tính tiền điện/viễn thông`;
-      return `${name(ev.playerId)} tung ${ev.dice[0]}+${ev.dice[1]}${ev.doubles ? ' (đôi!)' : ''}`;
+      return `${name(ev.playerId)} tung ${ev.dice[0]}+${ev.dice[1]}${ev.doubles ? ' (đôi!)' : ''}${ev.power ? ` · lực ${ev.power}%` : ''}`;
     case 'move':
       if (ev.steps === 0) return null;
       if (ev.steps < 0) return `${name(ev.playerId)} lùi ${-ev.steps} ô tới ${sq(ev.to)}`;
@@ -111,11 +111,25 @@ export function describeEvent(
         (ev.ended?.length ? ` Lễ hội ở ${ev.ended.map(sq).join(', ')} kết thúc.` : '')
       );
     case 'choosing':
+      if (ev.choice === 'swap')
+        return `😈 ${name(ev.playerId)} đang chọn người để hoán đổi tài sản…`;
+      if (ev.choice === 'teleport')
+        return `😈 ${name(ev.playerId)} đang chọn ô để dịch chuyển tới…`;
       return ev.choice === 'festival'
         ? `${name(ev.playerId)} đang chọn ô tổ chức lễ hội…`
         : ev.choice === 'demolish'
           ? `${name(ev.playerId)} đang chọn nhà để đập…`
           : `${name(ev.playerId)} đang chọn ô đất để tặng…`;
+    case 'assetsSwapped':
+      return `😈 ${name(ev.a)} hoán đổi toàn bộ tài sản với ${name(ev.b)}!`;
+    case 'frozen':
+      return `❄️ Băng giá! Mọi ô đất bị đóng băng tới lượt ${ev.until}: không thu thuê, không xây nhà`;
+    case 'frozenRent':
+      return `❄️ ${name(ev.playerId)} dừng ở ${sq(ev.pos)} đang đóng băng: không phải trả thuê`;
+    case 'thunder':
+      return `⚡ Thiên Lôi đánh sập nhà ở ${ev.hits.map((h) => `${sq(h.pos)} (${name(h.owner)})`).join(', ')}`;
+    case 'teleport':
+      return `😈 ${name(ev.playerId)} dịch chuyển tới ${sq(ev.pos)}`;
     case 'mercyRequested':
       return `🙏 ${name(ev.payer)} xin ${name(ev.owner)} ban ân huệ (tiền thuê ${formatMoney(ev.amount)})`;
     case 'mercy':

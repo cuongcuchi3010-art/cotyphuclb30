@@ -1,5 +1,6 @@
 import type { DeckId } from './data/cards.vi.js';
 import type {
+  CardChoiceKind,
   CasinoKind,
   Creditor,
   DebtReason,
@@ -10,7 +11,8 @@ import type {
 } from './types.js';
 
 export type PlayerAction =
-  | { type: 'roll' }
+  /** power 1–100: lực tung (nhấn giữ); không có = tung ngẫu nhiên */
+  | { type: 'roll'; power?: number }
   | { type: 'payBail' }
   | { type: 'useJailCard' }
   | { type: 'buy' }
@@ -39,6 +41,8 @@ export type PlayerAction =
   | { type: 'chooseDemolish'; pos: number }
   | { type: 'chooseGift'; pos: number; to: PlayerId }
   | { type: 'chooseFestival'; pos: number }
+  | { type: 'chooseSwap'; to: PlayerId }
+  | { type: 'chooseTeleport'; pos: number }
   | { type: 'bankLoan'; amount: number }
   | { type: 'repayLoan'; id: string }
   | {
@@ -93,6 +97,8 @@ export type GameEvent =
       dice: [number, number];
       doubles: boolean;
       purpose: 'move' | 'jail' | 'utility';
+      /** Lực tung khi nhấn giữ (1–100) */
+      power?: number;
     }
   | {
       t: 'move';
@@ -131,7 +137,7 @@ export type GameEvent =
       playerId: PlayerId;
       pos: number;
       level: number;
-      reason: 'fire' | 'demolish';
+      reason: 'fire' | 'demolish' | 'thunder';
       by?: PlayerId;
     }
   | { t: 'propertyGifted'; from: PlayerId; to: PlayerId; pos: number }
@@ -177,7 +183,12 @@ export type GameEvent =
       players?: PlayerId[];
       rolls?: Record<PlayerId, [number, number]>;
     }
-  | { t: 'choosing'; playerId: PlayerId; choice: 'demolish' | 'gift' | 'festival' }
+  | { t: 'choosing'; playerId: PlayerId; choice: CardChoiceKind }
+  | { t: 'assetsSwapped'; a: PlayerId; b: PlayerId }
+  | { t: 'frozen'; playerId: PlayerId; until: number }
+  | { t: 'frozenRent'; playerId: PlayerId; pos: number }
+  | { t: 'thunder'; playerId: PlayerId; hits: { pos: number; owner: PlayerId; houses: number }[] }
+  | { t: 'teleport'; playerId: PlayerId; pos: number }
   | { t: 'festival'; playerId: PlayerId; pos: number; mult?: number; ended?: number[] }
   | { t: 'build'; playerId: PlayerId; pos: number; level: number; cost: number }
   | { t: 'sell'; playerId: PlayerId; pos: number; level: number; refund: number }

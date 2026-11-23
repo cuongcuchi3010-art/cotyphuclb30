@@ -169,6 +169,7 @@ describe('Phòng chơi', () => {
         firstBuildMax: 2,
         bankruptcyMode: 'bankBuyout',
         mercy: false,
+        devilCards: true,
       },
     });
     a.msg({ type: 'start' });

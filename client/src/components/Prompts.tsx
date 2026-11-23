@@ -5,6 +5,7 @@ import {
   festivalMult,
   maxFestivals,
   mercyDebt,
+  netWorth,
   rentFor,
   giftTargets,
   GROUPS,
@@ -567,6 +568,80 @@ function CardChoicePrompt() {
       </button>
     );
   };
+  if (ph.choice === 'swap') {
+    const others = game.players.filter((p) => !p.bankrupt && p.id !== me);
+    return (
+      <Modal open>
+        <div className="text-center text-lg font-bold">{S.choice.swapTitle}</div>
+        <div className="mb-3 text-center text-sm text-gray-500">{S.choice.swapHint}</div>
+        <div className="space-y-1.5">
+          {others.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => act({ type: 'chooseSwap', to: p.id })}
+              className="flex w-full items-center gap-2 rounded-xl bg-black/5 px-3 py-2 text-left hover:bg-son-50 dark:bg-white/5"
+            >
+              <Avatar
+                token={p.token}
+                color={playerColor(room, p.id)}
+                size={32}
+                photo={photoOf(room, p.id)}
+              />
+              <span className="min-w-0 flex-1 truncate font-semibold">{p.name}</span>
+              <span className="text-right text-xs">
+                {S.choice.netWorth} <b className="text-son">{formatMoney(netWorth(game, p.id))}</b>
+              </span>
+            </button>
+          ))}
+        </div>
+        <div className="mt-2 text-center text-xs text-gray-500">
+          {S.choice.yours(formatMoney(netWorth(game, me)))}
+        </div>
+      </Modal>
+    );
+  }
+  if (ph.choice === 'teleport') {
+    const here = game.players.find((p) => p.id === me)!.position;
+    return (
+      <Modal open className="sm:max-w-2xl">
+        <div className="text-center text-lg font-bold">{S.choice.teleportTitle}</div>
+        <div className="mb-3 text-center text-sm text-gray-500">{S.choice.teleportHint}</div>
+        <div className="grid max-h-[60vh] grid-cols-2 gap-1.5 overflow-y-auto sm:grid-cols-4">
+          {Array.from({ length: 40 }, (_, i) => i)
+            .filter((i) => i !== here)
+            .map((i) => {
+              const sq = square(i);
+              const st = game.properties[i];
+              const color =
+                sq.kind === 'street'
+                  ? GROUPS[sq.group].color
+                  : sq.kind === 'transport' || sq.kind === 'utility'
+                    ? sq.brandColor
+                    : '#9CA3AF';
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => act({ type: 'chooseTeleport', pos: i })}
+                  className="flex items-center gap-1.5 rounded-lg bg-black/5 px-2 py-1.5 text-left text-xs hover:bg-son-50 dark:bg-white/5"
+                >
+                  <span className="h-6 w-1 shrink-0 rounded" style={{ background: color }} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-semibold">
+                      {squareName(game, i, true)}
+                    </span>
+                    <span className="block truncate text-[10px] text-gray-500">
+                      {st?.owner ? nameOf(room, st.owner) : `Ô ${i}`}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+        </div>
+      </Modal>
+    );
+  }
   if (ph.choice === 'festival') {
     const targets = festivalTargets(game, me);
     return (
@@ -584,7 +659,8 @@ function CardChoicePrompt() {
               <>
                 {formatMoney(base)} →{' '}
                 <b className="text-son">
-                  {formatMoney(base * 2)}–{formatMoney(base * 4)}
+                  {formatMoney(base * 2)}–
+                  {formatMoney(base * (game.rules.mode === 'freestyle' ? 5 : 4))}
                 </b>
               </>,
               false,
