@@ -257,7 +257,7 @@ export const S = {
 
   casino: {
     cashIntro: (opener: string, cap: string) =>
-      `${opener} làm nhà cái. Ai muốn chơi thì đặt cược (tối đa ${cap}); đổ cao hơn nhà cái thì thắng, thấp hơn thì thua, bằng điểm thì hoà.`,
+      `${opener} làm nhà cái. Ai muốn chơi thì đặt cược (${cap}); đổ cao hơn nhà cái thì thắng, thấp hơn thì thua, bằng điểm thì hoà.`,
     landIntro: (opener: string) =>
       `${opener} mở bàn. Ai muốn chơi thì đặt 1 ô đất; tất cả cùng đổ, ai cao nhất lấy hết các ô trên bàn.`,
     house: 'Nhà cái',

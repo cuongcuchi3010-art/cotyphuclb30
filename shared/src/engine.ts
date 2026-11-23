@@ -1262,8 +1262,8 @@ function resolveMercy(c: Ctx, choice: MercyChoice): void {
 export const CASINO_CASH_POS = 12;
 export const CASINO_LAND_POS = 28;
 const CASINO_MIN_BET = 10;
-/** Mức cược tối đa mỗi người ở Sòng Bạc Tiền: 1 tỷ */
-export const CASINO_MAX_BET = 1000;
+/** Cược Sòng Bạc Tiền không giới hạn (cap = 0): mỗi người cược tối đa bằng tiền mặt của mình */
+export const CASINO_UNLIMITED = 0;
 
 export function casinoKindAt(s: GameState, pos: number): CasinoKind | null {
   if (!isFreestyle(s)) return null;
@@ -1282,7 +1282,8 @@ export function casinoStakeTargets(s: GameState, pid: PlayerId): number[] {
 export function casinoBetLimit(s: GameState, pid: PlayerId): number {
   const k = s.casino;
   if (!k || k.kind !== 'cash') return 0;
-  return Math.max(0, Math.min(k.cap, getPlayer(s, pid).cash));
+  const cash = getPlayer(s, pid).cash;
+  return Math.max(0, k.cap > 0 ? Math.min(k.cap, cash) : cash);
 }
 
 const sumDice = (d: [number, number]) => d[0] + d[1];
@@ -1298,14 +1299,10 @@ function openCasino(c: Ctx, p: PlayerState, kind: CasinoKind, pos: number): void
       c.ev.push({ t: 'casinoSkip', kind, opener: p.id, reason: 'noCash' });
       return;
     }
-    // Nhà cái luôn đủ tiền trả: tiền nhà cái chia đều cho số người có thể cược
-    cap = Math.min(
-      CASINO_MAX_BET,
-      s.rules.casinoMaxBet ?? CASINO_MAX_BET,
-      Math.floor(p.cash / Math.max(1, bettors.length)),
-    );
+    // Không giới hạn mức cược: nhà cái thua mà thiếu tiền thì phải gom tiền / phá sản như nợ thường
+    cap = CASINO_UNLIMITED;
     eligible = bettors.map((o) => o.id);
-    if (eligible.length === 0 || cap < CASINO_MIN_BET) {
+    if (eligible.length === 0) {
       c.ev.push({ t: 'casinoSkip', kind, opener: p.id, reason: 'noPlayers' });
       return;
     }

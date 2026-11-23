@@ -140,7 +140,7 @@ export function describeEvent(
           : `${name(ev.owner)} từ chối ban ân huệ cho ${name(ev.payer)}`;
     case 'casinoOpen':
       return ev.kind === 'cash'
-        ? `🎰 ${name(ev.opener)} mở ${CASINO_NAMES.cash}: mọi người đặt cược (tối đa ${formatMoney(ev.cap)})`
+        ? `🎰 ${name(ev.opener)} mở ${CASINO_NAMES.cash}: mọi người đặt cược (${ev.cap > 0 ? `tối đa ${formatMoney(ev.cap)}` : 'không giới hạn'})`
         : `🎰 ${name(ev.opener)} mở ${CASINO_NAMES.land}: ai muốn chơi thì đặt 1 ô đất`;
     case 'casinoSkip':
       return `🎰 ${CASINO_NAMES[ev.kind]} không mở được: ${ev.reason === 'noCash' ? `${name(ev.opener)} không đủ tiền làm nhà cái` : 'không đủ người có thể tham gia'}`;

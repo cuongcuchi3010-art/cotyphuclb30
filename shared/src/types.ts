@@ -93,7 +93,7 @@ export const DEFAULT_RULES: Rules = {
   goSalary: 200,
   rentMult: 2,
   feeMult: 2,
-  casinoMaxBet: 1000,
+  casinoMaxBet: 0,
   firstBuildMax: 4,
   bankruptcyMode: 'creditor',
   mercy: true,

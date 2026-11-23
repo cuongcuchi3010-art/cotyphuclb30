@@ -354,3 +354,6 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 
 ## 3D14 — Nhà / khách sạn 3D theo màu chủ ô
 - Nhà: tường màu chủ ô pha trắng 55%, mái màu chủ ô, khung mái (viền) màu chủ ô đậm 30%. Khách sạn: thân màu chủ ô, mặt tiền nhạt, mái đậm.
+
+## C9 — Sòng Bạc Tiền cược không giới hạn
+- Bỏ mức trần 1 tỷ và trần "tiền nhà cái chia đều": mỗi người cược tối đa bằng tiền mặt của mình (`cap = 0` nghĩa là không giới hạn). Nhà cái thua mà thiếu tiền thì khoản nợ `casino` đi qua pha gom tiền / phá sản như nợ thường. Bỏ tuỳ chọn "Cược tối đa" ở sảnh (`rules.casinoMaxBet` giữ lại, mặc định 0, không còn dùng).

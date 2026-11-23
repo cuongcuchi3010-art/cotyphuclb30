@@ -86,7 +86,12 @@ export function CasinoPrompt() {
     <Modal open onClose={() => setMini(true)}>
       <div className="mb-2 text-center text-sm text-gray-600 dark:text-gray-300">
         {k.kind === 'cash'
-          ? S.casino.cashIntro(nameOf(room, k.opener), formatMoney(k.cap))
+          ? S.casino.cashIntro(
+              nameOf(room, k.opener),
+              k.cap > 0
+                ? `tối đa ${formatMoney(k.cap)}`
+                : 'không giới hạn, tối đa bằng tiền mặt của bạn',
+            )
           : S.casino.landIntro(nameOf(room, k.opener))}
       </div>
       <CasinoTable

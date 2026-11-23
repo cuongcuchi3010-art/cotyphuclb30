@@ -142,8 +142,8 @@ describe('Sòng Bạc Tiền', () => {
   it('mở bàn, cược, đổ: cao hơn nhà cái thắng, thấp hơn thua', () => {
     let s = open3();
     expect(s.phase.kind).toBe('casino');
-    expect(s.casino!.cap).toBe(750); // min(1 tỷ, 1500 / 2)
-    expect(() => act(s, 'p2', { type: 'casinoBet', amount: 800 })).toThrow('tối đa');
+    expect(s.casino!.cap).toBe(0); // không giới hạn
+    expect(() => act(s, 'p2', { type: 'casinoBet', amount: 1510 })).toThrow('tối đa');
     expect(() => act(s, 'p1', { type: 'casinoBet', amount: 100 })).toThrow('không tham gia');
     ({ state: s } = act(s, 'p2', { type: 'casinoBet', amount: 100 }));
     ({ state: s } = act(s, 'p3', { type: 'casinoBet', amount: 200 }));
@@ -176,20 +176,15 @@ describe('Sòng Bạc Tiền', () => {
     expect(r.state.phase.kind).toBe('awaitEnd');
   });
 
-  it('mức cược tối đa 1 tỷ', () => {
+  it('cược không giới hạn: tối đa bằng tiền mặt của người cược', () => {
     let s = mkGame(3, { ...FS, startingCash: 10000 });
-    pl(s, 'p1').position = 9;
-    ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 2]));
-    expect(casinoBetLimit(s, 'p2')).toBe(1000);
-    expect(() => act(s, 'p2', { type: 'casinoBet', amount: 1010 })).toThrow('tối đa');
-  });
-
-  it('mức cược không vượt tiền nhà cái chia đều', () => {
-    let s = mkGame(3, FS);
     pl(s, 'p1').cash = 300;
     pl(s, 'p1').position = 9;
     ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 2]));
-    expect(casinoBetLimit(s, 'p2')).toBe(150);
+    expect(casinoBetLimit(s, 'p2')).toBe(10000);
+    expect(() => act(s, 'p2', { type: 'casinoBet', amount: 10010 })).toThrow('tối đa');
+    ({ state: s } = act(s, 'p2', { type: 'casinoBet', amount: 5000 }));
+    expect(s.casino?.bets.p2).toBe(5000);
   });
 
   it('hết giờ đặt cược thì đổ; hết giờ đổ thì máy đổ hộ', () => {

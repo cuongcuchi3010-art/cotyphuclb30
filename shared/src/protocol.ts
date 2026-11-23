@@ -97,7 +97,8 @@ export const rulesSchema = z.object({
   goSalary: z.number().int().min(0).max(5000).default(200),
   rentMult: z.number().min(1).max(5).default(2),
   feeMult: z.number().min(1).max(5).default(2),
-  casinoMaxBet: z.number().int().min(50).max(1000).default(1000),
+  /** Không còn dùng (cược không giới hạn); giữ để phòng cũ không lỗi */
+  casinoMaxBet: z.number().int().min(0).max(100000).default(0),
   firstBuildMax: z.number().int().min(0).max(4).default(4),
   bankruptcyMode: z.enum(['creditor', 'bankBuyout']).default('creditor'),
   mercy: z.boolean().default(true),
