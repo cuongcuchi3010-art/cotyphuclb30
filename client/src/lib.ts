@@ -114,12 +114,19 @@ function typing(): boolean {
  * ô nhập bị dựng lại, mất focus và bàn phím tắt ngay.
  */
 export function useViewport(): { w: number; h: number } {
-  // innerWidth/innerHeight tính cả thanh cuộn: nếu dùng visualViewport (trừ thanh cuộn) thì
-  // trên Windows thanh cuộn hiện/ẩn làm bố cục đổi qua lại liên tục (giật qua lại)
-  const read = () => ({
-    w: Math.round(window.innerWidth),
-    h: Math.round(window.innerHeight),
-  });
+  // Máy có chuột (Windows): innerWidth/innerHeight tính cả thanh cuộn, để thanh cuộn hiện/ẩn
+  // không làm bố cục đổi qua lại. Điện thoại / máy tính bảng: KHÔNG dùng innerWidth vì trình
+  // duyệt di động nới innerWidth theo nội dung tràn ngang → bàn cờ to ra, lệch khỏi màn hình;
+  // dùng visualViewport (thanh cuộn trên di động nổi, không chiếm chỗ).
+  const read = () => {
+    const fine = window.matchMedia?.('(pointer: fine)').matches ?? false;
+    const vv = window.visualViewport;
+    if (fine || !vv) return { w: Math.round(window.innerWidth), h: Math.round(window.innerHeight) };
+    return {
+      w: Math.round(Math.min(vv.width * (vv.scale || 1), document.documentElement.clientWidth)),
+      h: Math.round(vv.height * (vv.scale || 1)),
+    };
+  };
   const [vp, setVp] = useState(read);
   useEffect(() => {
     const on = () => {

@@ -360,3 +360,7 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 
 ## F12 — Hạn mức vay Freestyle gấp 5 lần hệ số tiền thuê
 - `bankLoanMax` Freestyle = 500 tr × 5 × hệ số tiền thuê (×1 → 2,5 tỷ; ×2 → 5 tỷ; ×5 → 12,5 tỷ). Cổ điển giữ 500 tr. Luật trong phòng ghi rõ hạn mức.
+
+## 3D15 — Sửa bố cục điện thoại (Chrome / Safari) bị lệch, cắt bàn cờ
+- Lỗi do 3D13: dùng `innerWidth` cho mọi thiết bị; trình duyệt di động nới `innerWidth` theo nội dung tràn ngang → bố cục tưởng màn hình rộng (hiện cột nút hai bên, bàn cờ to, lệch trái). Giờ chỉ máy có chuột (`pointer: fine`) dùng `innerWidth/innerHeight`; máy cảm ứng dùng `visualViewport × scale` (không đổi khi phóng to bằng hai ngón), giới hạn bởi `clientWidth`.
+- `html, body { overflow-x: clip }` để nội dung tràn ngang không nới rộng trang trên di động.

@@ -21,6 +21,8 @@ body {
   @apply bg-giay text-gray-900 antialiased dark:bg-giay-dark dark:text-gray-100;
   font-family: 'Be Vietnam Pro', system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
+  /* Không để nội dung tràn ngang làm trình duyệt di động nới rộng trang (bàn cờ lệch, bị cắt) */
+  overflow-x: clip;
 }
 
 /* Hoạ tiết hoa sen nhẹ ở góc */
