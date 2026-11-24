@@ -18,7 +18,17 @@ import {
   type TokenId,
 } from '@cotyphu/shared';
 import { useStore } from '../store';
-import { BOARD_UNITS, boardXZ, cx, fmtClock, playerColor, sideOf, useGame, useNow } from '../lib';
+import {
+  BOARD_UNITS,
+  boardXZ,
+  cx,
+  fmtClock,
+  playerColor,
+  sideOf,
+  tileIconUrl,
+  useGame,
+  useNow,
+} from '../lib';
 import { S } from '../strings.vi';
 import { useMoneyFx, useRollInfo, RollBubble, EventTicker } from './BoardFx';
 import { ActionBar } from './ActionBar';
@@ -88,6 +98,8 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxW: number): string
 interface TileLook {
   name: string;
   icon: string;
+  /** Ảnh biểu trưng SVG của ô (null: dùng emoji / logo công ty) */
+  iconUrl: string | null;
   band: string | null;
   bottom: string;
   owner: string | null;
@@ -141,6 +153,7 @@ function tileLook(
   return {
     name,
     icon,
+    iconUrl: tileIconUrl(game, i),
     band,
     bottom,
     owner: st?.owner ? playerColor(room, st.owner) : null,
@@ -150,6 +163,38 @@ function tileLook(
     casino: !!ck,
     corner: sideOf(i) === 'corner',
   };
+}
+
+// Ảnh biểu trưng ô: tải một lần, vẽ lên canvas mặt ô khi đã sẵn sàng
+const TILE_IMG = new Map<string, HTMLImageElement>();
+const imgListeners = new Set<() => void>();
+let imgVersion = 0;
+function tileImage(url: string): HTMLImageElement | null {
+  let img = TILE_IMG.get(url);
+  if (!img) {
+    img = new Image();
+    img.decoding = 'async';
+    img.onload = () => {
+      imgVersion++;
+      imgListeners.forEach((f) => f());
+    };
+    img.src = url;
+    TILE_IMG.set(url, img);
+  }
+  return img.complete && img.naturalWidth > 0 ? img : null;
+}
+/** Tăng mỗi khi có thêm ảnh biểu trưng tải xong, để vẽ lại mặt ô */
+function useTileImageVersion(): number {
+  const [v, setV] = useState(imgVersion);
+  useEffect(() => {
+    const f = () => setV(imgVersion);
+    imgListeners.add(f);
+    f();
+    return () => {
+      imgListeners.delete(f);
+    };
+  }, []);
+  return v;
 }
 
 function drawTile(look: TileLook, w: number, d: number): THREE.CanvasTexture {
@@ -168,8 +213,15 @@ function drawTile(look: TileLook, w: number, d: number): THREE.CanvasTexture {
   const font = '"Be Vietnam Pro", system-ui, sans-serif';
   g.textAlign = 'center';
   g.textBaseline = 'middle';
-  g.font = `${Math.round(W * (look.corner ? 0.3 : 0.42))}px ${font}`;
-  g.fillText(look.icon, W / 2, H * (look.corner ? 0.38 : 0.42));
+  const img = look.iconUrl ? tileImage(look.iconUrl) : null;
+  if (img) {
+    const size = W * (look.corner ? 0.46 : 0.66);
+    const cy = H * (look.corner ? 0.36 : 0.41);
+    g.drawImage(img, (W - size) / 2, cy - size / 2, size, size);
+  } else {
+    g.font = `${Math.round(W * (look.corner ? 0.3 : 0.42))}px ${font}`;
+    g.fillText(look.icon, W / 2, H * (look.corner ? 0.38 : 0.42));
+  }
   g.fillStyle = look.casino ? '#F2A900' : '#1f2937';
   g.font = `800 ${Math.round(W * (look.corner ? 0.13 : 0.15))}px ${font}`;
   const lines = wrap(g, look.name, W * 0.9);
@@ -222,7 +274,9 @@ function Tile({ sq, fontsReady }: { sq: Square; fontsReady: boolean }) {
   const { room, game } = useGame();
   const open = useStore((s) => s.setOpenSquare);
   const look = tileLook(game, room, sq);
-  const key = JSON.stringify(look) + fontsReady;
+  const imgVer = useTileImageVersion();
+  if (look.iconUrl) tileImage(look.iconUrl);
+  const key = JSON.stringify(look) + fontsReady + imgVer;
   const [w, d] = tileSize(sq.index);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const tex = useMemo(() => drawTile(look, w, d), [key]);

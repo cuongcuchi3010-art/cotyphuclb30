@@ -364,3 +364,8 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 ## 3D15 — Sửa bố cục điện thoại (Chrome / Safari) bị lệch, cắt bàn cờ
 - Lỗi do 3D13: dùng `innerWidth` cho mọi thiết bị; trình duyệt di động nới `innerWidth` theo nội dung tràn ngang → bố cục tưởng màn hình rộng (hiện cột nút hai bên, bàn cờ to, lệch trái). Giờ chỉ máy có chuột (`pointer: fine`) dùng `innerWidth/innerHeight`; máy cảm ứng dùng `visualViewport × scale` (không đổi khi phóng to bằng hai ngón), giới hạn bởi `clientWidth`.
 - `html, body { overflow-x: clip }` để nội dung tràn ngang không nới rộng trang trên di động.
+
+## 3D16 — Bộ biểu trưng ô (SVG)
+- 33 icon SVG trong `client/public/tiles/`: 22 ô đất (`<số ô>.svg`), 2 ô thuế (`tax-4`, `tax-38`), ô đặc biệt (`go`, `chest`, `chance`, `jail`, `parking`, `goToJail`), ô thay thế (`festival`, `casino-cash`, `casino-land`). Vẽ phẳng cùng bảng màu; các ô theo logo (Hải Phòng, Khánh Hòa, Huế, Quận 1, ngành thuế) đều vẽ lại giản lược, không chép nguyên logo.
+- `tileIconUrl(game, pos)` (lib.ts) chọn ảnh theo luật ván (Sòng Bạc / Lễ Hội ở Freestyle hoặc tuỳ chọn). Ô công ty giữ logo thật (`BrandLogo`), trả null.
+- 2D: `<TileIcon>` dùng `<img>`, lỗi ảnh thì về emoji. 3D: ảnh tải một lần (cache), vẽ lên canvas mặt ô; tải xong thì tăng `imgVersion` để vẽ lại texture. Danh sách tài sản / thẻ vẫn dùng emoji nhỏ trong chữ.

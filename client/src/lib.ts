@@ -205,6 +205,33 @@ export function squareName(game: GameState | null | undefined, pos: number, shor
   return short ? (sq.short ?? sq.name) : sq.name;
 }
 
+/**
+ * Hình biểu trưng của ô (SVG trong /tiles), dùng chung cho bàn 2D và mặt ô 3D.
+ * Ô công ty (METUB, EVN…) giữ logo thật nên trả null.
+ */
+export function tileIconUrl(game: GameState | null | undefined, pos: number): string | null {
+  const ck = game ? casinoKindAt(game, pos) : null;
+  if (ck) return `/tiles/casino-${ck}.svg`;
+  if (pos === 20 && (game?.rules.mode === 'freestyle' || !!game?.rules.festivalSquare))
+    return '/tiles/festival.svg';
+  const sq = square(pos);
+  switch (sq.kind) {
+    case 'street':
+      return `/tiles/${pos}.svg`;
+    case 'tax':
+      return `/tiles/tax-${pos}.svg`;
+    case 'go':
+    case 'chest':
+    case 'chance':
+    case 'jail':
+    case 'parking':
+    case 'goToJail':
+      return `/tiles/${sq.kind}.svg`;
+    default:
+      return null;
+  }
+}
+
 /** Chữ trên thẻ theo luật ván: tiền Khởi Hành, hệ số tiền Freestyle, thẻ tiện ích → Sòng Bạc */
 export function cardText(game: GameState | null | undefined, card: Card): string {
   if (!game) return card.text;

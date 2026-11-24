@@ -21,7 +21,17 @@ import {
 } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
-import { cardText, cellOf, centerPct, cx, playerColor, sideOf, useGame, photoOf } from '../lib';
+import {
+  cardText,
+  cellOf,
+  centerPct,
+  cx,
+  playerColor,
+  sideOf,
+  useGame,
+  photoOf,
+  tileIconUrl,
+} from '../lib';
 import { BrandLogo } from './BrandLogo';
 import { Avatar } from './Avatar';
 import { CenterInfo } from './CenterInfo';
@@ -301,6 +311,24 @@ const PAD: Record<string, string> = {
   corner: 'flex-col',
 };
 
+/** Hình biểu trưng của ô; ảnh lỗi thì hiện emoji dự phòng */
+function TileIcon({ pos, size, fallback }: { pos: number; size: string; fallback?: string }) {
+  const { game } = useGame();
+  const url = tileIconUrl(game, pos);
+  const [broken, setBroken] = useState(false);
+  if (!url || broken) return <>{fallback}</>;
+  return (
+    <img
+      src={url}
+      alt=""
+      draggable={false}
+      onError={() => setBroken(true)}
+      className="block select-none"
+      style={{ width: size, height: size }}
+    />
+  );
+}
+
 function SquareCell({ sq }: { sq: Sq }) {
   const { room, game } = useGame();
   const open = useStore((s) => s.setOpenSquare);
@@ -329,7 +357,7 @@ function SquareCell({ sq }: { sq: Sq }) {
         title={sq.name}
       >
         <span className="upright leading-none drop-shadow-sm" style={{ fontSize: '5.4cqw' }}>
-          {fest ? '🎉' : SPECIAL_ICON[sq.kind]}
+          <TileIcon pos={sq.index} size="6.2cqw" fallback={fest ? '🎉' : SPECIAL_ICON[sq.kind]} />
         </span>
         <span
           className="upright font-extrabold uppercase leading-tight"
@@ -373,7 +401,7 @@ function SquareCell({ sq }: { sq: Sq }) {
         title={CASINO_NAMES[casino]}
       >
         <span className="upright leading-none" style={{ fontSize: '3.5cqw' }}>
-          🎰
+          <TileIcon pos={sq.index} size="4.4cqw" fallback="🎰" />
         </span>
         <span
           className={cx(
@@ -421,12 +449,14 @@ function SquareCell({ sq }: { sq: Sq }) {
         )}
         style={{ fontSize: '3.5cqw' }}
       >
-        {sq.kind === 'street' ? (
-          sq.icon
-        ) : isBrand ? (
+        {isBrand ? (
           <BrandLogo id={sq.logo} name={sq.name} color={sq.brandColor} size="3.4cqw" />
         ) : (
-          SPECIAL_ICON[sq.kind]
+          <TileIcon
+            pos={sq.index}
+            size="4.4cqw"
+            fallback={sq.kind === 'street' ? sq.icon : SPECIAL_ICON[sq.kind]}
+          />
         )}
       </span>
       {/* Tên ô */}
