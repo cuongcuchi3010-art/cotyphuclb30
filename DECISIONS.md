@@ -375,3 +375,4 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 - Tên ô trên mặt ô 3D: chữ 900, to 0.2 chiều ngang ô (tự thu nhỏ cho vừa 2 dòng), dải giá to hơn; ảnh biểu trưng nhỏ lại chừa chỗ.
 - Hàng ô phía xa (và góc Cà Phê / Lễ Hội) xoay chữ + hình 180° để đọc xuôi từ góc nhìn mặc định; dải màu nhóm và dải giá giữ nguyên vị trí (nhà vẫn xây trên dải màu).
 - Độ nét texture cao từ màn ≥2000 điểm ảnh thật (máy gập, 2K), ngân sách điểm ảnh 5M / 6,5M.
+- 3D: ô công ty vẽ logo thật từ `client/public/logos/<id>.png` (METUB, MMusic, Melive, MonoX), bo góc 18% như bàn 2D; EVN / Viettel chưa có file ảnh thì vẽ huy hiệu chữ trên màu thương hiệu (thay emoji 📺 / ⚡).

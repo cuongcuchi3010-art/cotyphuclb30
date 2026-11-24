@@ -100,6 +100,8 @@ interface TileLook {
   icon: string;
   /** Ảnh biểu trưng SVG của ô (null: dùng emoji / logo công ty) */
   iconUrl: string | null;
+  /** Ô công ty: logo thật (bo góc) hoặc huy hiệu chữ trên màu thương hiệu */
+  brand: { logo: string | null; text: string; color: string } | null;
   band: string | null;
   bottom: string;
   owner: string | null;
@@ -156,6 +158,17 @@ function tileLook(
     name,
     icon,
     iconUrl: tileIconUrl(game, i),
+    brand:
+      !ck && (sq.kind === 'transport' || sq.kind === 'utility')
+        ? {
+            logo: sq.logo && BRAND_PNG.has(sq.logo) ? `/logos/${sq.logo}.png` : null,
+            text: (sq.short ?? sq.name)
+              .replace(/[–-].*$/, '')
+              .trim()
+              .toUpperCase(),
+            color: sq.brandColor,
+          }
+        : null,
     band,
     bottom,
     owner: st?.owner ? playerColor(room, st.owner) : null,
@@ -167,6 +180,9 @@ function tileLook(
     flip: sideOf(i) === 'top' || i === 20,
   };
 }
+
+/** Logo công ty có file ảnh trong client/public/logos (giống bàn 2D) */
+const BRAND_PNG = new Set(['metub', 'mmusic', 'melive', 'monox']);
 
 // Ảnh biểu trưng ô: tải một lần, vẽ lên canvas mặt ô khi đã sẵn sàng
 const TILE_IMG = new Map<string, HTMLImageElement>();
@@ -222,7 +238,26 @@ function drawTile(look: TileLook, w: number, d: number): THREE.CanvasTexture {
     g.rotate(Math.PI);
   }
   const img = look.iconUrl ? tileImage(look.iconUrl) : null;
-  if (img) {
+  const logo = look.brand?.logo ? tileImage(look.brand.logo) : null;
+  if (look.brand) {
+    // Logo công ty: ảnh thật bo góc như bàn 2D; chưa có ảnh thì huy hiệu chữ
+    const size = W * 0.6;
+    const x = (W - size) / 2;
+    const y = H * 0.4 - size / 2;
+    g.save();
+    g.beginPath();
+    g.roundRect(x, y, size, size, size * 0.18);
+    g.clip();
+    if (logo) g.drawImage(logo, x, y, size, size);
+    else {
+      g.fillStyle = look.brand.color;
+      g.fillRect(x, y, size, size);
+      g.fillStyle = '#fff';
+      g.font = `900 ${Math.round(size * Math.min(0.36, 1.05 / Math.max(look.brand.text.length, 1)))}px ${font}`;
+      g.fillText(look.brand.text, W / 2, H * 0.4);
+    }
+    g.restore();
+  } else if (img) {
     const size = W * (look.corner ? 0.44 : 0.6);
     const cy = H * (look.corner ? 0.34 : 0.4);
     g.drawImage(img, (W - size) / 2, cy - size / 2, size, size);
@@ -297,6 +332,7 @@ function Tile({ sq, fontsReady }: { sq: Square; fontsReady: boolean }) {
   const look = tileLook(game, room, sq);
   const imgVer = useTileImageVersion();
   if (look.iconUrl) tileImage(look.iconUrl);
+  if (look.brand?.logo) tileImage(look.brand.logo);
   const key = JSON.stringify(look) + fontsReady + imgVer;
   const [w, d] = tileSize(sq.index);
   // eslint-disable-next-line react-hooks/exhaustive-deps
