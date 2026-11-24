@@ -369,3 +369,9 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 - 33 icon SVG trong `client/public/tiles/`: 22 ô đất (`<số ô>.svg`), 2 ô thuế (`tax-4`, `tax-38`), ô đặc biệt (`go`, `chest`, `chance`, `jail`, `parking`, `goToJail`), ô thay thế (`festival`, `casino-cash`, `casino-land`). Vẽ phẳng cùng bảng màu; các ô theo logo (Hải Phòng, Khánh Hòa, Huế, Quận 1, ngành thuế) đều vẽ lại giản lược, không chép nguyên logo.
 - `tileIconUrl(game, pos)` (lib.ts) chọn ảnh theo luật ván (Sòng Bạc / Lễ Hội ở Freestyle hoặc tuỳ chọn). Ô công ty giữ logo thật (`BrandLogo`), trả null.
 - 2D: `<TileIcon>` dùng `<img>`, lỗi ảnh thì về emoji. 3D: ảnh tải một lần (cache), vẽ lên canvas mặt ô; tải xong thì tăng `imgVersion` để vẽ lại texture. Danh sách tài sản / thẻ vẫn dùng emoji nhỏ trong chữ.
+
+## 3D17 — Chữ ô ở xa dễ đọc hơn
+- Camera mặc định cao hơn (0, 17.5, 10.5): nhìn gần thẳng xuống, ô hàng xa ít bị bẹp.
+- Tên ô trên mặt ô 3D: chữ 900, to 0.2 chiều ngang ô (tự thu nhỏ cho vừa 2 dòng), dải giá to hơn; ảnh biểu trưng nhỏ lại chừa chỗ.
+- Hàng ô phía xa (và góc Cà Phê / Lễ Hội) xoay chữ + hình 180° để đọc xuôi từ góc nhìn mặc định; dải màu nhóm và dải giá giữ nguyên vị trí (nhà vẫn xây trên dải màu).
+- Độ nét texture cao từ màn ≥2000 điểm ảnh thật (máy gập, 2K), ngân sách điểm ảnh 5M / 6,5M.

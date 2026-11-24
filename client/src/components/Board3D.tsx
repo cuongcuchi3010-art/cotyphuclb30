@@ -75,10 +75,10 @@ const SCREEN_PX =
   typeof window === 'undefined'
     ? 1920
     : Math.max(window.screen.width, window.screen.height) * (window.devicePixelRatio || 1);
-const HI_RES = SCREEN_PX >= 2500;
+const HI_RES = SCREEN_PX >= 2000;
 const PX = HI_RES ? 320 : 256; // px trên 1 đơn vị (Full HD cũng vẽ nét)
 /** Giới hạn số điểm ảnh vẽ mỗi khung hình (giữ 2K / 4K vẫn mượt) */
-const PIXEL_BUDGET = HI_RES ? 6_000_000 : 4_500_000;
+const PIXEL_BUDGET = HI_RES ? 6_500_000 : 5_000_000;
 
 function wrap(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
   const words = text.split(' ');
@@ -108,6 +108,8 @@ interface TileLook {
   fest: number;
   casino: boolean;
   corner: boolean;
+  /** Hàng ô phía xa: xoay chữ + hình 180° để đọc xuôi từ góc nhìn mặc định */
+  flip: boolean;
 }
 
 function tileLook(
@@ -162,6 +164,7 @@ function tileLook(
     fest: game && isFestival(game, i) ? festivalMult(game, i) : 0,
     casino: !!ck,
     corner: sideOf(i) === 'corner',
+    flip: sideOf(i) === 'top' || i === 20,
   };
 }
 
@@ -213,25 +216,43 @@ function drawTile(look: TileLook, w: number, d: number): THREE.CanvasTexture {
   const font = '"Be Vietnam Pro", system-ui, sans-serif';
   g.textAlign = 'center';
   g.textBaseline = 'middle';
+  if (look.flip) {
+    g.save();
+    g.translate(W, H);
+    g.rotate(Math.PI);
+  }
   const img = look.iconUrl ? tileImage(look.iconUrl) : null;
   if (img) {
-    const size = W * (look.corner ? 0.46 : 0.66);
-    const cy = H * (look.corner ? 0.36 : 0.41);
+    const size = W * (look.corner ? 0.44 : 0.6);
+    const cy = H * (look.corner ? 0.34 : 0.4);
     g.drawImage(img, (W - size) / 2, cy - size / 2, size, size);
   } else {
     g.font = `${Math.round(W * (look.corner ? 0.3 : 0.42))}px ${font}`;
     g.fillText(look.icon, W / 2, H * (look.corner ? 0.38 : 0.42));
   }
-  g.fillStyle = look.casino ? '#F2A900' : '#1f2937';
-  g.font = `800 ${Math.round(W * (look.corner ? 0.13 : 0.15))}px ${font}`;
-  const lines = wrap(g, look.name, W * 0.9);
-  lines.forEach((l, k) => g.fillText(l, W / 2, H * (look.corner ? 0.66 : 0.66) + k * W * 0.17));
+  // Tên ô to, đậm để ô ở xa (nhìn xiên) vẫn đọc được; quá dài thì thu nhỏ dần cho vừa 2 dòng
+  g.fillStyle = look.casino ? '#F2A900' : '#111827';
+  let fs = W * (look.corner ? 0.16 : 0.2);
+  let lines: string[] = [];
+  for (; fs > W * 0.12; fs *= 0.92) {
+    g.font = `900 ${Math.round(fs)}px ${font}`;
+    lines = wrap(g, look.name, W * 0.94);
+    const longest = Math.max(...lines.map((l) => g.measureText(l).width));
+    if (longest <= W * 0.94 && lines.join(' ') === look.name) break;
+  }
+  const y0 = H * (look.corner ? 0.64 : lines.length > 1 ? 0.66 : 0.71);
+  lines.forEach((l, k) => g.fillText(l, W / 2, y0 + k * fs * 1.08));
+  if (look.flip) g.restore();
   if (look.bottom) {
     g.fillStyle = look.owner ? look.owner : '#374151';
-    g.fillRect(0, H * 0.86, W, H * 0.14);
+    g.fillRect(0, H * 0.85, W, H * 0.15);
     g.fillStyle = '#fff';
-    g.font = `800 ${Math.round(W * 0.12)}px ${font}`;
-    g.fillText(look.bottom, W / 2, H * 0.93);
+    g.font = `900 ${Math.round(W * (look.corner ? 0.12 : 0.155))}px ${font}`;
+    g.save();
+    g.translate(W / 2, H * 0.927);
+    if (look.flip) g.rotate(Math.PI);
+    g.fillText(look.bottom, 0, 0);
+    g.restore();
   }
   if (look.owner) {
     g.strokeStyle = look.owner;
@@ -1160,7 +1181,7 @@ export default function Board3D({ fill }: { fill?: boolean }) {
         <Canvas
           shadows={!lite}
           dpr={dpr}
-          camera={{ position: [0, 15.5, 13.5], fov: fill ? 38 : 42 }}
+          camera={{ position: [0, 17.5, 10.5], fov: fill ? 38 : 42 }}
           gl={{ antialias: !lite, powerPreference: 'high-performance' }}
         >
           <Scene lite={lite} />
