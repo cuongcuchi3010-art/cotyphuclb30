@@ -16,6 +16,7 @@ import { TabBar, TabContent } from './Tabs';
 import { RulesButton } from './RulesGuide';
 import { Btn } from './ui';
 import { LegalNotice } from './LegalNotice';
+import { ErrorBoundary } from './ErrorBoundary';
 
 const RAIL = 84;
 const TOPBAR = 48;
@@ -56,8 +57,12 @@ export function GameScreen() {
 
   const overlays = (
     <>
-      <Prompts />
-      <PayNotices />
+      <ErrorBoundary quiet name="prompts">
+        <Prompts />
+      </ErrorBoundary>
+      <ErrorBoundary quiet name="notices">
+        <PayNotices />
+      </ErrorBoundary>
       <PropertyCardModal />
       {game.phase.kind === 'gameOver' && <GameOver />}
       {me === null && <div className="sr-only">{S.game.spectating}</div>}

@@ -393,3 +393,4 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 - Vay ngân hàng Freestyle: 500 tr × 5 × hệ số tiền phạt (không theo tiền thuê nữa).
 - Vay ngân hàng Freestyle (sửa): 1 tỷ × hệ số tiền phạt (×2 → 2 tỷ, ×5 → 5 tỷ).
 - Đấu Trí Toán (sửa): 4 đáp án để chọn (1 đúng, 3 nhiễu lệch 1/2/10/9/11 hoặc một thừa số với phép nhân, xáo vị trí); chọn ngoài 4 đáp án bị từ chối; mỗi người chọn 1 lần.
+- Client: ErrorBoundary toàn app (hiện lỗi + nút Tải lại thay vì trắng màn hình; lỗi tải tệp JS cũ sau deploy thì tự tải lại 1 lần) và bao riêng các bảng hỏi / thông báo (lỗi thì tạm ẩn, thử vẽ lại sau 1,5 giây).
