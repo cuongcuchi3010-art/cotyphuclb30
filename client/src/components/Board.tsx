@@ -412,9 +412,11 @@ function SquareCell({ sq }: { sq: Sq }) {
           <span className="font-black uppercase" style={{ fontSize: '1.15cqw' }}>
             {casino === 'quiz' ? 'Đấu Trí' : 'Sòng Bạc'}
           </span>
-          <span className="font-bold text-white" style={{ fontSize: '1.1cqw' }}>
-            {casino === 'quiz' ? '🧠 Hỏi đáp' : casino === 'cash' ? '💰 Tiền' : '🏠 Đất'}
-          </span>
+          {casino !== 'quiz' && (
+            <span className="font-bold text-white" style={{ fontSize: '1.1cqw' }}>
+              {casino === 'cash' ? '💰 Tiền' : '🏠 Đất'}
+            </span>
+          )}
         </span>
       </div>
     );
