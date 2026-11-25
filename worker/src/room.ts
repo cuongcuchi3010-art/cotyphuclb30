@@ -25,11 +25,11 @@ import {
   type TokenId,
 } from '@cotyphu/shared';
 
-export const OFFLINE_GRACE_MS = 3 * 60_000;
-/** Người mất kết nối (F5, chuyển app…) tới lượt: chờ đủ lâu để kịp vào lại rồi mới đi thay */
-export const OFFLINE_AUTOPLAY_MS = 20_000;
-/** Các pha có thể làm mất tài sản (gom tiền, chọn ô từ thẻ, ân huệ): không đi thay sớm, chờ hết giờ của pha */
-const NO_EARLY_AUTOPLAY = new Set(['raiseFunds', 'cardChoice', 'mercy', 'casino']);
+/**
+ * Mất kết nối (F5, chuyển app, rớt mạng…) quá thời gian này thì bot chơi thay; người chơi
+ * vào lại lúc nào cũng được, lấy lại ghế ngay. Không bao giờ phá sản vì vắng mặt.
+ */
+export const OFFLINE_GRACE_MS = 20_000;
 export const BOT_DELAY_MS = 1_200;
 export const AUCTION_MS = 10_000;
 export const DRAW_MS = 30_000;
@@ -549,28 +549,19 @@ export class RoomCore {
     const g = snap.game!;
     snap.autoAt = null;
     const needsAuto = this.autoPlan(g) !== null;
-    if (needsAuto) snap.autoAt = now + (this.hasBotPlan(g) ? BOT_DELAY_MS : OFFLINE_AUTOPLAY_MS);
+    if (needsAuto) snap.autoAt = now + BOT_DELAY_MS;
   }
 
-  private hasBotPlan(g: GameState): boolean {
-    return this.snap.seats.some((s) => s.isBot && botDecision(g, s.id) !== null);
-  }
-
-  /** Kế hoạch tự động hiện tại (bot trước, rồi người offline) */
+  /**
+   * Kế hoạch tự động hiện tại: chỉ bot (kể cả bot chơi thay người mất kết nối).
+   * Người vừa mất kết nối chưa quá 20 giây thì không ai đi thay; hết giờ của pha vẫn áp dụng.
+   */
   private autoPlan(g: GameState): { by: Actor; action: Action } | null {
     if (g.phase.kind === 'gameOver') return null;
     for (const s of this.snap.seats) {
       if (!s.isBot) continue;
       const plan = botDecision(g, s.id);
       if (plan) return plan;
-    }
-    if (g.phase.kind === 'auction') return null; // người offline không trả giá; chờ hết giờ
-    const actor = actingPlayer(g);
-    if (!actor) return null;
-    const seat = this.seat(actor);
-    if (seat && !seat.isBot && !this.isOnline(actor)) {
-      if (NO_EARLY_AUTOPLAY.has(g.phase.kind)) return null;
-      return timeoutAction(g);
     }
     return null;
   }
@@ -609,20 +600,20 @@ export class RoomCore {
         this.apply('system', { type: 'timeUp' });
         return;
       }
-      // Mất kết nối quá 3 phút → chờ host quyết định
+      // Mất kết nối quá 20 giây → bot chơi thay cho tới khi người chơi vào lại
       let changed = false;
       for (const s of snap.seats) {
         const p = snap.game.players.find((x) => x.id === s.id);
         if (
           s.offlineSince &&
           !s.isBot &&
-          !s.awaitingHostDecision &&
           p &&
           !p.bankrupt &&
           now >= s.offlineSince + OFFLINE_GRACE_MS
         ) {
-          s.awaitingHostDecision = true;
-          this.addLog(`${s.name} mất kết nối quá 3 phút — chờ chủ phòng quyết định`);
+          s.isBot = true;
+          s.awaitingHostDecision = false;
+          this.addLog(`${s.name} mất kết nối — bot chơi thay, vào lại lúc nào cũng được`);
           changed = true;
         }
       }

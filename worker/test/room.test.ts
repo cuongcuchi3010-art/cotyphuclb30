@@ -242,7 +242,8 @@ describe('Phòng chơi', () => {
     expect(watcher.room.players.find((p) => p.id === playerId)!.online).toBe(false);
     env.advance(4_000); // F5 vài giây: chưa đi thay
     expect(watcher.room.game!.lastDice).toBeNull();
-    env.advance(17_000); // quá 20 giây mới tự tung
+    env.advance(18_000); // quá 20 giây: bot chơi thay
+    expect(watcher.room.players.find((p) => p.id === playerId)!.isBot).toBe(true);
     expect(watcher.room.game!.lastDice).not.toBeNull();
     env.advance(20_000);
     // Vào lại
@@ -256,7 +257,7 @@ describe('Phòng chơi', () => {
     expect(other.playerId).toBeNull();
   });
 
-  it('mất kết nối khi đang gom tiền: không tự bán nhà / phá sản sớm', () => {
+  it('mất kết nối khi đang gom tiền: bot trả nợ thay, không phá sản', () => {
     const { env, a, b, c } = setup3();
     a.msg({ type: 'start' });
     drawAll(env);
@@ -265,25 +266,29 @@ describe('Phòng chơi', () => {
     // Đưa người đang tới lượt vào pha gom tiền với một khoản nợ lớn
     const st = env.core.snap.game!;
     st.phase = { kind: 'raiseFunds', debtor: cur.playerId! } as never;
-    st.debts = [{ from: cur.playerId!, to: 'bank', amount: 99_999, reason: 'tax' }] as never;
+    st.debts = [{ from: cur.playerId!, to: 'bank', amount: 100, reason: 'tax' }] as never;
     cur.close();
     env.advance(60_000);
     const p = env.core.snap.game!.players.find((x) => x.id === cur.playerId)!;
     expect(p.bankrupt).toBe(false);
   });
 
-  it('mất kết nối quá 3 phút: host chọn thay bằng bot hoặc cho phá sản', () => {
-    const { env, a, b, c } = setup3();
+  it('mất kết nối lâu: bot chơi thay, không phá sản; vào lại thì lấy lại ghế', () => {
+    const { env, a, c } = setup3();
     a.msg({ type: 'start' });
     drawAll(env);
+    const pid = c.playerId!;
+    const accName = c.account!.name;
     c.close();
-    env.advance(OFFLINE_GRACE_MS + 5_000);
-    const seat = a.room.players.find((p) => p.id === c.playerId)!;
-    expect(seat.awaitingHostDecision).toBe(true);
-    b.msg({ type: 'disconnectChoice', playerId: c.playerId!, choice: 'bot' });
-    expect(b.lastError).toMatch('chủ phòng');
-    a.msg({ type: 'disconnectChoice', playerId: c.playerId!, choice: 'bankrupt' });
-    expect(a.room.game!.players.find((p) => p.id === c.playerId)!.bankrupt).toBe(true);
+    env.advance(OFFLINE_GRACE_MS + 5 * 60_000);
+    const seat = a.room.players.find((p) => p.id === pid)!;
+    expect(seat.isBot).toBe(true);
+    expect(seat.awaitingHostDecision).toBe(false);
+    expect(a.room.game!.players.find((p) => p.id === pid)!.bankrupt).toBe(false);
+    const again = env.connect(accName);
+    again.msg({ type: 'resume' });
+    expect(again.playerId).toBe(pid);
+    expect(a.room.players.find((p) => p.id === pid)!.isBot).toBe(false);
   });
 
   it('bot thay người chơi tự đi', () => {

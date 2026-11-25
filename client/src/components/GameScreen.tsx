@@ -73,7 +73,8 @@ export function GameScreen() {
     // màn Full HD phóng chữ trong bảng thêm ~15% (2K/4K đã phóng theo cỡ chữ gốc)
     const panel = Math.round(Math.min(620 * ui, Math.max(340, w * 0.3)));
     const zoom = ui === 1 && w >= 1500 ? 1.15 : ui === 1 && w >= 1200 ? 1.08 : 1;
-    const twoCols = game.players.length > 3 && panel / zoom >= 420;
+    // Nhiều người chơi: khung danh sách cao hơn để xếp 1 cột từ trên xuống, đủ thông tin
+    const many = game.players.length > 3;
     return (
       <div className="flex gap-3 overflow-hidden p-2" style={{ height: '100dvh' }}>
         <div className="min-w-0 flex-1">
@@ -84,9 +85,9 @@ export function GameScreen() {
           style={{ width: panel / zoom, height: `${100 / zoom}%`, zoom }}
         >
           <TopBar />
-          {/* Bảng rộng (Full HD / 2K / 4K) và nhiều người chơi: xếp 2 cột để thấy hết không phải cuộn */}
-          <div className="shrink-0 overflow-y-auto" style={{ maxHeight: twoCols ? '46%' : '38%' }}>
-            <PlayerList compact={twoCols || h < 800} cols={twoCols ? 2 : 1} />
+          {/* 1 cột từ trên xuống, đủ tiền mặt / tài sản / số ô; nhiều người thì khung cao hơn */}
+          <div className="shrink-0 overflow-y-auto" style={{ maxHeight: many ? '58%' : '40%' }}>
+            <PlayerList compact={h < 800} cols={1} />
           </div>
           <div className="flex min-h-0 flex-1 flex-col rounded-2xl bg-white/90 p-2 shadow-card dark:bg-[#211d16]">
             <TabBar />
