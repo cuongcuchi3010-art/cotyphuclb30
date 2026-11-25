@@ -23,6 +23,7 @@ import {
   type Rules,
   type ServerMessage,
   type TokenId,
+  PROTOCOL_VERSION,
 } from '@cotyphu/shared';
 import { hideQuizAnswer, pickQuizQuestion } from './quiz.js';
 
@@ -682,6 +683,7 @@ export class RoomCore {
   view(): RoomView {
     const snap = this.snap;
     return {
+      v: PROTOCOL_VERSION,
       code: snap.code,
       hostId: snap.hostId,
       status: snap.status,

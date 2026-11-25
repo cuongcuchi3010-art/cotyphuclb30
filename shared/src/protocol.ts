@@ -208,7 +208,15 @@ export interface LogEntry {
   text: string;
 }
 
+/**
+ * Phiên bản giao thức client ↔ máy chủ. TĂNG số này mỗi khi đổi dữ liệu / hành động mà bản cũ không hiểu
+ * (vd: đổi kiểu câu hỏi Đấu Trí). Client thấy lệch thì tự tải lại hoặc báo máy chủ đang cập nhật.
+ */
+export const PROTOCOL_VERSION = 2;
+
 export interface RoomView {
+  /** Phiên bản giao thức của máy chủ (thiếu = bản cũ trước khi có kiểm tra phiên bản) */
+  v?: number;
   code: string;
   hostId: PlayerId | null;
   status: 'lobby' | 'playing' | 'ended';

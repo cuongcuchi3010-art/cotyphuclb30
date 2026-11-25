@@ -25,6 +25,7 @@ import {
   fmtClock,
   playerColor,
   sideOf,
+  squareName,
   tileIconUrl,
   useGame,
   useNow,
@@ -772,7 +773,7 @@ function Fx() {
           <FloatLabel
             key={`t${info!.key}`}
             pos={target}
-            text={`📍 ${BOARD[target]!.short ?? BOARD[target]!.name}`}
+            text={`📍 ${squareName(game, target, true)}`}
             bg="#C8102E"
           />
           <TargetRing pos={target} />

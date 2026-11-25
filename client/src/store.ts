@@ -7,6 +7,7 @@ import type {
   RoomView,
   ServerMessage,
 } from '@cotyphu/shared';
+import { PROTOCOL_VERSION } from '@cotyphu/shared';
 import { playForEvents } from './sound';
 
 type ConnState = 'idle' | 'connecting' | 'open' | 'reconnecting' | 'closed';
@@ -110,6 +111,8 @@ interface Store {
   notices: PayNotice[];
   fatal: string | null;
   kicked: boolean;
+  /** Máy chủ đang chạy bản cũ hơn giao diện (đang deploy) */
+  serverOutdated: boolean;
   /** Chênh lệch đồng hồ server - client */
   clockOffset: number;
   /** Tab đang mở ở panel */
@@ -191,6 +194,7 @@ export const useStore = create<Store>((set, get) => ({
   notices: [],
   fatal: null,
   kicked: false,
+  serverOutdated: false,
   clockOffset: 0,
   tab: 'assets',
   sheetOpen: false,
@@ -302,6 +306,31 @@ function open(code: string) {
   };
 }
 
+/**
+ * Client và máy chủ phải cùng phiên bản giao thức (lệch khi vừa deploy).
+ * Máy chủ mới hơn → tải lại trang để lấy giao diện mới (1 lần mỗi phiên bản).
+ * Máy chủ cũ hơn (deploy chưa xong) → báo đang cập nhật, không cho thao tác sai.
+ */
+function checkVersion(server: number) {
+  if (server === PROTOCOL_VERSION) {
+    if (useStore.getState().serverOutdated) useStore.setState({ serverOutdated: false });
+    return;
+  }
+  if (server > PROTOCOL_VERSION) {
+    try {
+      const key = `cotyphu:reload-v${server}`;
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, '1');
+        location.reload();
+        return;
+      }
+    } catch {
+      /* bỏ qua */
+    }
+  }
+  if (!useStore.getState().serverOutdated) useStore.setState({ serverOutdated: true });
+}
+
 function handle(code: string, m: ServerMessage) {
   const st = useStore.getState();
   switch (m.type) {
@@ -316,6 +345,7 @@ function handle(code: string, m: ServerMessage) {
       useStore.setState({ me: m.playerId, spectator: m.spectator, resumeChecked: true });
       return;
     case 'room': {
+      checkVersion(m.room.v ?? 1);
       const events = m.events ?? [];
       useStore.setState({
         room: m.room,

@@ -23,6 +23,7 @@ export function RoomPage({ code }: { code: string }) {
   const spectator = useStore((s) => s.spectator);
   const conn = useStore((s) => s.conn);
   const kicked = useStore((s) => s.kicked);
+  const serverOutdated = useStore((s) => s.serverOutdated);
   const fatal = useStore((s) => s.fatal);
   const resumeChecked = useStore((s) => s.resumeChecked);
 
@@ -53,6 +54,14 @@ export function RoomPage({ code }: { code: string }) {
   return (
     <>
       {body}
+      {serverOutdated && (
+        <div className="fixed inset-x-2 top-2 z-[70] mx-auto max-w-md rounded-2xl bg-amber-500 px-4 py-2 text-center text-sm font-semibold text-white shadow">
+          {S.conn.serverOutdated}{' '}
+          <button type="button" className="underline" onClick={() => location.reload()}>
+            {S.conn.reload}
+          </button>
+        </div>
+      )}
       {(conn === 'reconnecting' || conn === 'connecting') && (me || spectator) && (
         <div className="fixed left-1/2 top-2 z-[70] -translate-x-1/2 rounded-full bg-gray-900 px-4 py-1.5 text-sm text-white shadow">
           {conn === 'connecting' ? S.conn.connecting : S.conn.reconnecting}

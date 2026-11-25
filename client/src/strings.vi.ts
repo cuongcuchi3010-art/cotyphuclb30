@@ -420,6 +420,8 @@ export const S = {
     connecting: 'Đang kết nối…',
     reconnecting: 'Mất kết nối, đang thử lại…',
     kicked: 'Bạn đã bị mời ra khỏi phòng.',
+    serverOutdated: 'Máy chủ đang cập nhật bản mới, chờ khoảng 1 phút rồi',
+    reload: 'tải lại trang',
   },
 
   sound: { on: 'Bật tiếng', off: 'Tắt tiếng' },
