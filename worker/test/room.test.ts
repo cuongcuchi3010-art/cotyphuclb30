@@ -240,7 +240,9 @@ describe('Phòng chơi', () => {
     const accName = cur.account!.name;
     cur.close();
     expect(watcher.room.players.find((p) => p.id === playerId)!.online).toBe(false);
-    env.advance(4_000); // tự tung sau 3 giây
+    env.advance(4_000); // F5 vài giây: chưa đi thay
+    expect(watcher.room.game!.lastDice).toBeNull();
+    env.advance(17_000); // quá 20 giây mới tự tung
     expect(watcher.room.game!.lastDice).not.toBeNull();
     env.advance(20_000);
     // Vào lại
@@ -252,6 +254,22 @@ describe('Phòng chơi', () => {
     const other = env.connect('Người lạ');
     other.msg({ type: 'resume' });
     expect(other.playerId).toBeNull();
+  });
+
+  it('mất kết nối khi đang gom tiền: không tự bán nhà / phá sản sớm', () => {
+    const { env, a, b, c } = setup3();
+    a.msg({ type: 'start' });
+    drawAll(env);
+    const g = a.room.game!;
+    const cur = [a, b, c].find((x) => x.playerId === g.players[g.current]!.id)!;
+    // Đưa người đang tới lượt vào pha gom tiền với một khoản nợ lớn
+    const st = env.core.snap.game!;
+    st.phase = { kind: 'raiseFunds', debtor: cur.playerId! } as never;
+    st.debts = [{ from: cur.playerId!, to: 'bank', amount: 99_999, reason: 'tax' }] as never;
+    cur.close();
+    env.advance(60_000);
+    const p = env.core.snap.game!.players.find((x) => x.id === cur.playerId)!;
+    expect(p.bankrupt).toBe(false);
   });
 
   it('mất kết nối quá 3 phút: host chọn thay bằng bot hoặc cho phá sản', () => {

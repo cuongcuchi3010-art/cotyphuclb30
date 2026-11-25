@@ -26,7 +26,10 @@ import {
 } from '@cotyphu/shared';
 
 export const OFFLINE_GRACE_MS = 3 * 60_000;
-export const OFFLINE_AUTOPLAY_MS = 3_000;
+/** Người mất kết nối (F5, chuyển app…) tới lượt: chờ đủ lâu để kịp vào lại rồi mới đi thay */
+export const OFFLINE_AUTOPLAY_MS = 20_000;
+/** Các pha có thể làm mất tài sản (gom tiền, chọn ô từ thẻ, ân huệ): không đi thay sớm, chờ hết giờ của pha */
+const NO_EARLY_AUTOPLAY = new Set(['raiseFunds', 'cardChoice', 'mercy', 'casino']);
 export const BOT_DELAY_MS = 1_200;
 export const AUCTION_MS = 10_000;
 export const DRAW_MS = 30_000;
@@ -566,6 +569,7 @@ export class RoomCore {
     if (!actor) return null;
     const seat = this.seat(actor);
     if (seat && !seat.isBot && !this.isOnline(actor)) {
+      if (NO_EARLY_AUTOPLAY.has(g.phase.kind)) return null;
       return timeoutAction(g);
     }
     return null;

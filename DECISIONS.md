@@ -379,3 +379,7 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 
 ## 3D18 — Danh sách người chơi 2 cột trên màn lớn
 - Bố cục 3D ngang: từ 4 người chơi trở lên và bảng bên rộng ≥420px (Full HD / 2K / 4K) thì danh sách người chơi xếp 2 cột dạng gọn, khung cao tối đa 46% (1 cột: 38%), để thấy hết không phải cuộn.
+
+## W9 — F5 không còn làm mất tài sản
+- Lỗi: người mất kết nối tới lượt bị máy đi thay sau 3 giây; F5 lúc đang gom tiền → `autoLiquidate` bán nhà, thế chấp, thiếu thì phá sản.
+- Sửa: chờ 20 giây (`OFFLINE_AUTOPLAY_MS`) mới đi thay; các pha có thể mất tài sản (gom tiền, chọn ô từ thẻ, ân huệ, sòng bạc) không đi thay sớm, chỉ xử lý khi hết giờ của pha (gom tiền 2 phút). Test: F5 4 giây chưa tự tung; mất kết nối 60 giây khi đang gom tiền không phá sản.
