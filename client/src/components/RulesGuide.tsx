@@ -57,8 +57,8 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
             </li>
             <li>Lễ hội nhân tiền thuê ngẫu nhiên ×2 đến ×5 (số nhỏ hay ra hơn).</li>
             <li>
-              Vay ngân hàng tối đa {formatMoney(500 * 5 * (rules?.feeMult ?? 2))} (500 tr × 5 × hệ
-              số tiền phạt).
+              Vay ngân hàng tối đa {formatMoney(1000 * (rules?.feeMult ?? 2))} (1 tỷ × hệ số tiền
+              phạt).
             </li>
             <li>
               <b>Sòng Bạc Tiền</b> (thay EVN): người dừng ô làm nhà cái; ai muốn thì đặt cược (không

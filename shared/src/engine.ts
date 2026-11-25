@@ -2503,9 +2503,9 @@ export function canBorrowFromBank(s: GameState, p: PlayerState): boolean {
   );
 }
 
-/** Hạn mức vay ngân hàng: 500 tr; Freestyle gấp 5 lần hệ số tiền phạt (×2 → 5 tỷ) */
+/** Hạn mức vay ngân hàng: 500 tr; Freestyle = 1 tỷ × hệ số tiền phạt (×2 → 2 tỷ) */
 export function bankLoanMax(s: GameState): number {
-  return isFreestyle(s) ? Math.round(BANK_LOAN_MAX * 5 * (s.rules.feeMult ?? 2)) : BANK_LOAN_MAX;
+  return isFreestyle(s) ? Math.round(1000 * (s.rules.feeMult ?? 2)) : BANK_LOAN_MAX;
 }
 
 function takeBankLoan(c: Ctx, p: PlayerState, amount: number): void {

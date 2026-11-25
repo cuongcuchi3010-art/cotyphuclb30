@@ -391,3 +391,4 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 - 5 giây chuẩn bị, rồi máy ra phép tính nhẩm (cộng / trừ số 2 chữ số, hoặc nhân 3–12 × 6–19). 20 giây, mỗi người trả lời 1 lần; thứ tự = thứ tự máy chủ nhận. Nhất 75% quỹ, nhì 25% (đủ 2 người đúng thì kết thúc ngay). Chỉ 1 người đúng → ăn cả quỹ; không ai đúng → hoàn tiền.
 - Phase `quiz`, `state.quiz`; `casinoKindAt(28) = 'quiz'` để ô vẫn được đánh dấu là ô đặc biệt (không mua được, tô màu như Sòng Bạc). Bot không vào chơi (tính nhẩm là trò giữa người với người). Mã Sòng Bạc Đất còn trong engine nhưng không còn ô nào dùng.
 - Vay ngân hàng Freestyle: 500 tr × 5 × hệ số tiền phạt (không theo tiền thuê nữa).
+- Vay ngân hàng Freestyle (sửa): 1 tỷ × hệ số tiền phạt (×2 → 2 tỷ, ×5 → 5 tỷ).

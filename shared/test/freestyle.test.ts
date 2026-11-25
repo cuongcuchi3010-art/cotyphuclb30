@@ -87,12 +87,12 @@ describe('Freestyle: tiền và xây nhà', () => {
     expect(s.buildPass).toBe(6);
   });
 
-  it('hạn mức vay ngân hàng gấp 5 lần hệ số tiền phạt (không theo tiền thuê)', () => {
+  it('hạn mức vay ngân hàng = 1 tỷ × hệ số tiền phạt (không theo tiền thuê)', () => {
     let s = mkGame(2, { ...FS, feeMult: 3, rentMult: 5 });
-    expect(bankLoanMax(s)).toBe(7500);
+    expect(bankLoanMax(s)).toBe(3000);
     const cash = pl(s, 'p1').cash;
-    ({ state: s } = act(s, 'p1', { type: 'bankLoan', amount: 7500 }));
-    expect(pl(s, 'p1').cash).toBe(cash + 7500);
+    ({ state: s } = act(s, 'p1', { type: 'bankLoan', amount: 3000 }));
+    expect(pl(s, 'p1').cash).toBe(cash + 3000);
     expect(() => act(s, 'p1', { type: 'bankLoan', amount: 10 })).toThrow('tối đa 0');
     expect(bankLoanMax(mkGame(2))).toBe(500);
   });
