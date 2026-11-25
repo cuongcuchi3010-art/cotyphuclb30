@@ -269,7 +269,7 @@ export const S = {
     send: 'Trả lời',
     waitOthers: 'Đã gửi đáp án, chờ kết quả…',
     watching: '👀 Đang xem mọi người tính nhẩm',
-    oneTry: 'mỗi người trả lời 1 lần',
+    oneTry: 'chọn 1 trong 4 đáp án, mỗi người 1 lần',
     rule: 'Nhanh nhất ăn 75% quỹ, nhì ăn 25%. Chỉ 1 người đúng ăn cả quỹ; không ai đúng thì hoàn tiền.',
     answerIs: 'Đáp án:',
     nobody: 'Không ai trả lời đúng — hoàn tiền vào cửa',

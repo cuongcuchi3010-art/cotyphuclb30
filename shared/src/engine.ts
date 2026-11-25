@@ -1529,15 +1529,32 @@ export function quizAnswerOf(q: { a: number; op: QuizOp; b: number }): number {
   return q.op === '+' ? q.a + q.b : q.op === '-' ? q.a - q.b : q.a * q.b;
 }
 
-/** Câu hỏi tính nhẩm: cộng / trừ số có 2 chữ số, hoặc nhân bảng cửu chương mở rộng */
-function makeQuestion(rng: Rng): { a: number; op: QuizOp; b: number } {
+/** Câu hỏi tính nhẩm: cộng / trừ số có 2 chữ số, hoặc nhân bảng cửu chương mở rộng; kèm 4 đáp án */
+function makeQuestion(rng: Rng): { a: number; op: QuizOp; b: number; options: number[] } {
   const k = rng.int(0, 2);
-  if (k === 0) return { a: rng.int(12, 99), op: '+', b: rng.int(12, 99) };
-  if (k === 1) {
+  let q: { a: number; op: QuizOp; b: number };
+  if (k === 0) q = { a: rng.int(12, 99), op: '+', b: rng.int(12, 99) };
+  else if (k === 1) {
     const a = rng.int(30, 99);
-    return { a, op: '-', b: rng.int(11, a - 5) };
+    q = { a, op: '-', b: rng.int(11, a - 5) };
+  } else q = { a: rng.int(3, 12), op: '×', b: rng.int(6, 19) };
+  return { ...q, options: quizOptions(quizAnswerOf(q), q, rng) };
+}
+
+/** 3 đáp án nhiễu sát đáp án đúng (lệch 1, 2, 10 hoặc một thừa số), xáo trộn vị trí */
+function quizOptions(ans: number, q: { a: number; op: QuizOp }, rng: Rng): number[] {
+  const near = [1, -1, 2, -2, 10, -10, ...(q.op === '×' ? [q.a, -q.a] : [9, -9, 11, -11])];
+  const picks: number[] = [];
+  while (picks.length < 3) {
+    const v = ans + near[rng.int(0, near.length - 1)]!;
+    if (v >= 0 && v !== ans && !picks.includes(v)) picks.push(v);
   }
-  return { a: rng.int(3, 12), op: '×', b: rng.int(6, 19) };
+  const all = [ans, ...picks];
+  for (let i = all.length - 1; i > 0; i--) {
+    const j = rng.int(0, i);
+    [all[i], all[j]] = [all[j]!, all[i]!];
+  }
+  return all;
 }
 
 function openQuiz(c: Ctx, p: PlayerState, pos: number): void {
@@ -1623,6 +1640,7 @@ function quizAnswer(c: Ctx, p: PlayerState, value: number): void {
   const q = requireQuiz(c.s, 'question');
   if (!q.joined.includes(p.id)) fail('Bạn không tham gia lượt này');
   if (q.answered.includes(p.id)) fail('Mỗi người chỉ được trả lời 1 lần');
+  if (!q.question!.options.includes(value)) fail('Hãy chọn một trong 4 đáp án');
   q.answered.push(p.id);
   const ok = value === quizAnswerOf(q.question!);
   if (ok) q.correct.push(p.id);

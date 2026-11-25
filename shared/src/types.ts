@@ -317,7 +317,8 @@ export interface Quiz {
   joined: PlayerId[];
   passed: PlayerId[];
   pot: number;
-  question: { a: number; op: QuizOp; b: number } | null;
+  /** Câu hỏi + 4 đáp án để chọn (1 đúng, 3 nhiễu) */
+  question: { a: number; op: QuizOp; b: number; options: number[] } | null;
   /** Người đã trả lời (mỗi người 1 lần) */
   answered: PlayerId[];
   /** Người trả lời đúng, theo thứ tự nhanh nhất */

@@ -342,9 +342,15 @@ describe('Đấu Trí Toán (ô 28 Freestyle)', () => {
     expect(pl(s, 'p1').cash).toBe(1200);
     // Hết 5 giây chuẩn bị: ra câu 20 + 30
     ({ state: s } = act(s, 'system', { type: 'quizTimeout' }, [0, 20, 30]));
-    expect(s.quiz!.question).toEqual({ a: 20, op: '+', b: 30 });
+    expect(s.quiz!.question).toMatchObject({ a: 20, op: '+', b: 30 });
+    const opts = s.quiz!.question!.options;
+    expect(opts).toHaveLength(4);
+    expect(new Set(opts).size).toBe(4);
+    expect(opts).toContain(50);
+    const wrong = opts.find((v) => v !== 50)!;
+    expect(() => act(s, 'p3', { type: 'quizAnswer', value: 9999 })).toThrow('4 đáp án');
     expect(() => act(s, 'p1', { type: 'quizJoin' })).toThrow();
-    ({ state: s } = act(s, 'p3', { type: 'quizAnswer', value: 51 })); // sai
+    ({ state: s } = act(s, 'p3', { type: 'quizAnswer', value: wrong })); // sai
     expect(() => act(s, 'p3', { type: 'quizAnswer', value: 50 })).toThrow('1 lần');
     ({ state: s } = act(s, 'p2', { type: 'quizAnswer', value: 50 }));
     const r = act(s, 'p1', { type: 'quizAnswer', value: 50 });
@@ -373,8 +379,9 @@ describe('Đấu Trí Toán (ô 28 Freestyle)', () => {
     ({ state: t } = act(t, 'p1', { type: 'quizJoin' }));
     ({ state: t } = act(t, 'p2', { type: 'quizJoin' }));
     ({ state: t } = act(t, 'system', { type: 'quizTimeout' }, [1, 50, 20]));
-    ({ state: t } = act(t, 'p1', { type: 'quizAnswer', value: 1 }));
-    ({ state: t } = act(t, 'p2', { type: 'quizAnswer', value: 2 }));
+    const bad = t.quiz!.question!.options.filter((v) => v !== 30);
+    ({ state: t } = act(t, 'p1', { type: 'quizAnswer', value: bad[0]! }));
+    ({ state: t } = act(t, 'p2', { type: 'quizAnswer', value: bad[1]! }));
     expect(pl(t, 'p1').cash).toBe(1500);
     expect(pl(t, 'p2').cash).toBe(1500);
   });

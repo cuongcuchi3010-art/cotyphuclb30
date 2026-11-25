@@ -107,8 +107,9 @@ function step(s: GameState, rng: Rng): GameState {
     const p = q.joined.find((id) => !q.answered.includes(id));
     if (!p) return applyAction(s, 'system', { type: 'quizTimeout' }, rng).state;
     const right = quizAnswerOf(q.question!);
-    return applyAction(s, p, { type: 'quizAnswer', value: rng.int(0, 1) ? right : right + 1 }, rng)
-      .state;
+    const opts = q.question!.options;
+    const pick = rng.int(0, 1) ? right : opts[rng.int(0, opts.length - 1)]!;
+    return applyAction(s, p, { type: 'quizAnswer', value: pick }, rng).state;
   }
   if (ph.kind === 'casino') {
     const k = s.casino!;

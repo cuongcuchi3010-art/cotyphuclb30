@@ -173,7 +173,7 @@ export type GameEvent =
   | { t: 'quizPass'; playerId: PlayerId }
   | { t: 'quizCancel' }
   | { t: 'quizReady'; players: PlayerId[]; pot: number }
-  | { t: 'quizQuestion'; a: number; op: QuizOp; b: number }
+  | { t: 'quizQuestion'; a: number; op: QuizOp; b: number; options: number[] }
   | { t: 'quizAnswer'; playerId: PlayerId; ok: boolean }
   | {
       t: 'quizResult';

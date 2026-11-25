@@ -327,6 +327,7 @@ describe('Phòng chơi', () => {
           ? q.question!.a - q.question!.b
           : q.question!.a * q.question!.b;
     const before = a.room.game!.players.find((p) => p.id === ids[1])!.cash;
+    expect(q.question!.options).toContain(right);
     b.msg({ type: 'action', action: { type: 'quizAnswer', value: right } });
     env.advance(21_000); // hết 20 giây: chỉ b đúng → ăn cả quỹ
     expect(a.room.game!.quiz ?? null).toBeNull();

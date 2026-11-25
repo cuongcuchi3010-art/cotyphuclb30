@@ -392,3 +392,4 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 - Phase `quiz`, `state.quiz`; `casinoKindAt(28) = 'quiz'` để ô vẫn được đánh dấu là ô đặc biệt (không mua được, tô màu như Sòng Bạc). Bot không vào chơi (tính nhẩm là trò giữa người với người). Mã Sòng Bạc Đất còn trong engine nhưng không còn ô nào dùng.
 - Vay ngân hàng Freestyle: 500 tr × 5 × hệ số tiền phạt (không theo tiền thuê nữa).
 - Vay ngân hàng Freestyle (sửa): 1 tỷ × hệ số tiền phạt (×2 → 2 tỷ, ×5 → 5 tỷ).
+- Đấu Trí Toán (sửa): 4 đáp án để chọn (1 đúng, 3 nhiễu lệch 1/2/10/9/11 hoặc một thừa số với phép nhân, xáo vị trí); chọn ngoài 4 đáp án bị từ chối; mỗi người chọn 1 lần.

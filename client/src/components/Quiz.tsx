@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CASINO_NAMES, formatMoney, type GameEvent } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore } from '../store';
@@ -15,13 +15,6 @@ export function QuizPrompt() {
   const act = useStore((s) => s.act);
   const now = useNow(100);
   const q = game?.quiz;
-  const [value, setValue] = useState('');
-  const input = useRef<HTMLInputElement>(null);
-  const qKey = q?.question ? `${q.question.a}${q.question.op}${q.question.b}` : '';
-  useEffect(() => {
-    setValue('');
-    if (qKey) setTimeout(() => input.current?.focus(), 50);
-  }, [qKey]);
   if (!room || !game || game.phase.kind !== 'quiz' || !q) return null;
 
   const left = room.deadline ? Math.max(0, room.deadline - now) : 0;
@@ -33,11 +26,6 @@ export function QuizPrompt() {
   const answered = !!me && q.answered.includes(me);
 
   const people = q.stage === 'join' ? q.eligible : q.joined;
-  const submit = () => {
-    const n = Number(value.trim());
-    if (value.trim() === '' || !Number.isInteger(n)) return;
-    act({ type: 'quizAnswer', value: n });
-  };
 
   return (
     <Modal open>
@@ -99,28 +87,22 @@ export function QuizPrompt() {
               {q.question.a} {q.question.op} {q.question.b} = ?
             </div>
             {playing && !answered ? (
-              <form
-                className="flex gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  submit();
-                }}
-              >
-                <input
-                  ref={input}
-                  id="quiz-answer"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  value={value}
-                  onChange={(e) => setValue(e.target.value.replace(/[^\d-]/g, ''))}
-                  className="min-w-0 flex-1 rounded-xl border-2 border-son/40 bg-white px-3 py-2 text-center text-2xl font-black tabular-nums outline-none focus:border-son dark:bg-black/30"
-                  placeholder="?"
-                  aria-label={S.quiz.answerLabel}
-                />
-                <Btn type="submit" disabled={value.trim() === ''}>
-                  {S.quiz.send}
-                </Btn>
-              </form>
+              <div className="grid grid-cols-2 gap-2" role="group" aria-label={S.quiz.answerLabel}>
+                {q.question.options.map((v, i) => (
+                  <button
+                    type="button"
+                    key={v}
+                    data-quiz-option={v}
+                    onClick={() => act({ type: 'quizAnswer', value: v })}
+                    className={cx(
+                      'min-h-[56px] rounded-2xl text-2xl font-black tabular-nums text-white shadow-card transition active:scale-[0.97]',
+                      ['bg-son', 'bg-[#1F4FA8]', 'bg-[#1E9E5A]', 'bg-[#C98A06]'][i % 4],
+                    )}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
             ) : (
               <div className="text-sm text-gray-500">
                 {playing ? S.quiz.waitOthers : S.quiz.watching}
