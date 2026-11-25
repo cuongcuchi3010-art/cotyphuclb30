@@ -75,7 +75,7 @@ export const playerActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('quizPass') }),
   z.object({
     type: z.literal('quizAnswer'),
-    value: z.number().int().min(-1_000_000).max(1_000_000),
+    value: z.number().int().min(0).max(3),
   }),
   z.object({ type: z.literal('mercyRequest') }),
   z.object({ type: z.literal('mercyChoice'), choice: z.enum(['free', 'half', 'full']) }),
@@ -109,6 +109,8 @@ export const rulesSchema = z.object({
   bankruptcyMode: z.enum(['creditor', 'bankBuyout']).default('creditor'),
   mercy: z.boolean().default(true),
   devilCards: z.boolean().default(false),
+  quizCategories: z.array(z.string().max(60)).max(40).default([]),
+  quizDifficulties: z.array(z.number().int().min(1).max(3)).max(3).default([]),
 });
 
 /** Biệt danh = tên đăng nhập: chữ (có dấu), số, khoảng trắng, . _ - */

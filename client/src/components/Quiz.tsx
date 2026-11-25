@@ -9,7 +9,7 @@ import { Avatar } from './Avatar';
 /** Tổng thời gian mỗi bước (khớp máy chủ) để vẽ thanh đếm ngược */
 const STAGE_MS = { join: 10_000, ready: 5_000, question: 20_000 } as const;
 
-/** Đấu Trí Toán (Freestyle, ô 28): vào chơi → chuẩn bị → trả lời nhanh nhất */
+/** Đấu Trí (Freestyle, ô 28): vào chơi → chuẩn bị → trả lời nhanh nhất */
 export function QuizPrompt() {
   const { room, game, me } = useGame();
   const act = useStore((s) => s.act);
@@ -32,7 +32,7 @@ export function QuizPrompt() {
       <div className="space-y-3 text-center">
         <div>
           <div className="text-xs font-bold uppercase tracking-wider text-son">
-            🧮 {CASINO_NAMES.quiz}
+            🧠 {CASINO_NAMES.quiz}
           </div>
           <div className="mt-0.5 text-sm text-gray-600 dark:text-gray-300">
             {S.quiz.intro(nameOf(room, q.opener), formatMoney(q.stake))}
@@ -83,27 +83,51 @@ export function QuizPrompt() {
 
         {q.stage === 'question' && q.question && (
           <div className="space-y-3">
-            <div className="text-5xl font-black tabular-nums">
-              {q.question.a} {q.question.op} {q.question.b} = ?
+            <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs font-semibold">
+              <span className="rounded-full bg-[#1F4FA8]/10 px-2 py-0.5 text-[#1F4FA8] dark:text-sky-300">
+                {q.question.category}
+              </span>
+              <span className="rounded-full bg-black/5 px-2 py-0.5 dark:bg-white/10">
+                {S.quiz.difficulty[q.question.difficulty] ?? ''}
+              </span>
             </div>
-            {playing && !answered ? (
-              <div className="grid grid-cols-2 gap-2" role="group" aria-label={S.quiz.answerLabel}>
-                {q.question.options.map((v, i) => (
+            <div
+              className={cx(
+                'font-black leading-snug text-balance',
+                q.question.id === undefined ? 'text-5xl tabular-nums' : 'text-xl sm:text-2xl',
+              )}
+            >
+              {q.question.text}
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2" role="group" aria-label={S.quiz.answerLabel}>
+              {q.question.options.map((v, i) => {
+                const can = playing && !answered;
+                return (
                   <button
                     type="button"
-                    key={v}
-                    data-quiz-option={v}
-                    onClick={() => act({ type: 'quizAnswer', value: v })}
+                    key={i}
+                    data-quiz-option={i}
+                    disabled={!can}
+                    onClick={() => act({ type: 'quizAnswer', value: i })}
                     className={cx(
-                      'min-h-[56px] rounded-2xl text-2xl font-black tabular-nums text-white shadow-card transition active:scale-[0.97]',
+                      'flex min-h-[52px] items-center gap-2 rounded-2xl px-3 py-2 text-left font-bold text-white shadow-card transition active:scale-[0.97] disabled:opacity-60 disabled:active:scale-100',
+                      q.question!.id === undefined
+                        ? 'justify-center text-2xl tabular-nums'
+                        : 'text-base',
                       ['bg-son', 'bg-[#1F4FA8]', 'bg-[#1E9E5A]', 'bg-[#C98A06]'][i % 4],
                     )}
                   >
-                    {v}
+                    {q.question!.id !== undefined && (
+                      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/25 text-sm font-black">
+                        {'ABCD'[i]}
+                      </span>
+                    )}
+                    <span className="min-w-0">{v}</span>
                   </button>
-                ))}
-              </div>
-            ) : (
+                );
+              })}
+            </div>
+            {(!playing || answered) && (
               <div className="text-sm text-gray-500">
                 {playing ? S.quiz.waitOthers : S.quiz.watching}
               </div>
@@ -160,7 +184,7 @@ export function QuizPrompt() {
 
 type QuizResultEv = Extract<GameEvent, { t: 'quizResult' }>;
 
-/** Kết quả Đấu Trí Toán: hiện vài giây cho cả phòng */
+/** Kết quả Đấu Trí: hiện vài giây cho cả phòng */
 export function QuizResult() {
   const { room } = useGame();
   const events = useStore((s) => s.events);
@@ -177,7 +201,7 @@ export function QuizResult() {
     <Modal open onClose={() => setRes(null)}>
       <div className="space-y-2 text-center">
         <div className="text-xs font-bold uppercase tracking-wider text-son">
-          🧮 {CASINO_NAMES.quiz}
+          🧠 {CASINO_NAMES.quiz}
         </div>
         <div className="text-lg font-semibold">
           {S.quiz.answerIs} <b className="text-2xl">{res.answer}</b>

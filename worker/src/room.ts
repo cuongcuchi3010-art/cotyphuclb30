@@ -24,6 +24,7 @@ import {
   type ServerMessage,
   type TokenId,
 } from '@cotyphu/shared';
+import { hideQuizAnswer, pickQuizQuestion } from './quiz.js';
 
 /**
  * Mất kết nối (F5, chuyển app, rớt mạng…) quá thời gian này thì bot chơi thay; người chơi
@@ -37,7 +38,7 @@ export const DRAW_MS = 30_000;
 export const CASINO_BET_MS = 20_000;
 export const CASINO_STAKE_MS = 25_000;
 export const CASINO_ROLL_MS = 10_000;
-/** Đấu Trí Toán: 10 giây quyết định vào chơi, 5 giây chuẩn bị, 20 giây trả lời */
+/** Đấu Trí: 10 giây quyết định vào chơi, 5 giây chuẩn bị, 20 giây trả lời */
 export const QUIZ_JOIN_MS = 10_000;
 export const QUIZ_READY_MS = 5_000;
 export const QUIZ_ANSWER_MS = 20_000;
@@ -471,6 +472,11 @@ export class RoomCore {
   private apply(by: Actor, action: Action): void {
     const snap = this.snap;
     if (!snap.game) return;
+    // Đấu Trí hết 5 giây chuẩn bị: máy chủ chọn câu hỏi từ ngân hàng (đáp án chỉ ở máy chủ)
+    if (action.type === 'quizTimeout' && !action.question && snap.game.quiz?.stage === 'ready') {
+      const question = pickQuizQuestion(snap.game, this.host.rng);
+      if (question) action = { ...action, question };
+    }
     const { state, events } = applyAction(snap.game, by, action, this.host.rng);
     snap.game = state;
     this.afterChange(events);
@@ -692,7 +698,7 @@ export class RoomCore {
       spectators: this.host.conns().filter((c) => c.spectator).length,
       rules: snap.rules,
       hasPassword: snap.password.length > 0,
-      game: snap.game,
+      game: hideQuizAnswer(snap.game),
       deadline: snap.deadline,
       gameEndsAt: snap.gameEndsAt,
       log: snap.log.slice(-80),

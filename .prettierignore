@@ -2,3 +2,5 @@ dist
 node_modules
 .wrangler
 pnpm-lock.yaml
+worker/src/questions.ts
+data/questions.json

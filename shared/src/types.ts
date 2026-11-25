@@ -65,6 +65,10 @@ export interface Rules {
   mercy: boolean;
   /** Freestyle: thêm Bộ thẻ Ác Quỷ (hoán đổi tài sản, băng giá, Thiên Lôi, dịch chuyển) */
   devilCards: boolean;
+  /** Đấu Trí: chủ đề được hỏi (rỗng = tất cả) */
+  quizCategories: string[];
+  /** Đấu Trí: độ khó được hỏi 1–3 (rỗng = tất cả) */
+  quizDifficulties: number[];
 }
 
 export type BankruptcyMode = 'creditor' | 'bankBuyout';
@@ -98,6 +102,8 @@ export const DEFAULT_RULES: Rules = {
   bankruptcyMode: 'creditor',
   mercy: true,
   devilCards: false,
+  quizCategories: [],
+  quizDifficulties: [],
 };
 
 export interface PlayerStats {
@@ -230,7 +236,7 @@ export type Phase =
   | { kind: 'raiseFunds'; debtor: PlayerId }
   /** Freestyle: bàn cược Sòng Bạc đang mở (chi tiết ở state.casino) */
   | { kind: 'casino' }
-  /** Freestyle: Đấu Trí Toán đang mở (chi tiết ở state.quiz) */
+  /** Freestyle: Đấu Trí đang mở (chi tiết ở state.quiz) */
   | { kind: 'quiz' }
   /** Quyền ân huệ: người thiếu tiền trả thuê đã xin, chủ ô chọn giảm 100% / 50% / từ chối */
   | { kind: 'mercy'; pos: number; owner: PlayerId; payer: PlayerId; amount: number }
@@ -289,20 +295,41 @@ export interface GameState {
   endReason?: 'lastStanding' | 'timeUp';
   /** Freestyle: bàn cược Sòng Bạc đang mở */
   casino?: Casino | null;
-  /** Freestyle: Đấu Trí Toán đang mở */
+  /** Freestyle: Đấu Trí đang mở */
   quiz?: Quiz | null;
+  /** Mã câu hỏi ngân hàng đã dùng trong ván (không lặp lại) */
+  quizUsed?: number[];
   /** Thẻ Băng giá: chủ đất → lượt hết đóng băng (đất của người đó không thu thuê, không xây) */
   frozen?: Record<PlayerId, number>;
   /** Quyền ân huệ đã dùng: chủ ô → danh sách người đã được ân huệ */
   mercyUsed?: Record<PlayerId, PlayerId[]>;
 }
 
-/** 'quiz': ô Đấu Trí Toán (ô 28 khi bật quizSquare) — dùng chung chỗ đánh dấu ô đặc biệt */
+/** 'quiz': ô Đấu Trí (ô 28 khi bật quizSquare) — dùng chung chỗ đánh dấu ô đặc biệt */
 export type CasinoKind = 'cash' | 'land' | 'quiz';
 
 export type QuizOp = '+' | '-' | '×';
 
-/** Đấu Trí Toán: ai trả lời đúng nhanh nhất được 75% quỹ, nhì được 25% */
+/** Chủ đề phép tính nhẩm (máy tự ra đề), cùng hàng với các chủ đề trong ngân hàng câu hỏi */
+export const QUIZ_MATH_CATEGORY = 'Tính nhẩm';
+
+/** Câu hỏi đang hiện (không kèm đáp án) */
+export interface QuizQuestion {
+  /** Mã câu trong ngân hàng (không có với phép tính nhẩm) */
+  id?: number;
+  category: string;
+  /** 1 Dễ · 2 Trung bình · 3 Khó */
+  difficulty: number;
+  text: string;
+  options: string[];
+}
+
+/** Câu hỏi từ ngân hàng (máy chủ chọn), kèm đáp án */
+export interface BankQuestion extends QuizQuestion {
+  answerIndex: number;
+}
+
+/** Đấu Trí: ai trả lời đúng nhanh nhất được 75% quỹ, nhì được 25% */
 export interface Quiz {
   pos: number;
   /** Người dừng ở ô */
@@ -318,7 +345,9 @@ export interface Quiz {
   passed: PlayerId[];
   pot: number;
   /** Câu hỏi + 4 đáp án để chọn (1 đúng, 3 nhiễu) */
-  question: { a: number; op: QuizOp; b: number; options: number[] } | null;
+  question: QuizQuestion | null;
+  /** Vị trí đáp án đúng trong options — CHỈ có trên máy chủ, bị xoá trước khi gửi xuống người chơi */
+  answer?: number;
   /** Người đã trả lời (mỗi người 1 lần) */
   answered: PlayerId[];
   /** Người trả lời đúng, theo thứ tự nhanh nhất */

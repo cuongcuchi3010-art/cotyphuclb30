@@ -394,3 +394,9 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 - Vay ngân hàng Freestyle (sửa): 1 tỷ × hệ số tiền phạt (×2 → 2 tỷ, ×5 → 5 tỷ).
 - Đấu Trí Toán (sửa): 4 đáp án để chọn (1 đúng, 3 nhiễu lệch 1/2/10/9/11 hoặc một thừa số với phép nhân, xáo vị trí); chọn ngoài 4 đáp án bị từ chối; mỗi người chọn 1 lần.
 - Client: ErrorBoundary toàn app (hiện lỗi + nút Tải lại thay vì trắng màn hình; lỗi tải tệp JS cũ sau deploy thì tự tải lại 1 lần) và bao riêng các bảng hỏi / thông báo (lỗi thì tạm ẩn, thử vẽ lại sau 1,5 giây).
+
+## F14 — Ngân hàng 1000 câu hỏi cho ô Đấu Trí
+- Nguồn: `data/questions.json` (chủ dự án soạn, 20 chủ đề, 3 độ khó; hướng dẫn gốc ở `data/questions-README.md`). `scripts/gen-questions.py` kiểm tra dữ liệu rồi sinh `worker/src/questions.ts` (câu + đáp án, CHỈ ở máy chủ) và `shared/src/data/quizCategories.ts` (tên chủ đề + số câu cho sảnh).
+- Ô Đấu Trí (tên hiển thị đổi từ "Đấu Trí Toán"): hết 5 giây chuẩn bị, máy chủ (`worker/src/quiz.ts`) chọn ngẫu nhiên 1 câu theo chủ đề / độ khó chủ phòng chọn (rỗng = tất cả), không lặp câu trong ván (`state.quizUsed`). "Tính nhẩm" là một chủ đề thêm (tỉ lệ 1 / số chủ đề đang bật), máy tự ra phép tính.
+- Đáp án lưu ở `quiz.answer` (vị trí 0–3), bị xoá khỏi trạng thái gửi xuống người chơi (`hideQuizAnswer`); người chơi gửi vị trí đáp án. Kết quả gửi chữ đáp án đúng cho cả phòng.
+- Luật thưởng giữ như F13 (nhất 75% / nhì 25% quỹ), không dùng mức thưởng theo độ khó trong file hướng dẫn gốc vì ô Đấu Trí là trò nhiều người góp quỹ.

@@ -2,7 +2,8 @@ import type { DeckId } from './data/cards.vi.js';
 import type {
   CardChoiceKind,
   CasinoKind,
-  QuizOp,
+  BankQuestion,
+  QuizQuestion,
   Creditor,
   DebtReason,
   LoanOffer,
@@ -79,7 +80,8 @@ export type SystemAction =
   | { type: 'autoChoose' }
   | { type: 'autoDraw' }
   | { type: 'casinoTimeout' }
-  | { type: 'quizTimeout' }
+  /** Máy chủ kèm câu hỏi ngân hàng khi hết giờ chuẩn bị (không có thì ra phép tính nhẩm) */
+  | { type: 'quizTimeout'; question?: BankQuestion }
   | { type: 'mercyTimeout' };
 
 export type MercyChoice = 'free' | 'half' | 'full';
@@ -173,11 +175,12 @@ export type GameEvent =
   | { t: 'quizPass'; playerId: PlayerId }
   | { t: 'quizCancel' }
   | { t: 'quizReady'; players: PlayerId[]; pot: number }
-  | { t: 'quizQuestion'; a: number; op: QuizOp; b: number; options: number[] }
+  | { t: 'quizQuestion'; question: QuizQuestion }
   | { t: 'quizAnswer'; playerId: PlayerId; ok: boolean }
   | {
       t: 'quizResult';
-      answer: number;
+      /** Đáp án đúng (chữ) */
+      answer: string;
       pot: number;
       first: PlayerId | null;
       second: PlayerId | null;

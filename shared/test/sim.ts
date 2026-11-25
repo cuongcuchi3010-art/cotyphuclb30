@@ -7,7 +7,6 @@ import {
   canBuild,
   candidateActions,
   casinoBetLimit,
-  quizAnswerOf,
   casinoStakeTargets,
   mercyDebt,
   FREESTYLE_STOCK,
@@ -106,9 +105,7 @@ function step(s: GameState, rng: Rng): GameState {
       return applyAction(s, 'system', { type: 'quizTimeout' }, rng).state;
     const p = q.joined.find((id) => !q.answered.includes(id));
     if (!p) return applyAction(s, 'system', { type: 'quizTimeout' }, rng).state;
-    const right = quizAnswerOf(q.question!);
-    const opts = q.question!.options;
-    const pick = rng.int(0, 1) ? right : opts[rng.int(0, opts.length - 1)]!;
+    const pick = rng.int(0, 1) ? q.answer! : rng.int(0, q.question!.options.length - 1);
     return applyAction(s, p, { type: 'quizAnswer', value: pick }, rng).state;
   }
   if (ph.kind === 'casino') {

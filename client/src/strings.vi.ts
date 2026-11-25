@@ -103,7 +103,7 @@ export const S = {
     modeInfo: {
       classic: 'Luật cờ tỷ phú quen thuộc, tuỳ chỉnh bên dưới.',
       freestyle:
-        'Tiền to hơn, mua xong được xây ngay (số nhà tuỳ chọn), ghé lại ô là xây tới 4 nhà, lễ hội ×2–×5, ô EVN thành Sòng Bạc Tiền, ô Viettel thành Đấu Trí Toán, ô Cà Phê thành ô Lễ Hội.',
+        'Tiền to hơn, mua xong được xây ngay (số nhà tuỳ chọn), ghé lại ô là xây tới 4 nhà, lễ hội ×2–×5, ô EVN thành Sòng Bạc Tiền, ô Viettel thành Đấu Trí, ô Cà Phê thành ô Lễ Hội.',
     },
     goSalary: 'Tiền qua Khởi Hành',
     rentMult: 'Hệ số tiền thuê',
@@ -111,6 +111,9 @@ export const S = {
     casinoMaxBet: 'Cược tối đa ở Sòng Bạc Tiền',
     firstBuildMax: 'Mua xong được xây ngay',
     devilCards: '😈 Bộ thẻ Ác Quỷ (hoán đổi tài sản, băng giá, Thiên Lôi, dịch chuyển)',
+    quizTopics: '🧠 Chủ đề câu hỏi ô Đấu Trí',
+    quizAll: 'Tất cả',
+    quizDifficulty: 'Độ khó:',
     mercyRule: 'Quyền ân huệ (thiếu tiền trả thuê được xin chủ ô giảm 100% / 50%; mỗi người 1 lần)',
     bankruptcy: 'Khi phá sản',
     bankruptcyModes: { creditor: 'Chủ nợ nhận hết', bankBuyout: 'Ngân hàng mua lại nhà' },
@@ -256,16 +259,16 @@ export const S = {
   },
 
   quiz: {
-    intro: (opener: string, stake: string) =>
-      `${opener} mở Đấu Trí Toán · vào cửa ${stake} mỗi người`,
+    intro: (opener: string, stake: string) => `${opener} mở Đấu Trí · vào cửa ${stake} mỗi người`,
     pot: 'Quỹ',
-    join: (stake: string) => `🧮 Vào chơi (−${stake})`,
+    join: (stake: string) => `🧠 Vào chơi (−${stake})`,
     pass: 'Không chơi',
     joined: '✅ Bạn đã vào chơi, chờ mọi người…',
     passed: 'Bạn không chơi lượt này',
     notEligible: 'Bạn không đủ tiền mặt để vào chơi',
     getReady: 'Chuẩn bị!',
     answerLabel: 'Đáp án',
+    difficulty: ['', 'Dễ', 'Trung bình', 'Khó'] as string[],
     send: 'Trả lời',
     waitOthers: 'Đã gửi đáp án, chờ kết quả…',
     watching: '👀 Đang xem mọi người tính nhẩm',
@@ -274,7 +277,7 @@ export const S = {
     answerIs: 'Đáp án:',
     nobody: 'Không ai trả lời đúng — hoàn tiền vào cửa',
     close: 'Đóng',
-    waiting: '🧮 Đấu Trí Toán đang diễn ra…',
+    waiting: '🧠 Đấu Trí đang diễn ra…',
   },
   casino: {
     cashIntro: (opener: string, cap: string) =>

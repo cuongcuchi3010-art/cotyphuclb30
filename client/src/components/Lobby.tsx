@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { TOKENS, formatMoney, type BuildRule, type Rules } from '@cotyphu/shared';
+import {
+  QUIZ_BANK_TOPICS,
+  QUIZ_MATH_CATEGORY,
+  TOKENS,
+  formatMoney,
+  type BuildRule,
+  type Rules,
+} from '@cotyphu/shared';
 import { PLAYER_COLORS, S, TOKEN_NAMES } from '../strings.vi';
 import { useStore } from '../store';
 import { cx, useGame } from '../lib';
@@ -166,6 +173,7 @@ export function Lobby() {
                 onChange={(v) => setRules({ devilCards: v })}
                 label={S.lobby.devilCards}
               />
+              <QuizTopics rules={rules} setRules={setRules} />
               <Sel
                 label={S.lobby.firstBuildMax}
                 value={rules.firstBuildMax ?? 4}
@@ -376,6 +384,74 @@ export function Lobby() {
             {S.lobby.waitingHost}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+/** Đấu Trí: chủ phòng chọn chủ đề và độ khó (rỗng = tất cả) */
+function QuizTopics({
+  rules,
+  setRules,
+}: {
+  rules: Rules;
+  setRules: (patch: Partial<Rules>) => void;
+}) {
+  const cats = rules.quizCategories ?? [];
+  const diffs = rules.quizDifficulties ?? [];
+  const topics = [...QUIZ_BANK_TOPICS.map((t) => t.name), QUIZ_MATH_CATEGORY];
+  const toggle = <T,>(list: T[], v: T): T[] =>
+    list.includes(v) ? list.filter((x) => x !== v) : [...list, v];
+  const chip = (on: boolean) =>
+    cx(
+      'rounded-full border px-2.5 py-1 text-xs font-semibold transition',
+      on
+        ? 'border-son bg-son text-white'
+        : 'border-black/10 bg-white/70 text-gray-600 dark:border-white/15 dark:bg-white/5 dark:text-gray-300',
+    );
+  const count = (name: string) => QUIZ_BANK_TOPICS.find((t) => t.name === name)?.count ?? null;
+  return (
+    <div className="space-y-1.5 rounded-xl bg-black/[0.03] p-2 dark:bg-white/5">
+      <div className="font-semibold">{S.lobby.quizTopics}</div>
+      <div className="flex flex-wrap gap-1.5">
+        <button
+          type="button"
+          className={chip(cats.length === 0)}
+          onClick={() => setRules({ quizCategories: [] })}
+        >
+          {S.lobby.quizAll}
+        </button>
+        {topics.map((t) => (
+          <button
+            key={t}
+            type="button"
+            className={chip(cats.includes(t))}
+            onClick={() => setRules({ quizCategories: toggle(cats, t) })}
+          >
+            {t}
+            {count(t) !== null && <span className="ml-1 opacity-60">{count(t)}</span>}
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="mr-1 text-xs text-gray-500">{S.lobby.quizDifficulty}</span>
+        <button
+          type="button"
+          className={chip(diffs.length === 0)}
+          onClick={() => setRules({ quizDifficulties: [] })}
+        >
+          {S.lobby.quizAll}
+        </button>
+        {[1, 2, 3].map((d) => (
+          <button
+            key={d}
+            type="button"
+            className={chip(diffs.includes(d))}
+            onClick={() => setRules({ quizDifficulties: toggle(diffs, d) })}
+          >
+            {S.quiz.difficulty[d]}
+          </button>
+        ))}
       </div>
     </div>
   );

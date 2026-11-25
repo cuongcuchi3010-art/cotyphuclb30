@@ -9,3 +9,4 @@ export * from './protocol.js';
 export * from './data/board.vi.js';
 export * from './data/cards.vi.js';
 export * from './discord.js';
+export * from './data/quizCategories.js';

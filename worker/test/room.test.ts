@@ -170,6 +170,8 @@ describe('Phòng chơi', () => {
         bankruptcyMode: 'bankBuyout',
         mercy: false,
         devilCards: true,
+        quizCategories: [],
+        quizDifficulties: [],
       },
     });
     a.msg({ type: 'start' });
@@ -320,14 +322,11 @@ describe('Phòng chơi', () => {
     env.advance(5_500); // hết 5 giây chuẩn bị → ra câu hỏi
     const q = a.room.game!.quiz!;
     expect(q.stage).toBe('question');
-    const right =
-      q.question!.op === '+'
-        ? q.question!.a + q.question!.b
-        : q.question!.op === '-'
-          ? q.question!.a - q.question!.b
-          : q.question!.a * q.question!.b;
+    // Đáp án không được gửi xuống người chơi
+    expect(q.answer).toBeUndefined();
+    expect(q.question!.options).toHaveLength(4);
+    const right = env.core.snap.game!.quiz!.answer!;
     const before = a.room.game!.players.find((p) => p.id === ids[1])!.cash;
-    expect(q.question!.options).toContain(right);
     b.msg({ type: 'action', action: { type: 'quizAnswer', value: right } });
     env.advance(21_000); // hết 20 giây: chỉ b đúng → ăn cả quỹ
     expect(a.room.game!.quiz ?? null).toBeNull();

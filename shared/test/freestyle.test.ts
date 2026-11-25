@@ -6,7 +6,9 @@ import {
   rollWithPower,
   seededRng,
   bankLoanMax,
-  quizAnswerOf,
+  makeMathQuestion,
+  QUIZ_MATH_CATEGORY,
+  type BankQuestion,
   casinoBetLimit,
   festivalMult,
   rentFor,
@@ -314,7 +316,7 @@ describe('Tung canh lực', () => {
   });
 });
 
-describe('Đấu Trí Toán (ô 28 Freestyle)', () => {
+describe('Đấu Trí (ô 28 Freestyle)', () => {
   /** p1 dừng ở ô 28; tiền vào cửa = stakeStep × 50 */
   function openQuiz(n = 3, stakeStep = 6) {
     let s = mkGame(n, FS);
@@ -322,55 +324,74 @@ describe('Đấu Trí Toán (ô 28 Freestyle)', () => {
     ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 2, stakeStep]));
     return s;
   }
+  const BANK: BankQuestion = {
+    id: 7,
+    category: 'Lịch sử Việt Nam',
+    difficulty: 1,
+    text: 'Nhà nước đầu tiên của người Việt theo truyền thuyết là gì?',
+    options: ['Vạn Xuân', 'Đại Cồ Việt', 'Âu Lạc', 'Văn Lang'],
+    answerIndex: 3,
+  };
 
-  it('dừng ở ô 28: mở Đấu Trí Toán, tiền vào cửa 100 tr – 1 tỷ', () => {
+  it('dừng ở ô 28: mở Đấu Trí, tiền vào cửa 100 tr – 1 tỷ', () => {
     const s = openQuiz(3, 6);
     expect(s.phase.kind).toBe('quiz');
     expect(s.quiz!.stake).toBe(300);
     expect(s.quiz!.eligible).toEqual(['p1', 'p2', 'p3']);
-    const s2 = openQuiz(3, 20);
-    expect(s2.quiz!.stake).toBe(1000);
+    expect(openQuiz(3, 20).quiz!.stake).toBe(1000);
   });
 
-  it('nhất nhận 75% quỹ, nhì 25%', () => {
+  it('câu hỏi ngân hàng: nhất 75% quỹ, nhì 25%; ghi nhớ câu đã dùng', () => {
     let s = openQuiz(3, 6);
     ({ state: s } = act(s, 'p1', { type: 'quizJoin' }));
     ({ state: s } = act(s, 'p2', { type: 'quizJoin' }));
     ({ state: s } = act(s, 'p3', { type: 'quizJoin' }));
     expect(s.quiz!.stage).toBe('ready');
     expect(s.quiz!.pot).toBe(900);
-    expect(pl(s, 'p1').cash).toBe(1200);
-    // Hết 5 giây chuẩn bị: ra câu 20 + 30
-    ({ state: s } = act(s, 'system', { type: 'quizTimeout' }, [0, 20, 30]));
-    expect(s.quiz!.question).toMatchObject({ a: 20, op: '+', b: 30 });
-    const opts = s.quiz!.question!.options;
-    expect(opts).toHaveLength(4);
-    expect(new Set(opts).size).toBe(4);
-    expect(opts).toContain(50);
-    const wrong = opts.find((v) => v !== 50)!;
-    expect(() => act(s, 'p3', { type: 'quizAnswer', value: 9999 })).toThrow('4 đáp án');
-    expect(() => act(s, 'p1', { type: 'quizJoin' })).toThrow();
-    ({ state: s } = act(s, 'p3', { type: 'quizAnswer', value: wrong })); // sai
-    expect(() => act(s, 'p3', { type: 'quizAnswer', value: 50 })).toThrow('1 lần');
-    ({ state: s } = act(s, 'p2', { type: 'quizAnswer', value: 50 }));
-    const r = act(s, 'p1', { type: 'quizAnswer', value: 50 });
+    ({ state: s } = act(s, 'system', { type: 'quizTimeout', question: BANK }));
+    expect(s.quiz!.question).toEqual({
+      id: 7,
+      category: BANK.category,
+      difficulty: 1,
+      text: BANK.text,
+      options: BANK.options,
+    });
+    expect(s.quiz!.answer).toBe(3);
+    expect(s.quizUsed).toEqual([7]);
+    expect(() => act(s, 'p3', { type: 'quizAnswer', value: 9 })).toThrow('4 đáp án');
+    ({ state: s } = act(s, 'p3', { type: 'quizAnswer', value: 0 })); // sai
+    expect(() => act(s, 'p3', { type: 'quizAnswer', value: 3 })).toThrow('1 lần');
+    ({ state: s } = act(s, 'p2', { type: 'quizAnswer', value: 3 }));
+    const r = act(s, 'p1', { type: 'quizAnswer', value: 3 });
     s = r.state;
     expect(s.quiz).toBeNull();
     expect(pl(s, 'p2').cash).toBe(1200 + 675);
     expect(pl(s, 'p1').cash).toBe(1200 + 225);
     expect(pl(s, 'p3').cash).toBe(1200);
     expect(r.events).toContainEqual(
-      expect.objectContaining({ t: 'quizResult', first: 'p2', second: 'p1', prize1: 675 }),
+      expect.objectContaining({ t: 'quizResult', first: 'p2', second: 'p1', answer: 'Văn Lang' }),
     );
+  });
+
+  it('không có câu ngân hàng: máy ra phép tính nhẩm 4 đáp án', () => {
+    let s = openQuiz(2, 4);
+    ({ state: s } = act(s, 'p1', { type: 'quizJoin' }));
+    ({ state: s } = act(s, 'p2', { type: 'quizJoin' }));
+    ({ state: s } = act(s, 'system', { type: 'quizTimeout' }, [0, 20, 30]));
+    const q = s.quiz!;
+    expect(q.question!.category).toBe(QUIZ_MATH_CATEGORY);
+    expect(q.question!.text).toBe('20 + 30 = ?');
+    expect(new Set(q.question!.options).size).toBe(4);
+    expect(q.question!.options[q.answer!]).toBe('50');
+    expect(makeMathQuestion(seededRng(3)).options).toHaveLength(4);
   });
 
   it('chỉ một người đúng: nhận cả quỹ; không ai đúng: hoàn tiền', () => {
     let s = openQuiz(2, 4);
     ({ state: s } = act(s, 'p1', { type: 'quizJoin' }));
     ({ state: s } = act(s, 'p2', { type: 'quizJoin' }));
-    ({ state: s } = act(s, 'system', { type: 'quizTimeout' }, [2, 7, 8]));
-    expect(quizAnswerOf(s.quiz!.question!)).toBe(56);
-    ({ state: s } = act(s, 'p1', { type: 'quizAnswer', value: 56 }));
+    ({ state: s } = act(s, 'system', { type: 'quizTimeout', question: BANK }));
+    ({ state: s } = act(s, 'p1', { type: 'quizAnswer', value: 3 }));
     ({ state: s } = act(s, 'system', { type: 'quizTimeout' }));
     expect(pl(s, 'p1').cash).toBe(1500 + 200);
     expect(pl(s, 'p2').cash).toBe(1500 - 200);
@@ -378,10 +399,9 @@ describe('Đấu Trí Toán (ô 28 Freestyle)', () => {
     let t = openQuiz(2, 4);
     ({ state: t } = act(t, 'p1', { type: 'quizJoin' }));
     ({ state: t } = act(t, 'p2', { type: 'quizJoin' }));
-    ({ state: t } = act(t, 'system', { type: 'quizTimeout' }, [1, 50, 20]));
-    const bad = t.quiz!.question!.options.filter((v) => v !== 30);
-    ({ state: t } = act(t, 'p1', { type: 'quizAnswer', value: bad[0]! }));
-    ({ state: t } = act(t, 'p2', { type: 'quizAnswer', value: bad[1]! }));
+    ({ state: t } = act(t, 'system', { type: 'quizTimeout', question: BANK }));
+    ({ state: t } = act(t, 'p1', { type: 'quizAnswer', value: 0 }));
+    ({ state: t } = act(t, 'p2', { type: 'quizAnswer', value: 1 }));
     expect(pl(t, 'p1').cash).toBe(1500);
     expect(pl(t, 'p2').cash).toBe(1500);
   });

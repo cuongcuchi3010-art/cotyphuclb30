@@ -35,6 +35,7 @@ import type {
   CardChoiceKind,
   Casino,
   CasinoKind,
+  BankQuestion,
   Quiz,
   QuizOp,
   Rng,
@@ -49,6 +50,7 @@ import {
   BANK_LOAN_TURNS,
   DEFAULT_RULES,
   PLAYER_LOAN_MAX_TURNS,
+  QUIZ_MATH_CATEGORY,
 } from './types.js';
 
 export class GameError extends Error {
@@ -519,7 +521,7 @@ function applySystem(c: Ctx, a: Action): void {
       casinoTimeout(c);
       return;
     case 'quizTimeout':
-      quizTimeout(c);
+      quizTimeout(c, a.question);
       return;
     case 'autoDraw': {
       if (s.phase.kind !== 'drawOrder' || !s.lots) fail('Không ở pha bốc thăm');
@@ -1286,7 +1288,7 @@ export const CASINO_UNLIMITED = 0;
 export function casinoKindAt(s: GameState, pos: number): CasinoKind | null {
   if (!isFreestyle(s)) return null;
   if (pos === CASINO_CASH_POS) return 'cash';
-  // Ô 28: Đấu Trí Toán (đã thay hẳn Sòng Bạc Đất)
+  // Ô 28: Đấu Trí (đã thay hẳn Sòng Bạc Đất)
   if (pos === CASINO_LAND_POS) return 'quiz';
   return null;
 }
@@ -1516,7 +1518,7 @@ function resolveCasino(c: Ctx): void {
 }
 
 // ---------------------------------------------------------------------------
-// Freestyle: Đấu Trí Toán (ô 28)
+// Freestyle: Đấu Trí (ô 28)
 // ---------------------------------------------------------------------------
 
 /** Tiền vào cửa: ngẫu nhiên 100 tr – 1 tỷ, bước 50 tr */
@@ -1529,8 +1531,8 @@ export function quizAnswerOf(q: { a: number; op: QuizOp; b: number }): number {
   return q.op === '+' ? q.a + q.b : q.op === '-' ? q.a - q.b : q.a * q.b;
 }
 
-/** Câu hỏi tính nhẩm: cộng / trừ số có 2 chữ số, hoặc nhân bảng cửu chương mở rộng; kèm 4 đáp án */
-function makeQuestion(rng: Rng): { a: number; op: QuizOp; b: number; options: number[] } {
+/** Phép tính nhẩm: cộng / trừ số có 2 chữ số, hoặc nhân; kèm 4 đáp án và vị trí đáp án đúng */
+export function makeMathQuestion(rng: Rng): BankQuestion {
   const k = rng.int(0, 2);
   let q: { a: number; op: QuizOp; b: number };
   if (k === 0) q = { a: rng.int(12, 99), op: '+', b: rng.int(12, 99) };
@@ -1538,7 +1540,15 @@ function makeQuestion(rng: Rng): { a: number; op: QuizOp; b: number; options: nu
     const a = rng.int(30, 99);
     q = { a, op: '-', b: rng.int(11, a - 5) };
   } else q = { a: rng.int(3, 12), op: '×', b: rng.int(6, 19) };
-  return { ...q, options: quizOptions(quizAnswerOf(q), q, rng) };
+  const ans = quizAnswerOf(q);
+  const opts = quizOptions(ans, q, rng);
+  return {
+    category: QUIZ_MATH_CATEGORY,
+    difficulty: 1,
+    text: `${q.a} ${q.op} ${q.b} = ?`,
+    options: opts.map(String),
+    answerIndex: opts.indexOf(ans),
+  };
 }
 
 /** 3 đáp án nhiễu sát đáp án đúng (lệch 1, 2, 10 hoặc một thừa số), xáo trộn vị trí */
@@ -1590,7 +1600,7 @@ function rng50(rng: Rng): number {
 
 function requireQuiz(s: GameState, stage: Quiz['stage']): Quiz {
   const q = s.quiz;
-  if (s.phase.kind !== 'quiz' || !q) fail('Không có Đấu Trí Toán nào đang mở');
+  if (s.phase.kind !== 'quiz' || !q) fail('Không có Đấu Trí nào đang mở');
   if (q.stage !== stage) fail(stage === 'join' ? 'Đã hết giờ vào chơi' : 'Chưa tới lúc trả lời');
   return q;
 }
@@ -1640,17 +1650,18 @@ function quizAnswer(c: Ctx, p: PlayerState, value: number): void {
   const q = requireQuiz(c.s, 'question');
   if (!q.joined.includes(p.id)) fail('Bạn không tham gia lượt này');
   if (q.answered.includes(p.id)) fail('Mỗi người chỉ được trả lời 1 lần');
-  if (!q.question!.options.includes(value)) fail('Hãy chọn một trong 4 đáp án');
+  if (!Number.isInteger(value) || value < 0 || value >= q.question!.options.length)
+    fail('Hãy chọn một trong 4 đáp án');
   q.answered.push(p.id);
-  const ok = value === quizAnswerOf(q.question!);
+  const ok = value === q.answer;
   if (ok) q.correct.push(p.id);
   c.ev.push({ t: 'quizAnswer', playerId: p.id, ok });
   if (q.correct.length >= 2 || q.answered.length >= q.joined.length) resolveQuiz(c);
 }
 
-function quizTimeout(c: Ctx): void {
+function quizTimeout(c: Ctx, bank?: BankQuestion): void {
   const q = c.s.quiz;
-  if (c.s.phase.kind !== 'quiz' || !q) fail('Không có Đấu Trí Toán nào đang mở');
+  if (c.s.phase.kind !== 'quiz' || !q) fail('Không có Đấu Trí nào đang mở');
   if (q.stage === 'join') {
     // Ai chưa quyết thì coi như không chơi
     for (const id of q.eligible)
@@ -1658,15 +1669,20 @@ function quizTimeout(c: Ctx): void {
     quizEndJoin(c);
   } else if (q.stage === 'ready') {
     q.stage = 'question';
-    q.question = makeQuestion(c.rng);
-    c.ev.push({ t: 'quizQuestion', ...q.question });
+    // Câu hỏi ngân hàng do máy chủ chọn; không có thì máy ra phép tính nhẩm
+    const full = bank ?? makeMathQuestion(c.rng);
+    const { answerIndex, ...shown } = full;
+    q.question = shown;
+    q.answer = answerIndex;
+    if (full.id !== undefined) c.s.quizUsed = [...(c.s.quizUsed ?? []), full.id];
+    c.ev.push({ t: 'quizQuestion', question: shown });
   } else resolveQuiz(c);
 }
 
 function resolveQuiz(c: Ctx): void {
   const { s } = c;
   const q = s.quiz!;
-  const answer = quizAnswerOf(q.question!);
+  const answer = q.question!.options[q.answer ?? -1] ?? '';
   const [first, second] = q.correct;
   let prize1 = 0;
   let prize2 = 0;
@@ -2476,7 +2492,7 @@ function acceptTrade(c: Ctx, p: PlayerState, id: string): void {
   if (!t || t.to !== p.id) fail('Không tìm thấy đề nghị');
   if (s.phase.kind === 'auction') fail('Đợi đấu giá kết thúc rồi mới chấp nhận giao dịch');
   if (s.phase.kind === 'casino') fail('Đợi bàn cược Sòng Bạc xong rồi mới chấp nhận giao dịch');
-  if (s.phase.kind === 'quiz') fail('Đợi Đấu Trí Toán xong rồi mới chấp nhận giao dịch');
+  if (s.phase.kind === 'quiz') fail('Đợi Đấu Trí xong rồi mới chấp nhận giao dịch');
   s.trades = s.trades.filter((x) => x.id !== id);
   const err = validateTrade(s, t);
   if (err) {
