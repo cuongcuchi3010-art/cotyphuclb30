@@ -334,7 +334,7 @@ export interface Quiz {
   pos: number;
   /** Người dừng ở ô */
   opener: PlayerId;
-  /** Tiền vào cửa mỗi người (máy chọn ngẫu nhiên 100 tr – 1 tỷ) */
+  /** Tiền vào cửa mỗi người (máy chọn ngẫu nhiên 100 tr – 1 tỷ × hệ số tiền phạt) */
   stake: number;
   /** 'join': 10 giây quyết định · 'ready': 5 giây chuẩn bị · 'question': đang hỏi */
   stage: 'join' | 'ready' | 'question';

@@ -1521,9 +1521,17 @@ function resolveCasino(c: Ctx): void {
 // Freestyle: Đấu Trí (ô 28)
 // ---------------------------------------------------------------------------
 
-/** Tiền vào cửa: ngẫu nhiên 100 tr – 1 tỷ, bước 50 tr */
+/** Tiền vào cửa: ngẫu nhiên từ 100 tr tới 1 tỷ × hệ số tiền phạt, bước 50 tr */
 export const QUIZ_STAKE_MIN = 100;
-export const QUIZ_STAKE_MAX = 1000;
+export const QUIZ_STAKE_BASE_MAX = 1000;
+
+/** Mức vào cửa tối đa của ô Đấu Trí: 1 tỷ × hệ số tiền phạt (×2 → 2 tỷ) */
+export function quizStakeMax(s: GameState): number {
+  return Math.max(
+    QUIZ_STAKE_MIN,
+    Math.round((QUIZ_STAKE_BASE_MAX * (s.rules.feeMult ?? 2)) / 50) * 50,
+  );
+}
 /** Tỉ lệ chia quỹ: nhất 75%, nhì 25% */
 export const QUIZ_FIRST_SHARE = 0.75;
 
@@ -1569,7 +1577,7 @@ function quizOptions(ans: number, q: { a: number; op: QuizOp }, rng: Rng): numbe
 
 function openQuiz(c: Ctx, p: PlayerState, pos: number): void {
   const { s } = c;
-  const stake = rng50(c.rng);
+  const stake = rng50(c.rng, quizStakeMax(s));
   const eligible = alivePlayers(s)
     .filter((o) => o.cash >= stake)
     .map((o) => o.id);
@@ -1594,8 +1602,8 @@ function openQuiz(c: Ctx, p: PlayerState, pos: number): void {
   c.ev.push({ t: 'quizOpen', pos, opener: p.id, stake });
 }
 
-function rng50(rng: Rng): number {
-  return rng.int(QUIZ_STAKE_MIN / 50, QUIZ_STAKE_MAX / 50) * 50;
+function rng50(rng: Rng, max: number): number {
+  return rng.int(QUIZ_STAKE_MIN / 50, max / 50) * 50;
 }
 
 function requireQuiz(s: GameState, stage: Quiz['stage']): Quiz {

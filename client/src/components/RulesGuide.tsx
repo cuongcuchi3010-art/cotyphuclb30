@@ -66,12 +66,13 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
               như trả nợ). Đổ cao hơn nhà cái thắng tiền cược, thấp hơn thì thua, bằng điểm thì hoà.
             </li>
             <li>
-              <b>Đấu Trí</b> (thay Viettel): máy chọn tiền vào cửa ngẫu nhiên 100 tr – 1 tỷ; mọi
-              người có 10 giây quyết định vào chơi (bỏ tiền vào quỹ), cần từ 2 người. Sau 5 giây
-              chuẩn bị, máy hỏi một câu từ ngân hàng 1000 câu (lịch sử, địa lý, văn hoá, âm nhạc,
-              khoa học…) hoặc một phép tính nhẩm, có 4 đáp án A–D. Ai chọn đúng nhanh nhất được 75%
-              quỹ, nhì được 25% (mỗi người chọn 1 lần, 20 giây). Chỉ 1 người đúng thì ăn cả quỹ;
-              không ai đúng thì hoàn tiền. Câu đã hỏi không lặp lại trong ván.
+              <b>Đấu Trí</b> (thay Viettel): máy chọn tiền vào cửa ngẫu nhiên từ 100 tr tới{' '}
+              {formatMoney(1000 * (rules?.feeMult ?? 2))} (1 tỷ × hệ số tiền phạt); mọi người có 10
+              giây quyết định vào chơi (bỏ tiền vào quỹ), cần từ 2 người. Sau 5 giây chuẩn bị, máy
+              hỏi một câu từ ngân hàng 1000 câu (lịch sử, địa lý, văn hoá, âm nhạc, khoa học…) hoặc
+              một phép tính nhẩm, có 4 đáp án A–D. Ai chọn đúng nhanh nhất được 75% quỹ, nhì được
+              25% (mỗi người chọn 1 lần, 20 giây). Chỉ 1 người đúng thì ăn cả quỹ; không ai đúng thì
+              hoàn tiền. Câu đã hỏi không lặp lại trong ván.
             </li>
             <li>Ô Cà Phê (góc 20) thành ô Lễ Hội: dừng ở đó chọn 1 ô đất của mình mở lễ hội.</li>
             <li>Thẻ “Đi tới tiện ích gần nhất” thành “Đi tới Sòng Bạc Tiền / Đấu Trí gần nhất”.</li>
