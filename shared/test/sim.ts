@@ -7,6 +7,7 @@ import {
   canBuild,
   candidateActions,
   casinoBetLimit,
+  quizAnswerOf,
   casinoStakeTargets,
   mercyDebt,
   FREESTYLE_STOCK,
@@ -92,6 +93,23 @@ function step(s: GameState, rng: Rng): GameState {
   }
   if (ph.kind === 'raiseFunds' && mercyDebt(s, ph.debtor) && rng.int(0, 1) === 0)
     return applyAction(s, ph.debtor, { type: 'mercyRequest' }, rng).state;
+  if (ph.kind === 'quiz') {
+    const q = s.quiz!;
+    if (q.stage === 'join') {
+      const p = q.eligible.find((id) => !q.joined.includes(id) && !q.passed.includes(id));
+      if (!p || rng.int(0, 5) === 0)
+        return applyAction(s, 'system', { type: 'quizTimeout' }, rng).state;
+      const t = rng.int(0, 2) > 0 ? 'quizJoin' : 'quizPass';
+      return applyAction(s, p, { type: t }, rng).state;
+    }
+    if (q.stage === 'ready' || rng.int(0, 4) === 0)
+      return applyAction(s, 'system', { type: 'quizTimeout' }, rng).state;
+    const p = q.joined.find((id) => !q.answered.includes(id));
+    if (!p) return applyAction(s, 'system', { type: 'quizTimeout' }, rng).state;
+    const right = quizAnswerOf(q.question!);
+    return applyAction(s, p, { type: 'quizAnswer', value: rng.int(0, 1) ? right : right + 1 }, rng)
+      .state;
+  }
   if (ph.kind === 'casino') {
     const k = s.casino!;
     if (rng.int(0, 5) === 0) return applyAction(s, 'system', { type: 'casinoTimeout' }, rng).state;

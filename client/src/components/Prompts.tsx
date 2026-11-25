@@ -24,6 +24,7 @@ import { useStore } from '../store';
 import { cx, fmtClock, nameOf, playerColor, useGame, useNow, photoOf, squareName } from '../lib';
 import { Btn, Modal } from './ui';
 import { Avatar } from './Avatar';
+import { QuizPrompt, QuizResult } from './Quiz';
 import { CasinoPrompt, CasinoResult } from './Casino';
 import { motion } from 'framer-motion';
 
@@ -42,6 +43,8 @@ export function Prompts() {
       <CasinoPrompt />
       <MercyPrompt />
       <CasinoResult />
+      <QuizPrompt />
+      <QuizResult />
       <HostDisconnect />
     </>
   );

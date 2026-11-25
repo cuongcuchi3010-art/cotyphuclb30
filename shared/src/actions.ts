@@ -2,6 +2,7 @@ import type { DeckId } from './data/cards.vi.js';
 import type {
   CardChoiceKind,
   CasinoKind,
+  QuizOp,
   Creditor,
   DebtReason,
   LoanOffer,
@@ -62,6 +63,9 @@ export type PlayerAction =
   | { type: 'casinoStake'; pos: number }
   | { type: 'casinoPass' }
   | { type: 'casinoRoll' }
+  | { type: 'quizJoin' }
+  | { type: 'quizPass' }
+  | { type: 'quizAnswer'; value: number }
   /** Người thiếu tiền trả thuê (đang Gom tiền) xin chủ ô ban ân huệ */
   | { type: 'mercyRequest' }
   /** Chủ ô: free = giảm 100%, half = giảm 50%, full = từ chối */
@@ -75,6 +79,7 @@ export type SystemAction =
   | { type: 'autoChoose' }
   | { type: 'autoDraw' }
   | { type: 'casinoTimeout' }
+  | { type: 'quizTimeout' }
   | { type: 'mercyTimeout' };
 
 export type MercyChoice = 'free' | 'half' | 'full';
@@ -162,6 +167,25 @@ export type GameEvent =
   | { t: 'casinoRolling'; kind: CasinoKind; rollers: PlayerId[]; round: number }
   | { t: 'casinoRoll'; playerId: PlayerId; dice: [number, number] }
   | { t: 'casinoTie'; players: PlayerId[]; total: number }
+  | { t: 'quizOpen'; pos: number; opener: PlayerId; stake: number }
+  | { t: 'quizSkip'; opener: PlayerId; stake: number }
+  | { t: 'quizJoin'; playerId: PlayerId; stake: number }
+  | { t: 'quizPass'; playerId: PlayerId }
+  | { t: 'quizCancel' }
+  | { t: 'quizReady'; players: PlayerId[]; pot: number }
+  | { t: 'quizQuestion'; a: number; op: QuizOp; b: number }
+  | { t: 'quizAnswer'; playerId: PlayerId; ok: boolean }
+  | {
+      t: 'quizResult';
+      answer: number;
+      pot: number;
+      first: PlayerId | null;
+      second: PlayerId | null;
+      prize1: number;
+      prize2: number;
+      /** Không ai đúng: hoàn tiền */
+      refunded: boolean;
+    }
   | {
       t: 'casinoResult';
       kind: 'cash';

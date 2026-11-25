@@ -46,6 +46,13 @@ export function botDecision(s: GameState, botId: PlayerId): Plan | null {
     return currentPlayer(s).id === botId ? { by: 'system', action: { type: 'autoChoose' } } : null;
   }
   if (ph.kind === 'casino') return botCasino(s, botId);
+  // Đấu Trí Toán là trò tính nhẩm giữa người với người: bot không vào chơi
+  if (ph.kind === 'quiz') {
+    const q = s.quiz;
+    if (!q || q.stage !== 'join' || !q.eligible.includes(botId)) return null;
+    if (q.joined.includes(botId) || q.passed.includes(botId)) return null;
+    return { by: botId, action: { type: 'quizPass' } };
+  }
   // Bot không ban ân huệ (từ chối)
   if (ph.kind === 'mercy')
     return ph.owner === botId

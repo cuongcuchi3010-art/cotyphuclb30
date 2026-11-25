@@ -385,3 +385,9 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 - Sửa: chờ 20 giây (`OFFLINE_AUTOPLAY_MS`) mới đi thay; các pha có thể mất tài sản (gom tiền, chọn ô từ thẻ, ân huệ, sòng bạc) không đi thay sớm, chỉ xử lý khi hết giờ của pha (gom tiền 2 phút). Test: F5 4 giây chưa tự tung; mất kết nối 60 giây khi đang gom tiền không phá sản.
 - W10 (thay W9): mất kết nối quá 20 giây (`OFFLINE_GRACE_MS`) thì bot tự chơi thay, không còn hỏi chủ phòng / không phá sản vì vắng mặt; vào lại lúc nào cũng lấy lại ghế (bot thôi chơi). Trước 20 giây không ai đi thay, hết giờ của pha vẫn áp dụng. Bỏ đi thay bằng hành động hết giờ cho người offline.
 - 3D18 (sửa): danh sách người chơi màn lớn quay về 1 cột từ trên xuống, đủ thông tin; từ 4 người khung cao tối đa 58% (ít hơn: 40%).
+
+## F13 — Đấu Trí Toán thay Sòng Bạc Đất (Freestyle, ô 28)
+- Dừng ở ô 28: máy chọn tiền vào cửa ngẫu nhiên 100 tr – 1 tỷ (bước 50 tr). Ai đủ tiền mặt (kể cả người dừng) có 10 giây bấm Vào chơi (trừ tiền vào quỹ ngay) / Không chơi; hết giờ coi như không chơi. Dưới 2 người → huỷ, hoàn tiền.
+- 5 giây chuẩn bị, rồi máy ra phép tính nhẩm (cộng / trừ số 2 chữ số, hoặc nhân 3–12 × 6–19). 20 giây, mỗi người trả lời 1 lần; thứ tự = thứ tự máy chủ nhận. Nhất 75% quỹ, nhì 25% (đủ 2 người đúng thì kết thúc ngay). Chỉ 1 người đúng → ăn cả quỹ; không ai đúng → hoàn tiền.
+- Phase `quiz`, `state.quiz`; `casinoKindAt(28) = 'quiz'` để ô vẫn được đánh dấu là ô đặc biệt (không mua được, tô màu như Sòng Bạc). Bot không vào chơi (tính nhẩm là trò giữa người với người). Mã Sòng Bạc Đất còn trong engine nhưng không còn ô nào dùng.
+- Vay ngân hàng Freestyle: 500 tr × 5 × hệ số tiền phạt (không theo tiền thuê nữa).

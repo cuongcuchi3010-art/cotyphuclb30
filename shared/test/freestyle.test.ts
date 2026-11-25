@@ -6,6 +6,7 @@ import {
   rollWithPower,
   seededRng,
   bankLoanMax,
+  quizAnswerOf,
   casinoBetLimit,
   festivalMult,
   rentFor,
@@ -86,8 +87,8 @@ describe('Freestyle: tiền và xây nhà', () => {
     expect(s.buildPass).toBe(6);
   });
 
-  it('hạn mức vay ngân hàng gấp 5 lần hệ số tiền thuê', () => {
-    let s = mkGame(2, { ...FS, rentMult: 3 });
+  it('hạn mức vay ngân hàng gấp 5 lần hệ số tiền phạt (không theo tiền thuê)', () => {
+    let s = mkGame(2, { ...FS, feeMult: 3, rentMult: 5 });
     expect(bankLoanMax(s)).toBe(7500);
     const cash = pl(s, 'p1').cash;
     ({ state: s } = act(s, 'p1', { type: 'bankLoan', amount: 7500 }));
@@ -212,88 +213,6 @@ describe('Sòng Bạc Tiền', () => {
   });
 });
 
-describe('Sòng Bạc Đất', () => {
-  function openLand(n = 3) {
-    let s = mkGame(n, FS);
-    own(s, 'p1', 1);
-    own(s, 'p2', 6);
-    own(s, 'p3', 8);
-    pl(s, 'p1').position = 25;
-    ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 2])); // → 28
-    return s;
-  }
-
-  it('ai đổ cao nhất lấy hết các ô đã đặt', () => {
-    let s = openLand();
-    expect(s.casino!.kind).toBe('land');
-    expect(() => act(s, 'p2', { type: 'casinoStake', pos: 1 })).toThrow('của bạn');
-    ({ state: s } = act(s, 'p1', { type: 'casinoStake', pos: 1 }));
-    ({ state: s } = act(s, 'p2', { type: 'casinoStake', pos: 6 }));
-    ({ state: s } = act(s, 'p3', { type: 'casinoStake', pos: 8 }));
-    ({ state: s } = act(s, 'p1', { type: 'casinoRoll' }, [2, 3]));
-    ({ state: s } = act(s, 'p2', { type: 'casinoRoll' }, [4, 4]));
-    ({ state: s } = act(s, 'p3', { type: 'casinoRoll' }, [1, 1]));
-    expect(s.properties[1]!.owner).toBe('p2');
-    expect(s.properties[6]!.owner).toBe('p2');
-    expect(s.properties[8]!.owner).toBe('p2');
-  });
-
-  it('hoà điểm cao nhất thì những người đó đổ lại', () => {
-    let s = openLand();
-    ({ state: s } = act(s, 'p1', { type: 'casinoStake', pos: 1 }));
-    ({ state: s } = act(s, 'p2', { type: 'casinoStake', pos: 6 }));
-    ({ state: s } = act(s, 'p3', { type: 'casinoStake', pos: 8 }));
-    ({ state: s } = act(s, 'p1', { type: 'casinoRoll' }, [3, 4]));
-    ({ state: s } = act(s, 'p2', { type: 'casinoRoll' }, [5, 2]));
-    ({ state: s } = act(s, 'p3', { type: 'casinoRoll' }, [1, 1]));
-    expect(s.casino!.rollers).toEqual(['p1', 'p2']);
-    expect(s.casino!.round).toBe(2);
-    expect(() => act(s, 'p3', { type: 'casinoRoll' })).toThrow('không đổ');
-    ({ state: s } = act(s, 'p1', { type: 'casinoRoll' }, [6, 6]));
-    ({ state: s } = act(s, 'p2', { type: 'casinoRoll' }, [1, 2]));
-    expect(s.properties[6]!.owner).toBe('p1');
-    expect(s.properties[8]!.owner).toBe('p1');
-  });
-
-  it('dưới 2 người đặt thì huỷ; dưới 2 người có đất thì không mở', () => {
-    let s = openLand();
-    ({ state: s } = act(s, 'p1', { type: 'casinoStake', pos: 1 }));
-    ({ state: s } = act(s, 'p2', { type: 'casinoPass' }));
-    const r = act(s, 'p3', { type: 'casinoPass' });
-    expect(r.events).toContainEqual({ t: 'casinoCancel', kind: 'land' });
-    expect(r.state.properties[1]!.owner).toBe('p1');
-    let t = mkGame(2, FS);
-    own(t, 'p1', 1);
-    pl(t, 'p1').position = 25;
-    const r2 = act(t, 'p1', { type: 'roll' }, [1, 2]);
-    t = r2.state;
-    expect(t.phase.kind).toBe('awaitEnd');
-    expect(r2.events).toContainEqual(expect.objectContaining({ t: 'casinoSkip', kind: 'land' }));
-  });
-
-  it('đặt được ô đã có nhà (nhà đi kèm ô); nhận ô thế chấp trả phí 10%', () => {
-    let s = mkGame(3, FS);
-    own(s, 'p1', 1, 3);
-    s.properties[3]!.houses = 4;
-    own(s, 'p2', 6);
-    own(s, 'p3', 9);
-    s.properties[9]!.mortgaged = true;
-    pl(s, 'p1').position = 25;
-    ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 2]));
-    expect(s.casino!.eligible).toEqual(['p1', 'p2', 'p3']);
-    ({ state: s } = act(s, 'p1', { type: 'casinoStake', pos: 3 }));
-    ({ state: s } = act(s, 'p2', { type: 'casinoStake', pos: 6 }));
-    ({ state: s } = act(s, 'p3', { type: 'casinoStake', pos: 9 }));
-    ({ state: s } = act(s, 'p1', { type: 'casinoRoll' }, [1, 2]));
-    ({ state: s } = act(s, 'p2', { type: 'casinoRoll' }, [6, 6]));
-    ({ state: s } = act(s, 'p3', { type: 'casinoRoll' }, [1, 1]));
-    expect(s.properties[3]!.owner).toBe('p2');
-    expect(s.properties[3]!.houses).toBe(4);
-    expect(s.properties[9]!.owner).toBe('p2');
-    expect(pl(s, 'p2').cash).toBe(1500 - 6); // phí 10% của 60 tr thế chấp
-  });
-});
-
 describe('Bộ thẻ Ác Quỷ', () => {
   const DV = { ...FS, devilCards: true };
   const idx = (deck: 'chance' | 'chest', id: string) => DECKS[deck].findIndex((c) => c.id === id);
@@ -392,5 +311,79 @@ describe('Tung canh lực', () => {
     const r = act(s, 'p1', { type: 'roll', power: 100 });
     const ev = r.events.find((e) => e.t === 'roll');
     expect(ev && ev.t === 'roll' && ev.power).toBe(100);
+  });
+});
+
+describe('Đấu Trí Toán (ô 28 Freestyle)', () => {
+  /** p1 dừng ở ô 28; tiền vào cửa = stakeStep × 50 */
+  function openQuiz(n = 3, stakeStep = 6) {
+    let s = mkGame(n, FS);
+    pl(s, 'p1').position = 25;
+    ({ state: s } = act(s, 'p1', { type: 'roll' }, [1, 2, stakeStep]));
+    return s;
+  }
+
+  it('dừng ở ô 28: mở Đấu Trí Toán, tiền vào cửa 100 tr – 1 tỷ', () => {
+    const s = openQuiz(3, 6);
+    expect(s.phase.kind).toBe('quiz');
+    expect(s.quiz!.stake).toBe(300);
+    expect(s.quiz!.eligible).toEqual(['p1', 'p2', 'p3']);
+    const s2 = openQuiz(3, 20);
+    expect(s2.quiz!.stake).toBe(1000);
+  });
+
+  it('nhất nhận 75% quỹ, nhì 25%', () => {
+    let s = openQuiz(3, 6);
+    ({ state: s } = act(s, 'p1', { type: 'quizJoin' }));
+    ({ state: s } = act(s, 'p2', { type: 'quizJoin' }));
+    ({ state: s } = act(s, 'p3', { type: 'quizJoin' }));
+    expect(s.quiz!.stage).toBe('ready');
+    expect(s.quiz!.pot).toBe(900);
+    expect(pl(s, 'p1').cash).toBe(1200);
+    // Hết 5 giây chuẩn bị: ra câu 20 + 30
+    ({ state: s } = act(s, 'system', { type: 'quizTimeout' }, [0, 20, 30]));
+    expect(s.quiz!.question).toEqual({ a: 20, op: '+', b: 30 });
+    expect(() => act(s, 'p1', { type: 'quizJoin' })).toThrow();
+    ({ state: s } = act(s, 'p3', { type: 'quizAnswer', value: 51 })); // sai
+    expect(() => act(s, 'p3', { type: 'quizAnswer', value: 50 })).toThrow('1 lần');
+    ({ state: s } = act(s, 'p2', { type: 'quizAnswer', value: 50 }));
+    const r = act(s, 'p1', { type: 'quizAnswer', value: 50 });
+    s = r.state;
+    expect(s.quiz).toBeNull();
+    expect(pl(s, 'p2').cash).toBe(1200 + 675);
+    expect(pl(s, 'p1').cash).toBe(1200 + 225);
+    expect(pl(s, 'p3').cash).toBe(1200);
+    expect(r.events).toContainEqual(
+      expect.objectContaining({ t: 'quizResult', first: 'p2', second: 'p1', prize1: 675 }),
+    );
+  });
+
+  it('chỉ một người đúng: nhận cả quỹ; không ai đúng: hoàn tiền', () => {
+    let s = openQuiz(2, 4);
+    ({ state: s } = act(s, 'p1', { type: 'quizJoin' }));
+    ({ state: s } = act(s, 'p2', { type: 'quizJoin' }));
+    ({ state: s } = act(s, 'system', { type: 'quizTimeout' }, [2, 7, 8]));
+    expect(quizAnswerOf(s.quiz!.question!)).toBe(56);
+    ({ state: s } = act(s, 'p1', { type: 'quizAnswer', value: 56 }));
+    ({ state: s } = act(s, 'system', { type: 'quizTimeout' }));
+    expect(pl(s, 'p1').cash).toBe(1500 + 200);
+    expect(pl(s, 'p2').cash).toBe(1500 - 200);
+
+    let t = openQuiz(2, 4);
+    ({ state: t } = act(t, 'p1', { type: 'quizJoin' }));
+    ({ state: t } = act(t, 'p2', { type: 'quizJoin' }));
+    ({ state: t } = act(t, 'system', { type: 'quizTimeout' }, [1, 50, 20]));
+    ({ state: t } = act(t, 'p1', { type: 'quizAnswer', value: 1 }));
+    ({ state: t } = act(t, 'p2', { type: 'quizAnswer', value: 2 }));
+    expect(pl(t, 'p1').cash).toBe(1500);
+    expect(pl(t, 'p2').cash).toBe(1500);
+  });
+
+  it('dưới 2 người vào chơi thì huỷ, hoàn tiền; ai chưa quyết khi hết 10 giây coi như không chơi', () => {
+    let s = openQuiz(3, 6);
+    ({ state: s } = act(s, 'p2', { type: 'quizJoin' }));
+    ({ state: s } = act(s, 'system', { type: 'quizTimeout' }));
+    expect(s.quiz).toBeNull();
+    expect(pl(s, 'p2').cash).toBe(1500);
   });
 });

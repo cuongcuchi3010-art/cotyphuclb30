@@ -35,6 +35,8 @@ import type {
   CardChoiceKind,
   Casino,
   CasinoKind,
+  Quiz,
+  QuizOp,
   Rng,
   Rules,
   TokenId,
@@ -516,6 +518,9 @@ function applySystem(c: Ctx, a: Action): void {
     case 'casinoTimeout':
       casinoTimeout(c);
       return;
+    case 'quizTimeout':
+      quizTimeout(c);
+      return;
     case 'autoDraw': {
       if (s.phase.kind !== 'drawOrder' || !s.lots) fail('Không ở pha bốc thăm');
       const n = s.players.length;
@@ -677,6 +682,15 @@ function applyPlayer(c: Ctx, p: PlayerState, a: PlayerAction): void {
       return;
     case 'casinoRoll':
       casinoRoll(c, p);
+      return;
+    case 'quizJoin':
+      quizJoin(c, p);
+      return;
+    case 'quizPass':
+      quizPass(c, p);
+      return;
+    case 'quizAnswer':
+      quizAnswer(c, p, a.value);
       return;
     case 'mercyRequest': {
       const d = mercyDebt(s, p.id);
@@ -898,6 +912,10 @@ function landOn(c: Ctx, p: PlayerState, ctx: RentContext): void {
   c.ev.push({ t: 'land', playerId: p.id, pos });
 
   const ck = casinoKindAt(s, pos);
+  if (ck === 'quiz') {
+    openQuiz(c, p, pos);
+    return;
+  }
   if (ck) {
     openCasino(c, p, ck, pos);
     return;
@@ -1268,7 +1286,8 @@ export const CASINO_UNLIMITED = 0;
 export function casinoKindAt(s: GameState, pos: number): CasinoKind | null {
   if (!isFreestyle(s)) return null;
   if (pos === CASINO_CASH_POS) return 'cash';
-  if (pos === CASINO_LAND_POS) return 'land';
+  // Ô 28: Đấu Trí Toán (đã thay hẳn Sòng Bạc Đất)
+  if (pos === CASINO_LAND_POS) return 'quiz';
   return null;
 }
 
@@ -1494,6 +1513,175 @@ function resolveCasino(c: Ctx): void {
     rolls: { ...k.rolls },
   });
   closeCasino(c);
+}
+
+// ---------------------------------------------------------------------------
+// Freestyle: Đấu Trí Toán (ô 28)
+// ---------------------------------------------------------------------------
+
+/** Tiền vào cửa: ngẫu nhiên 100 tr – 1 tỷ, bước 50 tr */
+export const QUIZ_STAKE_MIN = 100;
+export const QUIZ_STAKE_MAX = 1000;
+/** Tỉ lệ chia quỹ: nhất 75%, nhì 25% */
+export const QUIZ_FIRST_SHARE = 0.75;
+
+export function quizAnswerOf(q: { a: number; op: QuizOp; b: number }): number {
+  return q.op === '+' ? q.a + q.b : q.op === '-' ? q.a - q.b : q.a * q.b;
+}
+
+/** Câu hỏi tính nhẩm: cộng / trừ số có 2 chữ số, hoặc nhân bảng cửu chương mở rộng */
+function makeQuestion(rng: Rng): { a: number; op: QuizOp; b: number } {
+  const k = rng.int(0, 2);
+  if (k === 0) return { a: rng.int(12, 99), op: '+', b: rng.int(12, 99) };
+  if (k === 1) {
+    const a = rng.int(30, 99);
+    return { a, op: '-', b: rng.int(11, a - 5) };
+  }
+  return { a: rng.int(3, 12), op: '×', b: rng.int(6, 19) };
+}
+
+function openQuiz(c: Ctx, p: PlayerState, pos: number): void {
+  const { s } = c;
+  const stake = rng50(c.rng);
+  const eligible = alivePlayers(s)
+    .filter((o) => o.cash >= stake)
+    .map((o) => o.id);
+  if (eligible.length < 2) {
+    c.ev.push({ t: 'quizSkip', opener: p.id, stake });
+    return;
+  }
+  s.quiz = {
+    pos,
+    opener: p.id,
+    stake,
+    stage: 'join',
+    eligible,
+    joined: [],
+    passed: [],
+    pot: 0,
+    question: null,
+    answered: [],
+    correct: [],
+  };
+  s.phase = { kind: 'quiz' };
+  c.ev.push({ t: 'quizOpen', pos, opener: p.id, stake });
+}
+
+function rng50(rng: Rng): number {
+  return rng.int(QUIZ_STAKE_MIN / 50, QUIZ_STAKE_MAX / 50) * 50;
+}
+
+function requireQuiz(s: GameState, stage: Quiz['stage']): Quiz {
+  const q = s.quiz;
+  if (s.phase.kind !== 'quiz' || !q) fail('Không có Đấu Trí Toán nào đang mở');
+  if (q.stage !== stage) fail(stage === 'join' ? 'Đã hết giờ vào chơi' : 'Chưa tới lúc trả lời');
+  return q;
+}
+
+function quizJoin(c: Ctx, p: PlayerState): void {
+  const q = requireQuiz(c.s, 'join');
+  if (!q.eligible.includes(p.id)) fail(`Cần ít nhất ${q.stake} tr tiền mặt để vào chơi`);
+  if (q.joined.includes(p.id)) fail('Bạn đã vào chơi rồi');
+  if (p.cash < q.stake) fail('Không đủ tiền mặt');
+  p.cash -= q.stake;
+  q.pot += q.stake;
+  q.joined.push(p.id);
+  q.passed = q.passed.filter((x) => x !== p.id);
+  c.ev.push({ t: 'quizJoin', playerId: p.id, stake: q.stake });
+  maybeQuizReady(c);
+}
+
+function quizPass(c: Ctx, p: PlayerState): void {
+  const q = requireQuiz(c.s, 'join');
+  if (!q.eligible.includes(p.id)) fail('Bạn không ở bàn này');
+  if (q.joined.includes(p.id)) fail('Bạn đã bỏ tiền vào quỹ');
+  if (!q.passed.includes(p.id)) q.passed.push(p.id);
+  c.ev.push({ t: 'quizPass', playerId: p.id });
+  maybeQuizReady(c);
+}
+
+function maybeQuizReady(c: Ctx): void {
+  const q = c.s.quiz!;
+  if (q.eligible.every((id) => q.joined.includes(id) || q.passed.includes(id))) quizEndJoin(c);
+}
+
+/** Hết thời gian vào chơi: đủ 2 người thì chuẩn bị, không thì hoàn tiền */
+function quizEndJoin(c: Ctx): void {
+  const { s } = c;
+  const q = s.quiz!;
+  if (q.joined.length < 2) {
+    for (const id of q.joined) getPlayer(s, id).cash += q.stake;
+    c.ev.push({ t: 'quizCancel' });
+    closeQuiz(c);
+    return;
+  }
+  q.stage = 'ready';
+  c.ev.push({ t: 'quizReady', players: [...q.joined], pot: q.pot });
+}
+
+function quizAnswer(c: Ctx, p: PlayerState, value: number): void {
+  const q = requireQuiz(c.s, 'question');
+  if (!q.joined.includes(p.id)) fail('Bạn không tham gia lượt này');
+  if (q.answered.includes(p.id)) fail('Mỗi người chỉ được trả lời 1 lần');
+  q.answered.push(p.id);
+  const ok = value === quizAnswerOf(q.question!);
+  if (ok) q.correct.push(p.id);
+  c.ev.push({ t: 'quizAnswer', playerId: p.id, ok });
+  if (q.correct.length >= 2 || q.answered.length >= q.joined.length) resolveQuiz(c);
+}
+
+function quizTimeout(c: Ctx): void {
+  const q = c.s.quiz;
+  if (c.s.phase.kind !== 'quiz' || !q) fail('Không có Đấu Trí Toán nào đang mở');
+  if (q.stage === 'join') {
+    // Ai chưa quyết thì coi như không chơi
+    for (const id of q.eligible)
+      if (!q.joined.includes(id) && !q.passed.includes(id)) q.passed.push(id);
+    quizEndJoin(c);
+  } else if (q.stage === 'ready') {
+    q.stage = 'question';
+    q.question = makeQuestion(c.rng);
+    c.ev.push({ t: 'quizQuestion', ...q.question });
+  } else resolveQuiz(c);
+}
+
+function resolveQuiz(c: Ctx): void {
+  const { s } = c;
+  const q = s.quiz!;
+  const answer = quizAnswerOf(q.question!);
+  const [first, second] = q.correct;
+  let prize1 = 0;
+  let prize2 = 0;
+  if (!first) {
+    // Không ai đúng: hoàn tiền vào cửa
+    for (const id of q.joined) getPlayer(s, id).cash += q.stake;
+  } else if (!second) {
+    // Chỉ một người đúng: nhận cả quỹ
+    prize1 = q.pot;
+    getPlayer(s, first).cash += prize1;
+  } else {
+    prize1 = Math.round(q.pot * QUIZ_FIRST_SHARE);
+    prize2 = q.pot - prize1;
+    getPlayer(s, first).cash += prize1;
+    getPlayer(s, second).cash += prize2;
+  }
+  c.ev.push({
+    t: 'quizResult',
+    answer,
+    pot: q.pot,
+    first: first ?? null,
+    second: second ?? null,
+    prize1,
+    prize2,
+    refunded: !first,
+  });
+  closeQuiz(c);
+}
+
+function closeQuiz(c: Ctx): void {
+  c.s.quiz = null;
+  setNeutral(c.s);
+  proceed(c);
 }
 
 function closeCasino(c: Ctx): void {
@@ -1751,6 +1939,7 @@ function proceed(c: Ctx): void {
       s.phase.kind === 'auction' ||
       s.phase.kind === 'cardChoice' ||
       s.phase.kind === 'casino' ||
+      s.phase.kind === 'quiz' ||
       s.phase.kind === 'mercy'
     )
       return;
@@ -2269,6 +2458,7 @@ function acceptTrade(c: Ctx, p: PlayerState, id: string): void {
   if (!t || t.to !== p.id) fail('Không tìm thấy đề nghị');
   if (s.phase.kind === 'auction') fail('Đợi đấu giá kết thúc rồi mới chấp nhận giao dịch');
   if (s.phase.kind === 'casino') fail('Đợi bàn cược Sòng Bạc xong rồi mới chấp nhận giao dịch');
+  if (s.phase.kind === 'quiz') fail('Đợi Đấu Trí Toán xong rồi mới chấp nhận giao dịch');
   s.trades = s.trades.filter((x) => x.id !== id);
   const err = validateTrade(s, t);
   if (err) {
@@ -2313,9 +2503,9 @@ export function canBorrowFromBank(s: GameState, p: PlayerState): boolean {
   );
 }
 
-/** Hạn mức vay ngân hàng: 500 tr; Freestyle gấp 5 lần hệ số tiền thuê (×2 → 5 tỷ) */
+/** Hạn mức vay ngân hàng: 500 tr; Freestyle gấp 5 lần hệ số tiền phạt (×2 → 5 tỷ) */
 export function bankLoanMax(s: GameState): number {
-  return isFreestyle(s) ? Math.round(BANK_LOAN_MAX * 5 * rentMultOf(s)) : BANK_LOAN_MAX;
+  return isFreestyle(s) ? Math.round(BANK_LOAN_MAX * 5 * (s.rules.feeMult ?? 2)) : BANK_LOAN_MAX;
 }
 
 function takeBankLoan(c: Ctx, p: PlayerState, amount: number): void {
@@ -2455,6 +2645,8 @@ export function timeoutAction(s: GameState): TimeoutPlan | null {
       return { by: 'system', action: { type: 'autoDraw' } };
     case 'casino':
       return { by: 'system', action: { type: 'casinoTimeout' } };
+    case 'quiz':
+      return { by: 'system', action: { type: 'quizTimeout' } };
     case 'mercy':
       return { by: 'system', action: { type: 'mercyTimeout' } };
     default:
@@ -2467,7 +2659,12 @@ export function actingPlayer(s: GameState): PlayerId | null {
   if (s.phase.kind === 'gameOver') return null;
   if (s.phase.kind === 'raiseFunds') return s.phase.debtor;
   if (s.phase.kind === 'mercy') return s.phase.owner;
-  if (s.phase.kind === 'auction' || s.phase.kind === 'drawOrder' || s.phase.kind === 'casino')
+  if (
+    s.phase.kind === 'auction' ||
+    s.phase.kind === 'drawOrder' ||
+    s.phase.kind === 'casino' ||
+    s.phase.kind === 'quiz'
+  )
     return null;
   return currentPlayer(s).id;
 }

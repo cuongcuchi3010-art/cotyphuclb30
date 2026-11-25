@@ -196,7 +196,7 @@ export function useMeasuredHeight<T extends HTMLElement>(): [React.RefObject<T>,
   return [ref, h];
 }
 
-/** Tên ô theo ván (Freestyle: ô 12 / 28 là Sòng Bạc) */
+/** Tên ô theo ván (Freestyle: ô 12 Sòng Bạc Tiền, ô 28 Đấu Trí Toán) */
 export function squareName(game: GameState | null | undefined, pos: number, short = false): string {
   const ck = game ? casinoKindAt(game, pos) : null;
   if (ck) return CASINO_NAMES[ck];
@@ -237,7 +237,7 @@ export function cardText(game: GameState | null | undefined, card: Card): string
   if (!game) return card.text;
   const free = game.rules.mode === 'freestyle';
   if (free && card.effect.type === 'nearestUtility')
-    return 'Đi tới Sòng Bạc gần nhất phía trước và mở bàn cược như khi dừng ở ô.';
+    return 'Đi tới Sòng Bạc Tiền hoặc Đấu Trí Toán gần nhất phía trước, chơi như khi dừng ở ô.';
   const go = game.rules.goSalary ?? 200;
   const mult = free ? (game.rules.feeMult ?? 2) : 1;
   const fmt = (n: number) => (n >= 1000 ? `${(n / 1000).toLocaleString('vi-VN')} tỷ` : `${n} tr`);

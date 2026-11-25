@@ -17,12 +17,18 @@ const REASON: Record<string, string> = {
 };
 
 /** Tên hai ô Sòng Bạc (Freestyle) */
-export const CASINO_NAMES = { cash: 'Sòng Bạc Tiền', land: 'Sòng Bạc Đất' } as const;
+export const CASINO_NAMES = {
+  cash: 'Sòng Bạc Tiền',
+  land: 'Sòng Bạc Đất',
+  quiz: 'Đấu Trí Toán',
+} as const;
 
 /** Câu nhật ký tiếng Việt cho một sự kiện. null = không cần ghi. */
 export function describeEvent(
   ev: GameEvent,
-  s: Pick<GameState, 'players'> & { rules?: Pick<GameState['rules'], 'mode'> },
+  s: Pick<GameState, 'players'> & {
+    rules?: Pick<GameState['rules'], 'mode'>;
+  },
 ): string | null {
   const name = (id: string | null | undefined) =>
     id === 'bank' ? 'Ngân hàng' : (s.players.find((p) => p.id === id)?.name ?? '?');
@@ -31,7 +37,7 @@ export function describeEvent(
     free && i === 12
       ? CASINO_NAMES.cash
       : free && i === 28
-        ? CASINO_NAMES.land
+        ? CASINO_NAMES.quiz
         : free && i === 20
           ? 'Lễ Hội'
           : square(i).name;
@@ -138,6 +144,27 @@ export function describeEvent(
         : ev.choice === 'half'
           ? `🙏 ${name(ev.owner)} ban ân huệ: giảm 50%, ${name(ev.payer)} chỉ trả ${formatMoney(ev.amount)}`
           : `${name(ev.owner)} từ chối ban ân huệ cho ${name(ev.payer)}`;
+    case 'quizOpen':
+      return `🧮 ${name(ev.opener)} mở ${CASINO_NAMES.quiz}: vào cửa ${formatMoney(ev.stake)}, ai muốn chơi thì vào trong 10 giây`;
+    case 'quizSkip':
+      return `🧮 ${CASINO_NAMES.quiz} không mở được: không đủ 2 người có ${formatMoney(ev.stake)} tiền mặt`;
+    case 'quizJoin':
+      return `🧮 ${name(ev.playerId)} vào chơi (${formatMoney(ev.stake)})`;
+    case 'quizPass':
+      return `🧮 ${name(ev.playerId)} không chơi`;
+    case 'quizCancel':
+      return `🧮 ${CASINO_NAMES.quiz}: không đủ 2 người, hoàn tiền`;
+    case 'quizReady':
+      return `🧮 ${ev.players.length} người vào chơi, quỹ ${formatMoney(ev.pot)}. Chuẩn bị…`;
+    case 'quizQuestion':
+      return `🧮 Câu hỏi: ${ev.a} ${ev.op} ${ev.b} = ?`;
+    case 'quizAnswer':
+      return null;
+    case 'quizResult':
+      if (ev.refunded) return `🧮 Đáp án ${ev.answer}: không ai đúng, hoàn tiền vào cửa`;
+      return ev.second
+        ? `🧮 Đáp án ${ev.answer}: ${name(ev.first)} nhất (+${formatMoney(ev.prize1)}), ${name(ev.second)} nhì (+${formatMoney(ev.prize2)})`
+        : `🧮 Đáp án ${ev.answer}: chỉ ${name(ev.first)} đúng, nhận cả quỹ ${formatMoney(ev.prize1)}`;
     case 'casinoOpen':
       return ev.kind === 'cash'
         ? `🎰 ${name(ev.opener)} mở ${CASINO_NAMES.cash}: mọi người đặt cược (${ev.cap > 0 ? `tối đa ${formatMoney(ev.cap)}` : 'không giới hạn'})`

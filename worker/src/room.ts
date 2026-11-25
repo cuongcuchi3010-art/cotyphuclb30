@@ -37,6 +37,10 @@ export const DRAW_MS = 30_000;
 export const CASINO_BET_MS = 20_000;
 export const CASINO_STAKE_MS = 25_000;
 export const CASINO_ROLL_MS = 10_000;
+/** Đấu Trí Toán: 10 giây quyết định vào chơi, 5 giây chuẩn bị, 20 giây trả lời */
+export const QUIZ_JOIN_MS = 10_000;
+export const QUIZ_READY_MS = 5_000;
+export const QUIZ_ANSWER_MS = 20_000;
 /** Quyền ân huệ: thời gian chủ ô quyết định (hết giờ thì thu đủ) */
 export const MERCY_MS = 12_000;
 export const RAISE_FUNDS_MS = 120_000;
@@ -504,7 +508,7 @@ export class RoomCore {
 
   private deadlineKeyFor(g: GameState): string {
     const actor = actingPlayer(g) ?? '-';
-    return `${g.phase.kind}:${actor}:${g.turn}:${g.doublesCount}:${g.rolled}:${g.auction?.seq ?? ''}:${g.auction?.pos ?? ''}:${g.casino?.stage ?? ''}:${g.casino?.round ?? ''}`;
+    return `${g.phase.kind}:${actor}:${g.turn}:${g.doublesCount}:${g.rolled}:${g.auction?.seq ?? ''}:${g.auction?.pos ?? ''}:${g.casino?.stage ?? ''}:${g.casino?.round ?? ''}:${g.quiz?.stage ?? ''}`;
   }
 
   private updateDeadline(now: number): void {
@@ -527,6 +531,15 @@ export class RoomCore {
         break;
       case 'mercy':
         snap.deadline = now + MERCY_MS;
+        break;
+      case 'quiz':
+        snap.deadline =
+          now +
+          (g.quiz?.stage === 'join'
+            ? QUIZ_JOIN_MS
+            : g.quiz?.stage === 'ready'
+              ? QUIZ_READY_MS
+              : QUIZ_ANSWER_MS);
         break;
       case 'casino':
         // Sòng Bạc: luôn có đếm ngược riêng để ván không bị treo

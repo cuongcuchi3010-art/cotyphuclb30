@@ -230,6 +230,8 @@ export type Phase =
   | { kind: 'raiseFunds'; debtor: PlayerId }
   /** Freestyle: bàn cược Sòng Bạc đang mở (chi tiết ở state.casino) */
   | { kind: 'casino' }
+  /** Freestyle: Đấu Trí Toán đang mở (chi tiết ở state.quiz) */
+  | { kind: 'quiz' }
   /** Quyền ân huệ: người thiếu tiền trả thuê đã xin, chủ ô chọn giảm 100% / 50% / từ chối */
   | { kind: 'mercy'; pos: number; owner: PlayerId; payer: PlayerId; amount: number }
   | { kind: 'gameOver' };
@@ -287,13 +289,40 @@ export interface GameState {
   endReason?: 'lastStanding' | 'timeUp';
   /** Freestyle: bàn cược Sòng Bạc đang mở */
   casino?: Casino | null;
+  /** Freestyle: Đấu Trí Toán đang mở */
+  quiz?: Quiz | null;
   /** Thẻ Băng giá: chủ đất → lượt hết đóng băng (đất của người đó không thu thuê, không xây) */
   frozen?: Record<PlayerId, number>;
   /** Quyền ân huệ đã dùng: chủ ô → danh sách người đã được ân huệ */
   mercyUsed?: Record<PlayerId, PlayerId[]>;
 }
 
-export type CasinoKind = 'cash' | 'land';
+/** 'quiz': ô Đấu Trí Toán (ô 28 khi bật quizSquare) — dùng chung chỗ đánh dấu ô đặc biệt */
+export type CasinoKind = 'cash' | 'land' | 'quiz';
+
+export type QuizOp = '+' | '-' | '×';
+
+/** Đấu Trí Toán: ai trả lời đúng nhanh nhất được 75% quỹ, nhì được 25% */
+export interface Quiz {
+  pos: number;
+  /** Người dừng ở ô */
+  opener: PlayerId;
+  /** Tiền vào cửa mỗi người (máy chọn ngẫu nhiên 100 tr – 1 tỷ) */
+  stake: number;
+  /** 'join': 10 giây quyết định · 'ready': 5 giây chuẩn bị · 'question': đang hỏi */
+  stage: 'join' | 'ready' | 'question';
+  /** Người đủ tiền vào chơi */
+  eligible: PlayerId[];
+  /** Người đã vào (đã bỏ tiền vào quỹ) */
+  joined: PlayerId[];
+  passed: PlayerId[];
+  pot: number;
+  question: { a: number; op: QuizOp; b: number } | null;
+  /** Người đã trả lời (mỗi người 1 lần) */
+  answered: PlayerId[];
+  /** Người trả lời đúng, theo thứ tự nhanh nhất */
+  correct: PlayerId[];
+}
 
 export interface Casino {
   kind: CasinoKind;

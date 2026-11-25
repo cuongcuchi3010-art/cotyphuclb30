@@ -291,6 +291,49 @@ describe('Phòng chơi', () => {
     expect(a.room.players.find((p) => p.id === pid)!.isBot).toBe(false);
   });
 
+  it('Đấu Trí Toán: 10 giây vào chơi, 5 giây chuẩn bị, 20 giây trả lời rồi chia quỹ', () => {
+    const { env, a, b, c } = setup3();
+    a.msg({ type: 'start' });
+    drawAll(env);
+    const g = env.core.snap.game!;
+    g.rules.mode = 'freestyle';
+    const ids = [a, b, c].map((x) => x.playerId!);
+    g.phase = { kind: 'quiz' };
+    g.quiz = {
+      pos: 28,
+      opener: ids[0]!,
+      stake: 300,
+      stage: 'join',
+      eligible: ids,
+      joined: [],
+      passed: [],
+      pot: 0,
+      question: null,
+      answered: [],
+      correct: [],
+    };
+    a.msg({ type: 'action', action: { type: 'quizJoin' } });
+    b.msg({ type: 'action', action: { type: 'quizJoin' } });
+    expect(a.room.game!.quiz!.pot).toBe(600);
+    env.advance(10_500); // hết 10 giây: c chưa quyết → không chơi
+    expect(a.room.game!.quiz!.stage).toBe('ready');
+    env.advance(5_500); // hết 5 giây chuẩn bị → ra câu hỏi
+    const q = a.room.game!.quiz!;
+    expect(q.stage).toBe('question');
+    const right =
+      q.question!.op === '+'
+        ? q.question!.a + q.question!.b
+        : q.question!.op === '-'
+          ? q.question!.a - q.question!.b
+          : q.question!.a * q.question!.b;
+    const before = a.room.game!.players.find((p) => p.id === ids[1])!.cash;
+    b.msg({ type: 'action', action: { type: 'quizAnswer', value: right } });
+    env.advance(21_000); // hết 20 giây: chỉ b đúng → ăn cả quỹ
+    expect(a.room.game!.quiz ?? null).toBeNull();
+    expect(a.room.game!.players.find((p) => p.id === ids[1])!.cash).toBe(before + 600);
+    void c;
+  });
+
   it('bot thay người chơi tự đi', () => {
     const { env, a, c } = setup3();
     a.msg({ type: 'start' });

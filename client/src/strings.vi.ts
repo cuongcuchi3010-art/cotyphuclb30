@@ -103,7 +103,7 @@ export const S = {
     modeInfo: {
       classic: 'Luật cờ tỷ phú quen thuộc, tuỳ chỉnh bên dưới.',
       freestyle:
-        'Tiền to hơn, mua xong được xây ngay (số nhà tuỳ chọn), ghé lại ô là xây tới 4 nhà, lễ hội ×2–×5, ô EVN và Viettel thành Sòng Bạc Tiền và Sòng Bạc Đất, ô Cà Phê thành ô Lễ Hội.',
+        'Tiền to hơn, mua xong được xây ngay (số nhà tuỳ chọn), ghé lại ô là xây tới 4 nhà, lễ hội ×2–×5, ô EVN thành Sòng Bạc Tiền, ô Viettel thành Đấu Trí Toán, ô Cà Phê thành ô Lễ Hội.',
     },
     goSalary: 'Tiền qua Khởi Hành',
     rentMult: 'Hệ số tiền thuê',
@@ -255,6 +255,27 @@ export const S = {
     waitingOwner: (owner: string, payer: string) => `🙏 ${payer} đang xin ${owner} ban ân huệ…`,
   },
 
+  quiz: {
+    intro: (opener: string, stake: string) =>
+      `${opener} mở Đấu Trí Toán · vào cửa ${stake} mỗi người`,
+    pot: 'Quỹ',
+    join: (stake: string) => `🧮 Vào chơi (−${stake})`,
+    pass: 'Không chơi',
+    joined: '✅ Bạn đã vào chơi, chờ mọi người…',
+    passed: 'Bạn không chơi lượt này',
+    notEligible: 'Bạn không đủ tiền mặt để vào chơi',
+    getReady: 'Chuẩn bị!',
+    answerLabel: 'Đáp án',
+    send: 'Trả lời',
+    waitOthers: 'Đã gửi đáp án, chờ kết quả…',
+    watching: '👀 Đang xem mọi người tính nhẩm',
+    oneTry: 'mỗi người trả lời 1 lần',
+    rule: 'Nhanh nhất ăn 75% quỹ, nhì ăn 25%. Chỉ 1 người đúng ăn cả quỹ; không ai đúng thì hoàn tiền.',
+    answerIs: 'Đáp án:',
+    nobody: 'Không ai trả lời đúng — hoàn tiền vào cửa',
+    close: 'Đóng',
+    waiting: '🧮 Đấu Trí Toán đang diễn ra…',
+  },
   casino: {
     cashIntro: (opener: string, cap: string) =>
       `${opener} làm nhà cái. Ai muốn chơi thì đặt cược (${cap}); đổ cao hơn nhà cái thì thắng, thấp hơn thì thua, bằng điểm thì hoà.`,

@@ -57,8 +57,8 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
             </li>
             <li>Lễ hội nhân tiền thuê ngẫu nhiên ×2 đến ×5 (số nhỏ hay ra hơn).</li>
             <li>
-              Vay ngân hàng tối đa {formatMoney(500 * 5 * (rules?.rentMult ?? 2))} (500 tr × 5 × hệ
-              số tiền thuê).
+              Vay ngân hàng tối đa {formatMoney(500 * 5 * (rules?.feeMult ?? 2))} (500 tr × 5 × hệ
+              số tiền phạt).
             </li>
             <li>
               <b>Sòng Bạc Tiền</b> (thay EVN): người dừng ô làm nhà cái; ai muốn thì đặt cược (không
@@ -66,11 +66,16 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
               như trả nợ). Đổ cao hơn nhà cái thắng tiền cược, thấp hơn thì thua, bằng điểm thì hoà.
             </li>
             <li>
-              <b>Sòng Bạc Đất</b> (thay Viettel): mỗi người đặt tối đa 1 ô của mình (nhà, khách sạn
-              trên ô đi kèm), cần từ 2 người; tất cả cùng đổ, ai cao nhất lấy hết, hoà thì đổ lại.
+              <b>Đấu Trí Toán</b> (thay Viettel): máy chọn tiền vào cửa ngẫu nhiên 100 tr – 1 tỷ;
+              mọi người có 10 giây quyết định vào chơi (bỏ tiền vào quỹ), cần từ 2 người. Sau 5 giây
+              chuẩn bị, máy ra một phép tính nhẩm; ai trả lời đúng nhanh nhất được 75% quỹ, nhì được
+              25% (mỗi người trả lời 1 lần, 20 giây). Chỉ 1 người đúng thì ăn cả quỹ; không ai đúng
+              thì hoàn tiền.
             </li>
             <li>Ô Cà Phê (góc 20) thành ô Lễ Hội: dừng ở đó chọn 1 ô đất của mình mở lễ hội.</li>
-            <li>Thẻ “Đi tới tiện ích gần nhất” thành “Đi tới Sòng Bạc gần nhất”.</li>
+            <li>
+              Thẻ “Đi tới tiện ích gần nhất” thành “Đi tới Sòng Bạc Tiền / Đấu Trí Toán gần nhất”.
+            </li>
             {rules?.devilCards && (
               <li>
                 <b>😈 Bộ thẻ Ác Quỷ</b>: Khí Vận <i>Hoán đổi số phận</i> (đổi toàn bộ tiền, đất, nhà

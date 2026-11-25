@@ -39,6 +39,7 @@ export function ActionBar() {
         {S.mercy.waitingOwner(nameOf(room, ph.owner), nameOf(room, ph.payer))}
       </div>
     );
+  if (ph.kind === 'quiz') return <div className={note}>{S.quiz.waiting}</div>;
   if (ph.kind === 'casino' && game.casino)
     return <div className={note}>{S.casino.waiting(CASINO_NAMES[game.casino.kind])}</div>;
   if (ph.kind === 'cardChoice') {
