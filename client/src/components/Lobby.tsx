@@ -139,7 +139,7 @@ export function Lobby() {
           <Sel
             label={S.lobby.goSalary}
             value={rules.goSalary ?? 200}
-            options={[100, 200, 300, 500, 1000]}
+            options={free ? [100, 200, 300, 500, 700, 1000] : [100, 200, 300, 500, 1000]}
             format={(v) =>
               formatMoney(v) + (v === (free ? 500 : 200) ? ` (${S.lobby.standard})` : '')
             }
