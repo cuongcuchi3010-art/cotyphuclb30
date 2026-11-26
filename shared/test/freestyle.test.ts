@@ -334,23 +334,15 @@ describe('Đấu Trí (ô 28 Freestyle)', () => {
     answerIndex: 3,
   };
 
-  it('dừng ở ô 28: mở Đấu Trí, tiền vào cửa 100 tr – 1 tỷ × hệ số phạt', () => {
+  it('dừng ở ô 28: mở Đấu Trí, tiền vào cửa 100 tr – 1 tỷ', () => {
     const s = openQuiz(3, 6);
     expect(s.phase.kind).toBe('quiz');
     expect(s.quiz!.stake).toBe(300);
     expect(s.quiz!.eligible).toEqual(['p1', 'p2', 'p3']);
     expect(openQuiz(3, 20).quiz!.stake).toBe(1000);
-    // FS: phạt ×2 → tối đa 2 tỷ (cần người chơi đủ tiền mặt để mở)
-    const rich = (step: number) => {
-      let r = mkGame(3, { ...FS, startingCash: 5000 });
-      pl(r, 'p1').position = 25;
-      ({ state: r } = act(r, 'p1', { type: 'roll' }, [1, 2, step]));
-      return r;
-    };
-    expect(rich(40).quiz!.stake).toBe(2000);
-    expect(() => rich(41)).toThrow(); // vượt 2 tỷ: không có trong khoảng
-    expect(quizStakeMax(mkGame(2, { ...FS, feeMult: 3 }))).toBe(3000);
-    expect(quizStakeMax(mkGame(2, { ...FS, feeMult: 1 }))).toBe(1000);
+    // Tối đa 1 tỷ, không theo hệ số tiền phạt
+    expect(quizStakeMax(mkGame(2, { ...FS, feeMult: 5 }))).toBe(1000);
+    expect(() => openQuiz(3, 21)).toThrow(); // vượt 1 tỷ: không có trong khoảng
   });
 
   it('câu hỏi ngân hàng: nhất 75% quỹ, nhì 25%; ghi nhớ câu đã dùng', () => {

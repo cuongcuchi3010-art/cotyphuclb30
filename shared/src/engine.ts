@@ -1521,16 +1521,13 @@ function resolveCasino(c: Ctx): void {
 // Freestyle: Đấu Trí (ô 28)
 // ---------------------------------------------------------------------------
 
-/** Tiền vào cửa: ngẫu nhiên từ 100 tr tới 1 tỷ × hệ số tiền phạt, bước 50 tr */
+/** Tiền vào cửa: ngẫu nhiên 100 tr – 1 tỷ, bước 50 tr (không theo hệ số tiền phạt) */
 export const QUIZ_STAKE_MIN = 100;
 export const QUIZ_STAKE_BASE_MAX = 1000;
 
-/** Mức vào cửa tối đa của ô Đấu Trí: 1 tỷ × hệ số tiền phạt (×2 → 2 tỷ) */
-export function quizStakeMax(s: GameState): number {
-  return Math.max(
-    QUIZ_STAKE_MIN,
-    Math.round((QUIZ_STAKE_BASE_MAX * (s.rules.feeMult ?? 2)) / 50) * 50,
-  );
+/** Mức vào cửa tối đa của ô Đấu Trí: 1 tỷ */
+export function quizStakeMax(_s: GameState): number {
+  return QUIZ_STAKE_BASE_MAX;
 }
 /** Tỉ lệ chia quỹ: nhất 75%, nhì 25% */
 export const QUIZ_FIRST_SHARE = 0.75;

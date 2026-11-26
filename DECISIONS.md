@@ -404,3 +404,4 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 - 3D: nhãn ô đích dùng `squareName` (Đấu Trí / Sòng Bạc Tiền / Lễ Hội) thay tên ô gốc.
 - Đấu Trí: tiền vào cửa ngẫu nhiên từ 100 tr tới 1 tỷ × hệ số tiền phạt (`quizStakeMax`, bước 50 tr); phạt ×2 → tối đa 2 tỷ, ×3 → 3 tỷ.
 - Sảnh: bỏ bộ chọn chủ đề / độ khó Đấu Trí (luôn hỏi tất cả 21 chủ đề, mọi độ khó). `rules.quizCategories / quizDifficulties` vẫn giữ (mặc định rỗng = tất cả) để có thể mở lại sau.
+- Đấu Trí (sửa lại): tiền vào cửa ngẫu nhiên 100 tr – 1 tỷ cố định, không theo hệ số tiền phạt.
