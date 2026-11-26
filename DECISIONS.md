@@ -403,3 +403,4 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 - W11 — Kiểm tra phiên bản giao thức: `PROTOCOL_VERSION` (shared/protocol.ts, hiện = 2) gửi trong mỗi RoomView (`v`). Client lệch: máy chủ mới hơn → tự tải lại 1 lần; máy chủ cũ hơn (đang deploy) → hiện dải vàng "Máy chủ đang cập nhật… tải lại trang". Nguyên nhân lỗi "Hãy chọn một trong 4 đáp án" lặp lại: giao diện mới gửi vị trí đáp án (0–3) tới máy chủ còn bản cũ (đòi đúng con số). TĂNG `PROTOCOL_VERSION` mỗi khi đổi dữ liệu / hành động không tương thích.
 - 3D: nhãn ô đích dùng `squareName` (Đấu Trí / Sòng Bạc Tiền / Lễ Hội) thay tên ô gốc.
 - Đấu Trí: tiền vào cửa ngẫu nhiên từ 100 tr tới 1 tỷ × hệ số tiền phạt (`quizStakeMax`, bước 50 tr); phạt ×2 → tối đa 2 tỷ, ×3 → 3 tỷ.
+- Sảnh: bỏ bộ chọn chủ đề / độ khó Đấu Trí (luôn hỏi tất cả 21 chủ đề, mọi độ khó). `rules.quizCategories / quizDifficulties` vẫn giữ (mặc định rỗng = tất cả) để có thể mở lại sau.
