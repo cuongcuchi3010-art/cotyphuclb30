@@ -48,7 +48,6 @@ import {
   BANK_LOAN_MAX,
   BANK_LOAN_RATE_PCT,
   BANK_LOAN_TURNS,
-  BANK_ROLLOVER_FEE_PCT,
   DEFAULT_RULES,
   PLAYER_LOAN_MAX_TURNS,
   QUIZ_MATH_CATEGORY,
@@ -753,9 +752,6 @@ function applyPlayer(c: Ctx, p: PlayerState, a: PlayerAction): void {
       return;
     case 'repayLoan':
       repayLoan(c, p, a.id);
-      return;
-    case 'rolloverLoan':
-      rolloverLoan(c, p, a.id);
       return;
     case 'proposeLoan':
       proposeLoan(c, p, a);
@@ -2046,7 +2042,7 @@ function nextTurn(c: Ctx): void {
     l.turnsLeft--;
     if (l.turnsLeft <= 0) {
       s.loans = s.loans.filter((x) => x !== l);
-      s.debts.push({ from: cur.id, to: l.lender, amount: l.repay, reason: 'loan', loanId: l.id });
+      s.debts.push({ from: cur.id, to: l.lender, amount: l.repay, reason: 'loan' });
       c.ev.push({ t: 'loanDue', lender: l.lender, borrower: cur.id, amount: l.repay });
       due = true;
     }
@@ -2576,48 +2572,6 @@ function takeBankLoan(c: Ctx, p: PlayerState, amount: number): void {
     repay,
     turns: BANK_LOAN_TURNS,
   });
-}
-
-/**
- * Freestyle: khoản vay ngân hàng có thể đáo hạn (sắp đến hạn ở lượt sau, hoặc đã đến hạn mà chưa trả).
- * Trả số tiền đáo hạn (gốc + lãi đã đến hạn) bằng một khoản vay mới 5 lượt, lãi 10% như thường; phí 5%.
- */
-export function rolloverAmount(s: GameState, pid: PlayerId, id: string): number | null {
-  if (!isFreestyle(s)) return null;
-  const d = s.debts.find((x) => x.from === pid && x.loanId === id && x.to === 'bank');
-  if (d) return d.amount;
-  const l = s.loans.find((x) => x.id === id && x.borrower === pid && x.lender === 'bank');
-  return l && l.turnsLeft <= 1 ? l.repay : null;
-}
-
-export function rolloverFee(amount: number): number {
-  return Math.ceil((amount * BANK_ROLLOVER_FEE_PCT) / 100);
-}
-
-function rolloverLoan(c: Ctx, p: PlayerState, id: string): void {
-  const { s } = c;
-  if (!isFreestyle(s)) fail('Đáo hạn chỉ có ở chế độ Freestyle');
-  if (!canBorrowFromBank(s, p)) fail('Chỉ đáo hạn trong lượt của mình hoặc khi đang gom tiền');
-  const amount = rolloverAmount(s, p.id, id);
-  if (amount === null) fail('Chỉ đáo hạn khoản vay ngân hàng sắp đến hạn hoặc đã đến hạn');
-  // Bỏ khoản nợ / khoản vay cũ, mở khoản vay mới bằng số tiền đáo hạn
-  s.debts = s.debts.filter((x) => !(x.from === p.id && x.loanId === id));
-  s.loans = s.loans.filter((x) => x.id !== id);
-  const repay = bankLoanRepay(amount);
-  s.loans.push({
-    id: `L${s.nextLoanId++}`,
-    lender: 'bank',
-    borrower: p.id,
-    principal: amount,
-    repay,
-    turnsLeft: BANK_LOAN_TURNS,
-  });
-  const fee = rolloverFee(amount);
-  c.ev.push({ t: 'loanRollover', borrower: p.id, amount, fee, repay, turns: BANK_LOAN_TURNS });
-  // Phí đáo hạn: trả ngay, thiếu thì gom tiền như nợ thường
-  s.debts.unshift({ from: p.id, to: 'bank', amount: fee, reason: 'loan' });
-  if (s.phase.kind === 'raiseFunds') proceed(c);
-  else settle(c);
 }
 
 function repayLoan(c: Ctx, p: PlayerState, id: string): void {

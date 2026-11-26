@@ -233,8 +233,6 @@ export function describeEvent(
       return `${name(ev.borrower)} trả hết nợ ${formatMoney(ev.amount)} cho ${name(ev.lender)}`;
     case 'loanDue':
       return `Khoản vay của ${name(ev.borrower)} đến hạn: phải trả ${formatMoney(ev.amount)} cho ${name(ev.lender)}`;
-    case 'loanRollover':
-      return `🏦 ${name(ev.borrower)} đáo hạn ${formatMoney(ev.amount)} với ngân hàng (phí ${formatMoney(ev.fee)}): khoản vay mới trả ${formatMoney(ev.repay)} sau ${ev.turns} lượt`;
     case 'loanOffered':
       return ev.offer.lender === ev.offer.from
         ? `${name(ev.offer.from)} đề nghị cho ${name(ev.offer.to)} vay ${formatMoney(ev.offer.amount)}`

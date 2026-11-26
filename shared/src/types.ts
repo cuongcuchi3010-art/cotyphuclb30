@@ -148,8 +148,6 @@ export interface Debt {
   pos?: number;
   /** Đã xin ân huệ cho khoản này (bị từ chối thì không xin lại) */
   mercyAsked?: boolean;
-  /** Khoản vay đến hạn (để đáo hạn ngân hàng ở Freestyle) */
-  loanId?: string;
 }
 
 export type DebtReason =
@@ -224,8 +222,6 @@ export interface LoanOffer {
 export const BANK_LOAN_MAX = 500;
 export const BANK_LOAN_RATE_PCT = 10;
 export const BANK_LOAN_TURNS = 5;
-/** Freestyle: phí đáo hạn khoản vay ngân hàng (% số tiền đáo hạn) */
-export const BANK_ROLLOVER_FEE_PCT = 5;
 export const PLAYER_LOAN_MAX_TURNS = 20;
 
 export type Phase =

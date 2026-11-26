@@ -468,8 +468,6 @@ export const S = {
 
   loan: {
     bankTitle: 'Vay ngân hàng',
-    rollover: (fee: string) => `🔁 Đáo hạn (phí ${fee})`,
-    rolloverHint: 'Freestyle: chuyển khoản sắp đến hạn thành khoản vay mới 5 lượt, phí 5%',
     bankInfo: (rate: number, turns: number, max: string) =>
       `Lãi ${rate}%, trả sau ${turns} lượt của bạn. Dư nợ tối đa ${max}.`,
     amount: 'Số tiền vay (tr)',

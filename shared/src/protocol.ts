@@ -71,7 +71,6 @@ export const playerActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('casinoStake'), pos }),
   z.object({ type: z.literal('casinoPass') }),
   z.object({ type: z.literal('casinoRoll') }),
-  z.object({ type: z.literal('rolloverLoan'), id: z.string().max(20) }),
   z.object({ type: z.literal('quizJoin') }),
   z.object({ type: z.literal('quizPass') }),
   z.object({

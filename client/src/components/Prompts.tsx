@@ -5,8 +5,6 @@ import {
   festivalMult,
   maxFestivals,
   mercyDebt,
-  rolloverAmount,
-  rolloverFee,
   netWorth,
   rentFor,
   giftTargets,
@@ -268,11 +266,6 @@ function RaiseFundsBanner() {
         >
           {S.raise.openLoan}
         </Btn>
-        {debt.loanId && rolloverAmount(game, me!, debt.loanId) !== null && (
-          <Btn big variant="gold" onClick={() => act({ type: 'rolloverLoan', id: debt.loanId! })}>
-            {S.loan.rollover(formatMoney(rolloverFee(debt.amount)))}
-          </Btn>
-        )}
         {mercyDebt(game, me!) && (
           <Btn big variant="gold" onClick={() => act({ type: 'mercyRequest' })}>
             {S.mercy.request(nameOf(room, debt.to))}

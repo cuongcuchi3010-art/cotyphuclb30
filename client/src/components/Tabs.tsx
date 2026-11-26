@@ -21,8 +21,6 @@ import {
   type PlayerState,
   DISCORD_GUILD_ID,
   WIDGETBOT_CHANNEL_ID,
-  rolloverAmount,
-  rolloverFee,
 } from '@cotyphu/shared';
 import { S } from '../strings.vi';
 import { useStore, type TradeDraft } from '../store';
@@ -534,26 +532,14 @@ function LoanTab() {
               {l.lender === 'bank' ? `🏦 ${S.loan.bank}` : nameOf(room, l.lender)}:{' '}
               <b>{formatMoney(l.repay)}</b> · {S.loan.turnsLeft(l.turnsLeft)}
             </span>
-            <span className="flex shrink-0 gap-1">
-              {rolloverAmount(game, meP.id, l.id) !== null && canBorrowFromBank(game, meP) && (
-                <Btn
-                  variant="secondary"
-                  className="!min-h-[30px] !px-2"
-                  title={S.loan.rolloverHint}
-                  onClick={() => act({ type: 'rolloverLoan', id: l.id })}
-                >
-                  {S.loan.rollover(formatMoney(rolloverFee(l.repay)))}
-                </Btn>
-              )}
-              <Btn
-                variant="gold"
-                className="!min-h-[30px] !px-2"
-                disabled={meP.cash < l.repay}
-                onClick={() => act({ type: 'repayLoan', id: l.id })}
-              >
-                {S.loan.repayNow}
-              </Btn>
-            </span>
+            <Btn
+              variant="gold"
+              className="!min-h-[30px] !px-2"
+              disabled={meP.cash < l.repay}
+              onClick={() => act({ type: 'repayLoan', id: l.id })}
+            >
+              {S.loan.repayNow}
+            </Btn>
           </div>
         ))}
         {lent.length > 0 && (

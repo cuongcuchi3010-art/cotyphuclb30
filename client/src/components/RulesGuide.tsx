@@ -61,11 +61,6 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
               phạt).
             </li>
             <li>
-              Đáo hạn ngân hàng: khoản vay sắp đến hạn (còn 1 lượt) hoặc đã đến hạn mà chưa đủ tiền
-              trả được chuyển thành khoản vay mới 5 lượt (lãi 10% như thường), phí đáo hạn 5% số
-              tiền đáo hạn.
-            </li>
-            <li>
               <b>Sòng Bạc Tiền</b> (thay EVN): người dừng ô làm nhà cái; ai muốn thì đặt cược (không
               giới hạn, tối đa bằng tiền mặt của mình; nhà cái thua mà thiếu tiền thì phải gom tiền
               như trả nợ). Đổ cao hơn nhà cái thắng tiền cược, thấp hơn thì thua, bằng điểm thì hoà.
