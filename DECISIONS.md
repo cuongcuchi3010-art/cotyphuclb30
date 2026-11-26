@@ -405,3 +405,6 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 - Đấu Trí: tiền vào cửa ngẫu nhiên từ 100 tr tới 1 tỷ × hệ số tiền phạt (`quizStakeMax`, bước 50 tr); phạt ×2 → tối đa 2 tỷ, ×3 → 3 tỷ.
 - Sảnh: bỏ bộ chọn chủ đề / độ khó Đấu Trí (luôn hỏi tất cả 21 chủ đề, mọi độ khó). `rules.quizCategories / quizDifficulties` vẫn giữ (mặc định rỗng = tất cả) để có thể mở lại sau.
 - Đấu Trí (sửa lại): tiền vào cửa ngẫu nhiên 100 tr – 1 tỷ cố định, không theo hệ số tiền phạt.
+
+## F15 — Đáo hạn khoản vay ngân hàng (Freestyle)
+- Khoản vay ngân hàng còn 1 lượt (sắp đến hạn) hoặc đã đến hạn mà đang gom tiền: nút "🔁 Đáo hạn" (tab Vay / bảng gom tiền). Số tiền đáo hạn = số phải trả (gốc + lãi) → khoản vay mới cùng số tiền, 5 lượt, lãi 10%; phí đáo hạn 5% số tiền đáo hạn (trả ngay, thiếu thì gom tiền). Không tính vào hạn mức vay mới. Nợ đến hạn mang `loanId` để nhận diện. Cổ điển không có.

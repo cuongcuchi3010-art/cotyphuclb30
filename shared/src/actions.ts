@@ -47,6 +47,8 @@ export type PlayerAction =
   | { type: 'chooseSwap'; to: PlayerId }
   | { type: 'chooseTeleport'; pos: number }
   | { type: 'bankLoan'; amount: number }
+  /** Freestyle: đáo hạn khoản vay ngân hàng sắp / đã đến hạn (phí 5%) */
+  | { type: 'rolloverLoan'; id: string }
   | { type: 'repayLoan'; id: string }
   | {
       type: 'proposeLoan';
@@ -241,6 +243,14 @@ export type GameEvent =
     }
   | { t: 'loanRepaid'; lender: Creditor; borrower: PlayerId; amount: number }
   | { t: 'loanDue'; lender: Creditor; borrower: PlayerId; amount: number }
+  | {
+      t: 'loanRollover';
+      borrower: PlayerId;
+      amount: number;
+      fee: number;
+      repay: number;
+      turns: number;
+    }
   | { t: 'loanOffered'; offer: LoanOffer }
   | { t: 'loanRejected'; id: string; by: PlayerId }
   | { t: 'loanCancelled'; id: string; reason: 'withdrawn' | 'invalid' | 'bankrupt' | 'replaced' }

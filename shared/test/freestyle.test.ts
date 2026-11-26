@@ -8,6 +8,8 @@ import {
   bankLoanMax,
   makeMathQuestion,
   quizStakeMax,
+  rolloverAmount,
+  rolloverFee,
   QUIZ_MATH_CATEGORY,
   type BankQuestion,
   casinoBetLimit,
@@ -416,5 +418,58 @@ describe('Đấu Trí (ô 28 Freestyle)', () => {
     ({ state: s } = act(s, 'system', { type: 'quizTimeout' }));
     expect(s.quiz).toBeNull();
     expect(pl(s, 'p2').cash).toBe(1500);
+  });
+});
+
+describe('Đáo hạn khoản vay ngân hàng (Freestyle)', () => {
+  it('khoản vay sắp đến hạn: đáo hạn thành khoản vay mới, phí 5%', () => {
+    let s = mkGame(2, FS);
+    ({ state: s } = act(s, 'p1', { type: 'bankLoan', amount: 1000 }));
+    const cash = pl(s, 'p1').cash;
+    const id = s.loans[0]!.id;
+    expect(() => act(s, 'p1', { type: 'rolloverLoan', id })).toThrow('sắp đến hạn');
+    s.loans[0]!.turnsLeft = 1;
+    expect(rolloverAmount(s, 'p1', id)).toBe(1100);
+    const r = act(s, 'p1', { type: 'rolloverLoan', id });
+    s = r.state;
+    expect(s.loans).toHaveLength(1);
+    expect(s.loans[0]).toMatchObject({
+      principal: 1100,
+      repay: 1210,
+      turnsLeft: 5,
+      lender: 'bank',
+    });
+    expect(pl(s, 'p1').cash).toBe(cash - rolloverFee(1100));
+    expect(rolloverFee(1100)).toBe(55);
+    expect(r.events).toContainEqual(expect.objectContaining({ t: 'loanRollover', fee: 55 }));
+  });
+
+  it('đã đến hạn mà không đủ tiền: đáo hạn trong lúc gom tiền thay vì bán nhà', () => {
+    let s = mkGame(2, FS);
+    ({ state: s } = act(s, 'p1', { type: 'bankLoan', amount: 2000 }));
+    const id = s.loans[0]!.id;
+    s.loans[0]!.turnsLeft = 1;
+    pl(s, 'p1').cash = 300;
+    // Hết lượt p1, p2 đi, rồi tới lượt p1: khoản vay đến hạn
+    s.phase = { kind: 'awaitEnd' };
+    s.rolled = true;
+    ({ state: s } = act(s, 'p1', { type: 'endTurn' }));
+    s.phase = { kind: 'awaitEnd' };
+    s.rolled = true;
+    ({ state: s } = act(s, 'p2', { type: 'endTurn' }));
+    expect(s.phase).toEqual({ kind: 'raiseFunds', debtor: 'p1' });
+    expect(s.debts[0]).toMatchObject({ amount: 2200, loanId: id });
+    ({ state: s } = act(s, 'p1', { type: 'rolloverLoan', id }));
+    expect(s.phase.kind).toBe('awaitRoll');
+    expect(s.debts).toHaveLength(0);
+    expect(pl(s, 'p1').cash).toBe(300 - 110);
+    expect(s.loans[0]).toMatchObject({ principal: 2200, repay: 2420 });
+  });
+
+  it('chế độ cổ điển không có đáo hạn', () => {
+    let s = mkGame(2);
+    ({ state: s } = act(s, 'p1', { type: 'bankLoan', amount: 100 }));
+    s.loans[0]!.turnsLeft = 1;
+    expect(() => act(s, 'p1', { type: 'rolloverLoan', id: s.loans[0]!.id })).toThrow('Freestyle');
   });
 });
