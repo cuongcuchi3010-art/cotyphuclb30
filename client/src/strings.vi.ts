@@ -366,6 +366,7 @@ export const S = {
     theirAssets: (n: string) => `Tài sản của ${n}`,
     noProps: 'Không có ô nào.',
     hasHouses: 'nhóm có nhà',
+    tileHasHouses: 'ô có nhà',
     pending: 'Đề nghị đang chờ',
     gives: 'đưa',
   },

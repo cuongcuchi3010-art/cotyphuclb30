@@ -6,6 +6,7 @@ import {
   rollWithPower,
   seededRng,
   bankLoanMax,
+  blockHasNoBuildings,
   makeMathQuestion,
   quizStakeMax,
   QUIZ_MATH_CATEGORY,
@@ -416,5 +417,35 @@ describe('Đấu Trí (ô 28 Freestyle)', () => {
     ({ state: s } = act(s, 'system', { type: 'quizTimeout' }));
     expect(s.quiz).toBeNull();
     expect(pl(s, 'p2').cash).toBe(1500);
+  });
+});
+
+describe('Freestyle: giao dịch / thế chấp theo từng ô', () => {
+  it('ô không có nhà giao dịch được dù cả nhóm màu có nhà; ô có nhà thì không', () => {
+    const s = mkGame(2, FS);
+    own(s, 'p1', 31, 32, 34); // nhóm xanh lá
+    s.properties[32]!.houses = 2;
+    expect(blockHasNoBuildings(s, 31)).toBe(true);
+    expect(blockHasNoBuildings(s, 32)).toBe(false);
+    const ok = act(s, 'p1', {
+      type: 'proposeTrade',
+      to: 'p2',
+      give: { cash: 0, properties: [31], jailCards: 0 },
+      take: { cash: 100, properties: [], jailCards: 0 },
+    });
+    expect(ok.state.trades).toHaveLength(1);
+    expect(() =>
+      act(s, 'p1', {
+        type: 'proposeTrade',
+        to: 'p2',
+        give: { cash: 0, properties: [32], jailCards: 0 },
+        take: { cash: 100, properties: [], jailCards: 0 },
+      }),
+    ).toThrow('đang có nhà');
+    // Cổ điển vẫn theo cả nhóm
+    const c = mkGame(2);
+    own(c, 'p1', 31, 32, 34);
+    c.properties[32]!.houses = 2;
+    expect(blockHasNoBuildings(c, 31)).toBe(false);
   });
 });

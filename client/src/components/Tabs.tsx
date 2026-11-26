@@ -316,7 +316,13 @@ function AssetPicker({
               {sq.name}
             </span>
             <span className="shrink-0 text-xs text-gray-500">
-              {st.mortgaged ? '🔒 TC' : !ok ? S.trade.hasHouses : formatMoney(sq.price)}
+              {st.mortgaged
+                ? '🔒 TC'
+                : !ok
+                  ? game.rules.mode === 'freestyle'
+                    ? S.trade.tileHasHouses
+                    : S.trade.hasHouses
+                  : formatMoney(sq.price)}
             </span>
           </button>
         );

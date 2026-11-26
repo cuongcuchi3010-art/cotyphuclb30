@@ -251,8 +251,12 @@ export function groupHasNoBuildings(s: GameState, pos: number): boolean {
   return groupOf(pos).every((i) => (s.properties[i]?.houses ?? 0) === 0);
 }
 
-/** Điều kiện "không có nhà" để thế chấp / giao dịch / tặng: cả nhóm màu không có nhà */
+/**
+ * Điều kiện "không có nhà" để thế chấp / giao dịch / tặng.
+ * Cổ điển: cả nhóm màu không có nhà. Freestyle (xây theo từng ô, không cần trọn nhóm): chỉ cần chính ô đó không có nhà.
+ */
 export function blockHasNoBuildings(s: GameState, pos: number): boolean {
+  if (isFreestyle(s)) return (s.properties[pos]?.houses ?? 0) === 0;
   return groupHasNoBuildings(s, pos);
 }
 
@@ -2230,7 +2234,12 @@ function mortgage(c: Ctx, p: PlayerState, pos: number): void {
   const st = getProp(s, pos);
   if (st.owner !== p.id) fail('Ô này không phải của bạn');
   if (st.mortgaged) fail('Ô đã thế chấp');
-  if (!blockHasNoBuildings(s, pos)) fail('Phải bán hết nhà trong nhóm trước khi thế chấp');
+  if (!blockHasNoBuildings(s, pos))
+    fail(
+      isFreestyle(s)
+        ? 'Phải bán hết nhà trên ô trước khi thế chấp'
+        : 'Phải bán hết nhà trong nhóm trước khi thế chấp',
+    );
   const amount = mortgageValue(pos);
   st.mortgaged = true;
   p.cash += amount;
@@ -2424,7 +2433,10 @@ function validateSide(s: GameState, owner: PlayerState, side: TradeSide): string
     const st = s.properties[pos];
     if (!st) return 'Ô không hợp lệ';
     if (st.owner !== owner.id) return `${square(pos).name} không còn thuộc ${owner.name}`;
-    if (!blockHasNoBuildings(s, pos)) return `Nhóm của ${square(pos).name} đang có nhà`;
+    if (!blockHasNoBuildings(s, pos))
+      return isFreestyle(s)
+        ? `${square(pos).name} đang có nhà`
+        : `Nhóm của ${square(pos).name} đang có nhà`;
   }
   return null;
 }

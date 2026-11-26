@@ -406,3 +406,4 @@ Bản 3D (isometric) bị lỗi hiển thị nên đã **gỡ bỏ hoàn toàn**
 - Sảnh: bỏ bộ chọn chủ đề / độ khó Đấu Trí (luôn hỏi tất cả 21 chủ đề, mọi độ khó). `rules.quizCategories / quizDifficulties` vẫn giữ (mặc định rỗng = tất cả) để có thể mở lại sau.
 - Đấu Trí (sửa lại): tiền vào cửa ngẫu nhiên 100 tr – 1 tỷ cố định, không theo hệ số tiền phạt.
 - F15 đã bỏ theo yêu cầu (revert): không còn đáo hạn khoản vay ngân hàng.
+- F16 — Freestyle: điều kiện "không có nhà" để giao dịch / thế chấp / tặng ô chỉ xét CHÍNH ô đó (vì xây theo từng ô, không cần trọn nhóm). Cổ điển vẫn xét cả nhóm màu.
